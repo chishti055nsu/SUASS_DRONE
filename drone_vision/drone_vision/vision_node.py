@@ -223,13 +223,13 @@ class DroneVisionNode(Node):
         self._pub_detections.publish(det_msg)
 
         # ── Publish scene analysis ─────────────────────────────────────
-        scene_msg = self._build_scene_analysis(header, gemma_result, raw_json, gemma_ms)
+        scene_msg = self._build_scene_analysis(header, gemma_result, raw_json, gemma_ms, detections)
         self._pub_scene.publish(scene_msg)
 
         # ── Publish action zones ───────────────────────────────────────
-        self._pub_landing.publish(self._build_action_zone(header, gemma_result, "landing"))
-        self._pub_takeoff.publish(self._build_action_zone(header, gemma_result, "takeoff"))
-        self._pub_drop.publish(self._build_action_zone(header, gemma_result, "drop_payload"))
+        self._pub_landing.publish(self._build_action_zone(header, gemma_result, "landing", detections))
+        self._pub_takeoff.publish(self._build_action_zone(header, gemma_result, "takeoff", detections))
+        self._pub_drop.publish(self._build_action_zone(header, gemma_result, "drop_payload", detections))
 
         # ── Publish obstacles ──────────────────────────────────────────
         self._pub_obstacles.publish(self._build_obstacles(header, detections, gemma_result))
@@ -272,7 +272,7 @@ class DroneVisionNode(Node):
 
         return msg
 
-    def _build_scene_analysis(self, header, gemma_result, raw_json, gemma_ms) -> SceneAnalysis:
+    def _build_scene_analysis(self, header, gemma_result, raw_json, gemma_ms, detections=None) -> SceneAnalysis:
         msg = SceneAnalysis()
         msg.header = header
         msg.raw_json = raw_json
@@ -297,13 +297,13 @@ class DroneVisionNode(Node):
         msg.detected_features = feats
 
         # Embed zone sub-messages
-        msg.landing_zone = self._build_action_zone(header, gemma_result, "landing")
-        msg.takeoff_zone = self._build_action_zone(header, gemma_result, "takeoff")
-        msg.drop_zone    = self._build_action_zone(header, gemma_result, "drop_payload")
+        msg.landing_zone = self._build_action_zone(header, gemma_result, "landing", detections)
+        msg.takeoff_zone = self._build_action_zone(header, gemma_result, "takeoff", detections)
+        msg.drop_zone    = self._build_action_zone(header, gemma_result, "drop_payload", detections)
 
         return msg
 
-    def _build_action_zone(self, header, gemma_result, zone_type: str) -> ActionZone:
+    def _build_action_zone(self, header, gemma_result, zone_type: str, detections: list = None) -> ActionZone:
         msg = ActionZone()
         msg.header = header
         msg.zone_type = zone_type
@@ -314,15 +314,36 @@ class DroneVisionNode(Node):
             "drop_payload": "drop_zone",
         }
         key = key_map.get(zone_type, "landing_zone")
-        z = gemma_result.get(key, {})
+        z = gemma_result.get(key, {}) if gemma_result else {}
 
         msg.zone_detected       = bool(z.get("detected", False))
         msg.description         = z.get("description", "")
         msg.clearance_score     = float(z.get("clearance_score", z.get("confidence", 0.0)))
         msg.safety_assessment   = z.get("safety", "caution")
         msg.reasoning           = z.get("reasoning", "")
-        msg.recommended_action  = gemma_result.get("mission_recommendation", {}).get("action", "hold")
+        msg.recommended_action  = gemma_result.get("mission_recommendation", {}).get("action", "hold") if gemma_result else "hold"
         msg.gemma_confidence    = float(z.get("confidence", z.get("clearance_score", 0.0)))
+
+        # Find matching YOLO detection geometry if available
+        matched_det = None
+        if detections:
+            target_cat = "drop_zone" if zone_type == "drop_payload" else "landing_zone"
+            for d in detections:
+                if d.get("category") == target_cat or d.get("class_name") in ("circle", "h_marker", "landing_pad", "target"):
+                    matched_det = d
+                    break
+
+        if matched_det:
+            msg.zone_detected  = True
+            msg.center_pixel   = [float(matched_det["center_px"][0]), float(matched_det["center_px"][1])]
+            msg.bbox_xyxy      = [float(b) for b in matched_det["bbox_xyxy"]]
+            msg.area_ratio     = float(matched_det["area_ratio"])
+            msg.confidence     = float(matched_det["confidence"])
+        else:
+            msg.center_pixel   = [320.0, 240.0] if msg.zone_detected else [0.0, 0.0]
+            msg.bbox_xyxy      = [0.0, 0.0, 0.0, 0.0]
+            msg.area_ratio     = 0.05 if msg.zone_detected else 0.0
+            msg.confidence     = msg.gemma_confidence
 
         return msg
 

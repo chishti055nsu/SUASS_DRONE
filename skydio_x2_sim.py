@@ -312,6 +312,24 @@ class SkydioX2Simulation:
                 mission_type="search_and_drop",
                 on_state_change=self._on_state_change,
                 loiter_confirm_frames=3)
+        elif ch == "1":
+            print(f"\n\033[91m⚠️ [FAILURE TEST] INJECT CAMERA BLACKOUT / SENSOR FAILURE\033[0m")
+            self._inject_cam_failure = not getattr(self, "_inject_cam_failure", False)
+            print(f"Camera blackout active: {self._inject_cam_failure}")
+        elif ch == "2":
+            print(f"\n\033[91m⚠️ [FAILURE TEST] INJECT GPS DRIFT / POSITION LOSS\033[0m")
+            self._inject_gps_failure = not getattr(self, "_inject_gps_failure", False)
+            print(f"GPS drift active: {self._inject_gps_failure}")
+        elif ch == "3":
+            print(f"\n\033[91m⚡ [FAILURE TEST] INJECT LOW BATTERY (10% FAILSAFE)\033[0m")
+            self.sm.on_vision_update({}, {}, {}, {}, battery_pct=10.0)
+        elif ch == "4":
+            print(f"\n\033[91m⌛ [FAILURE TEST] INJECT STALE VISION TIMEOUT (>3.0s)\033[0m")
+            self.sm._last_vision_time = time.time() - 10.0
+            self.sm.check_timeouts()
+        elif ch == "5":
+            print(f"\n\033[91m🌳 [FAILURE TEST] INJECT CRITICAL OBSTACLE DENSITY (0.95)\033[0m")
+            self.sm.on_vision_update({}, {}, {}, {"density": 0.95}, battery_pct=100.0)
         elif ch == "q":
             print(f"\n\033[91m🚪 [COMMAND] QUIT SIMULATION\033[0m")
             self._should_quit = True
