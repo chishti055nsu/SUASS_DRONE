@@ -195,11 +195,11 @@ def draw_cam_hud(
 # ─────────────────────────────────────────────────────────────────────────────
 class SkydioX2Simulation:
 
-    # Mission waypoints [x, y, z]
-    SEARCH_WPS  = [[ 6,  6, 10], [ 6, -6, 10], [-6, -6, 10], [-6,  6, 10]]
-    HOME_POS    = [ 0.0,  0.0, 8.0]
-    DROP_POS    = [ 8.0,  4.0, 3.5]    # Above target red bullseye
-    LAND_POS    = [ 0.0,  0.0, 0.08]   # On white H-marker
+    # Mission waypoints [x, y, z] — 500-Meter Competition Scale
+    SEARCH_WPS  = [[100.0, 30.0, 15.0], [250.0, -30.0, 15.0], [400.0, 30.0, 15.0], [500.0, 0.0, 15.0]]
+    HOME_POS    = [  0.0,  0.0,  8.0]
+    DROP_POS    = [500.0,  0.0,  3.5]    # Above 500m target red bullseye
+    LAND_POS    = [  0.0,  0.0,  0.08]   # On home base white H-marker
 
     def __init__(self, yolo_model="yolov8n.pt", gemma_model="gemma4:e4b",
                  gemma_interval=40, ollama_url="http://localhost:11434"):
@@ -260,7 +260,7 @@ class SkydioX2Simulation:
         self._frame_n   = 0
         self._target    = np.array(self.HOME_POS, dtype=float)
         self._active_setpoint = np.array(self.HOME_POS, dtype=float) # Smooth glide setpoint
-        self._max_speed = 3.0   # m/s max trajectory glide speed
+        self._max_speed = 15.0  # 15 m/s max trajectory glide speed for 500m transit
         self._wp_idx    = 0
         self._gemma_res = None
         self._gemma_ms  = 0.0
@@ -293,8 +293,8 @@ class SkydioX2Simulation:
             self.sm.on_start_command()
             self.sm.on_armed()
         elif ch == "d":
-            print(f"\n\033[93m📦 [COMMAND] FLY TO DROP TARGET (8m, 4m, 3.5m)\033[0m")
-            self.sm._transition(MissionState.APPROACH_TARGET, "fly to drop target command")
+            print(f"\n\033[93m📦 [COMMAND] FLY TO 500-METER DROP TARGET (500m, 0m, 3.5m)\033[0m")
+            self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
             self._target = np.array(self.DROP_POS)
         elif ch == "l":
             print(f"\n\033[92m⬇ [COMMAND] LAND ON WHITE H-MARKER (0m, 0m, 0.08m)\033[0m")
