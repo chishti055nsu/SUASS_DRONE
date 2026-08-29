@@ -1,28 +1,29 @@
 """
 skydio_x2_sim.py
 ================
-IUB Drone — Skydio X2 Native MuJoCo Simulation (Original High-Precision Layout).
+IUB Drone — Skydio X2 Native MuJoCo Simulation (1 KM Multi-Target SUAS Edition).
 
 Features:
-  - Official DeepMind Skydio X2 quadcopter model
-  - Native MuJoCo Interactive 3D Viewer + OpenCV Camera Feed Window with HUD Overlay
-  - Smooth 2.5 m/s trajectory setpoint generator (zero visual distortion or camera glitching)
-  - Key callbacks in BOTH 3D viewer window AND terminal (Auto-arms on S/D/L keys from IDLE)
-  - Downward drone camera -> YOLOv8 + Gemma 4 e4b structured vision
-  - High-precision 500 Hz PD controller (0.01m accuracy)
-  - Production SUAS State Machine (IDLE -> TAKEOFF -> SEARCH -> APPROACH -> DROP -> RETURN_HOME -> LAND -> COMPLETE)
+  - Official DeepMind Skydio X2 model with 1.5 KM Extended Airspace & Multi-Storey City Skyscrapers
+  - Target 1: 500-Meter Drop Zone Bullseye [500m, 100m, 3.5m]
+  - Target 2: 1-Kilometer Extended Inspection Target [1000m, -50m, 3.5m]
+  - Airborne Weather Balloons (25m - 60m altitude) & Flying Birds
+  - Dual Windows: Native 3D MuJoCo Interactive Viewer + Downward Camera Feed with HUD Overlay
+  - Smooth 18 m/s Trajectory Setpoint Generator (High-Speed 1km Transit)
+  - Key Callbacks in BOTH 3D Viewer & Terminal (Auto-arms on S/D/L/1/2 keys)
 
 Usage:
     mjpython skydio_x2_sim.py
 
-Controls (Press S, D, L, A, R, Q in 3D Window OR Terminal):
-    S  → Start mission (TAKEOFF → SEARCH pattern)
-    D  → Fly to drop target [8m, 4m, 3.5m] & release payload on red circle
-    L  → Fly to white H-marker & land
-    A  → Abort / hold position
-    1-5→ Failure Injection Tests (Camera Blackout, GPS Loss, Low Battery, Stale Vision, Obstacles)
-    R  → Reset simulation
-    Q  → Quit
+Controls (Press in 3D Window OR Terminal):
+    S    → Start mission (TAKEOFF → SEARCH pattern)
+    D / 1→ Fly to Target 1: 500m Drop Target [500m, 100m, 3.5m]
+    2    → Fly to Target 2: 1km Extended Target [1000m, -50m, 3.5m]
+    L / 3→ Return Home & Land on White H-marker [0m, 0m, 0.08m]
+    A    → Abort / hold position
+    C    → Toggle Camera View (Chase Cam <-> Downward Vision <-> Spotter Cam)
+    R    → Reset simulation
+    Q    → Quit
 """
 
 import os
@@ -108,7 +109,7 @@ class SkydioX2Controller:
     ) -> np.ndarray:
         # Altitude PID
         err_z = target[2] - pos[2]
-        thrust_total = HOVER_THRUST_EACH * 4 + 10.0 * err_z - 5.0 * vel[2]
+        thrust_total = HOVER_THRUST_EACH * 4 + 12.0 * err_z - 6.0 * vel[2]
         thrust_total = np.clip(thrust_total, 0.0, 4 * CTRL_MAX)
 
         # Orientation
@@ -117,12 +118,12 @@ class SkydioX2Controller:
         pitch = math.asin(np.clip(2*(w*y - z*x), -1.0, 1.0))
 
         err_x, err_y = target[0] - pos[0], target[1] - pos[1]
-        des_pitch = np.clip( 1.0 * err_x - 0.8 * vel[0], -0.2, 0.2)
-        des_roll  = np.clip(-1.0 * err_y + 0.8 * vel[1], -0.2, 0.2)
+        des_pitch = np.clip( 0.8 * err_x - 0.6 * vel[0], -0.25, 0.25)
+        des_roll  = np.clip(-0.8 * err_y + 0.6 * vel[1], -0.25, 0.25)
 
-        r_cmd = 3.0 * (des_roll - roll)   - 0.8 * gyro[0]
-        p_cmd = 3.0 * (des_pitch - pitch) - 0.8 * gyro[1]
-        y_cmd = -0.5 * gyro[2]
+        r_cmd = 3.5 * (des_roll - roll)   - 0.8 * gyro[0]
+        p_cmd = 3.5 * (des_pitch - pitch) - 0.8 * gyro[1]
+        y_cmd = -0.6 * gyro[2]
 
         base = thrust_total / 4.0
         t1 = np.clip(base + p_cmd - r_cmd - y_cmd, 0.0, CTRL_MAX) # Rear-Right
@@ -141,12 +142,14 @@ def draw_cam_hud(
     state: str,
     gemma: dict,
     pos: np.ndarray,
+    target: np.ndarray,
     fps: float,
     gemma_ms: float,
     sim_time: float,
 ) -> np.ndarray:
     """Draw telemetry & mission state HUD on camera feed."""
     h, w = frame.shape[:2]
+    dist_target = np.linalg.norm(target[:2] - pos[:2])
 
     # Top banner
     color = STATE_COLORS.get(state, (200, 200, 200))
@@ -156,8 +159,8 @@ def draw_cam_hud(
                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
 
     # Telemetry
-    tele = f"Alt: {pos[2]:4.1f}m | Pos: ({pos[0]:.1f}, {pos[1]:.1f})m | t: {sim_time:.1f}s | FPS: {fps:.0f}"
-    cv2.putText(frame, tele, (w - 380, 24),
+    tele = f"Alt: {pos[2]:4.1f}m | TargetDist: {dist_target:5.1f}m | t: {sim_time:.1f}s | FPS: {fps:.0f}"
+    cv2.putText(frame, tele, (w - 420, 24),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
 
     # Gemma Panel
@@ -180,33 +183,34 @@ def draw_cam_hud(
                         cv2.FONT_HERSHEY_SIMPLEX, 0.48, c, 2 if bold else 1)
 
     # Controls footer
-    cv2.putText(frame, "[S]Start [D]Drop Target [L]Land [A]Abort [R]Reset [Q]Quit",
-                (10, h - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 120), 1)
+    cv2.putText(frame, "[S]Start [D/1]500m Target [2]1km Target [L/3]Land [C]Cam [R]Reset [Q]Quit",
+                (10, h - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (120, 120, 120), 1)
 
     return frame
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Skydio X2 Native MuJoCo Simulation Class
+# Skydio X2 Native MuJoCo Simulation Class (1km Multi-Target)
 # ─────────────────────────────────────────────────────────────────────────────
 class SkydioX2Simulation:
 
-    # Mission waypoints [x, y, z]
-    SEARCH_WPS  = [[ 6.0,  6.0, 10.0], [ 6.0, -6.0, 10.0], [-6.0, -6.0, 10.0], [-6.0,  6.0, 10.0]]
-    HOME_POS    = [ 0.0,  0.0, 8.0]
-    DROP_POS    = [ 8.0,  4.0, 3.5]    # Above target red bullseye
-    LAND_POS    = [ 0.0,  0.0, 0.08]   # On white H-marker
+    # Mission waypoints [x, y, z] — 1 KM Multi-Target Scale
+    SEARCH_WPS   = [[200.0, 50.0, 15.0], [500.0, 100.0, 15.0], [750.0, -50.0, 15.0], [1000.0, -50.0, 15.0]]
+    HOME_POS     = [   0.0,    0.0,  8.0]
+    DROP_500M    = [ 500.0,  100.0,  3.5]    # Target 1: 500m Drop Bullseye
+    TARGET_1KM   = [1000.0,  -50.0,  3.5]    # Target 2: 1km Extended Target
+    LAND_POS     = [   0.0,    0.0,  0.08]   # Base Station White H-Marker
 
     def __init__(self, yolo_model="yolov8n.pt", gemma_model="gemma4:e4b",
                  gemma_interval=40, ollama_url="http://localhost:11434"):
 
-        banner = "─" * 54
+        banner = "─" * 60
         print(f"\n\033[1m\033[96m{banner}")
-        print("  IUB Drone  ×  Skydio X2  ×  Native MuJoCo Viewer")
+        print("  IUB Drone  ×  Skydio X2  ×  1 KM Multi-Target MuJoCo Suite")
         print(f"{banner}\033[0m\n")
 
         # ── MuJoCo Model Load ─────────────────────────────────────────
-        print("\033[93m[1/4] Loading Skydio X2 MuJoCo model...\033[0m")
+        print("\033[93m[1/4] Loading 1km Skydio X2 MuJoCo model...\033[0m")
         cwd = os.getcwd()
         os.chdir(os.path.join(ROOT, "mujoco_sim"))
         try:
@@ -216,13 +220,13 @@ class SkydioX2Simulation:
         finally:
             os.chdir(cwd)
 
+        self._x2_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "x2")
+
         # Offscreen renderer for drone downward camera
         self.drone_renderer = mujoco.Renderer(self.model, CAM_H, CAM_W)
-
-        # Dynamic downward camera tracker
         self._down_cam = mujoco.MjvCamera()
         self._down_cam.type        = mujoco.mjtCamera.mjCAMERA_TRACKING
-        self._down_cam.trackbodyid = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "x2")
+        self._down_cam.trackbodyid = self._x2_body_id
         self._down_cam.distance    = 0.01
         self._down_cam.elevation   = -90.0
         self._down_cam.azimuth     = 90.0
@@ -256,13 +260,14 @@ class SkydioX2Simulation:
         self._frame_n   = 0
         self._target    = np.array(self.HOME_POS, dtype=float)
         self._active_setpoint = np.array(self.HOME_POS, dtype=float)
-        self._max_speed = 2.5   # 2.5 m/s max trajectory glide speed
+        self._max_speed = 18.0  # 18 m/s max trajectory glide speed for 1km transit
         self._wp_idx    = 0
         self._gemma_res = None
         self._gemma_ms  = 0.0
         self._fps_times = []
         self._dropped   = False
         self._should_quit = False
+        self._camera_mode = 0   # 0=Chase Cam, 1=Downward Vision, 2=Target Spotter
 
         self._reset()
 
@@ -285,7 +290,7 @@ class SkydioX2Simulation:
         vel  = self.data.qvel[:3].copy()
         return pos, vel, quat, gyro
 
-    # ── Smooth trajectory glide step (2.5 m/s) ───────────────────────
+    # ── Smooth trajectory glide step (18 m/s max) ─────────────────────
     def _smooth_trajectory_step(self, dt=0.002):
         diff = self._target - self._active_setpoint
         dist = np.linalg.norm(diff)
@@ -312,21 +317,29 @@ class SkydioX2Simulation:
     def process_command_key(self, key_str: str):
         ch = key_str.lower()
         if ch == "s":
-            print(f"\n\033[92m▶ [COMMAND] START MISSION (TAKEOFF → SEARCH)\033[0m")
+            print(f"\n\033[92m▶ [COMMAND] START MISSION (TAKEOFF → SEARCH 1KM)\033[0m")
             self._dropped = False
             self.sm._transition(MissionState.ARMING, "start command received")
             self.sm.on_armed()
             self.sm.on_altitude_reached()
-        elif ch == "d":
-            print(f"\n\033[93m📦 [COMMAND] FLY TO DROP TARGET (8m, 4m, 3.5m)\033[0m")
+        elif ch in ("d", "1"):
+            print(f"\n\033[93m📦 [COMMAND] FLY TO TARGET 1: 500-METER DROP ZONE (500m, 100m, 3.5m)\033[0m")
             self._dropped = False
             if self.sm.state == "IDLE":
                 self.sm.on_start_command()
                 self.sm.on_armed()
-            self.sm._transition(MissionState.APPROACH_TARGET, "fly to drop target command")
-            self._target = np.array(self.DROP_POS)
-        elif ch == "l":
-            print(f"\n\033[92m⬇ [COMMAND] LAND ON WHITE H-MARKER (0m, 0m, 0.08m)\033[0m")
+            self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
+            self._target = np.array(self.DROP_500M)
+        elif ch == "2":
+            print(f"\n\033[93m🎯 [COMMAND] FLY TO TARGET 2: 1-KILOMETER EXTENDED BASE (1000m, -50m, 3.5m)\033[0m")
+            self._dropped = False
+            if self.sm.state == "IDLE":
+                self.sm.on_start_command()
+                self.sm.on_armed()
+            self.sm._transition(MissionState.APPROACH_TARGET, "fly to 1km extended target command")
+            self._target = np.array(self.TARGET_1KM)
+        elif ch in ("l", "3"):
+            print(f"\n\033[92m⬇ [COMMAND] RETURN HOME & LAND ON WHITE H-MARKER (0m, 0m, 0.08m)\033[0m")
             if self.sm.state == "IDLE":
                 self.sm.on_start_command()
                 self.sm.on_armed()
@@ -337,6 +350,10 @@ class SkydioX2Simulation:
             self.sm.on_abort_command()
             pos = self.data.qpos[:3].copy()
             self._target = np.array([pos[0], pos[1], max(pos[2], 2.0)])
+        elif ch == "c":
+            self._camera_mode = (self._camera_mode + 1) % 3
+            modes = ["CHASE CAM (Follows Drone across 1km)", "ONBOARD DOWNWARD VISION", "SPOTTER CAM (Target 1/2 View)"]
+            print(f"\n\033[96m📷 [CAMERA MODE] {modes[self._camera_mode]}\033[0m")
         elif ch == "r":
             print(f"\n\033[93m🔄 [COMMAND] RESET SIMULATION\033[0m")
             self._reset()
@@ -344,24 +361,6 @@ class SkydioX2Simulation:
                 mission_type="search_and_drop",
                 on_state_change=self._on_state_change,
                 loiter_confirm_frames=3)
-        elif ch == "1":
-            print(f"\n\033[91m⚠️ [FAILURE TEST] INJECT CAMERA BLACKOUT / SENSOR FAILURE\033[0m")
-            self._inject_cam_failure = not getattr(self, "_inject_cam_failure", False)
-            print(f"Camera blackout active: {self._inject_cam_failure}")
-        elif ch == "2":
-            print(f"\n\033[91m⚠️ [FAILURE TEST] INJECT GPS DRIFT / POSITION LOSS\033[0m")
-            self._inject_gps_failure = not getattr(self, "_inject_gps_failure", False)
-            print(f"GPS drift active: {self._inject_gps_failure}")
-        elif ch == "3":
-            print(f"\n\033[91m⚡ [FAILURE TEST] INJECT LOW BATTERY (10% FAILSAFE)\033[0m")
-            self.sm.on_vision_update({}, {}, {}, {}, battery_pct=10.0)
-        elif ch == "4":
-            print(f"\n\033[91m⌛ [FAILURE TEST] INJECT STALE VISION TIMEOUT (>3.0s)\033[0m")
-            self.sm._last_vision_time = time.time() - 10.0
-            self.sm.check_timeouts()
-        elif ch == "5":
-            print(f"\n\033[91m🌳 [FAILURE TEST] INJECT CRITICAL OBSTACLE DENSITY (0.95)\033[0m")
-            self.sm.on_vision_update({}, {}, {}, {"density": 0.95}, battery_pct=100.0)
         elif ch == "q":
             print(f"\n\033[91m🚪 [COMMAND] QUIT SIMULATION\033[0m")
             self._should_quit = True
@@ -392,7 +391,7 @@ class SkydioX2Simulation:
         if self.sm.state != "SEARCH":
             return
         wp = np.array(self.SEARCH_WPS[self._wp_idx])
-        if np.linalg.norm(pos[:2] - wp[:2]) < 1.5:
+        if np.linalg.norm(pos[:2] - wp[:2]) < 5.0:
             self._wp_idx = (self._wp_idx + 1) % len(self.SEARCH_WPS)
             self._target = np.array(self.SEARCH_WPS[self._wp_idx])
             log.info(f"Search WP {self._wp_idx}: {self._target}")
@@ -404,9 +403,9 @@ class SkydioX2Simulation:
             self.sm.on_altitude_reached()
 
         elif s in ("APPROACH_TARGET", "DROP_PAYLOAD") and not self._dropped:
-            dist_to_drop = np.linalg.norm(pos[:2] - self.DROP_POS[:2])
-            if dist_to_drop < 1.2 and pos[2] <= 4.2:
-                print(f"\n\033[93m📦 PAYLOAD DROPPED ON RED TARGET CIRCLE! (Alt={pos[2]:.2f}m)\033[0m")
+            dist_to_drop = np.linalg.norm(pos[:2] - self._target[:2])
+            if dist_to_drop < 2.0 and pos[2] <= 4.2:
+                print(f"\n\033[93m📦 PAYLOAD DELIVERED AT TARGET POSITION! ({pos[0]:.1f}m, {pos[1]:.1f}m, {pos[2]:.2f}m)\033[0m")
                 self._dropped = True
                 self.sm.on_payload_dropped()
                 self.sm._transition(MissionState.RETURN_HOME, "payload dropped return home")
@@ -417,7 +416,7 @@ class SkydioX2Simulation:
             self.sm.on_landed()
 
         elif s == "RETURN_HOME":
-            if np.linalg.norm(pos[:2]) < 1.0:
+            if np.linalg.norm(pos[:2]) < 2.0:
                 self.sm.on_at_home()
 
     # ── Vision → Mission ──────────────────────────────────────────────
@@ -449,14 +448,18 @@ class SkydioX2Simulation:
         return float(len(self._fps_times))
 
     # ─────────────────────────────────────────────────────────────────
-    # Native MuJoCo Viewer Main Loop
+    # Native MuJoCo Viewer Main Loop (Dual Windows + Zero-Crash Cam)
     # ─────────────────────────────────────────────────────────────────
     def run(self):
-        print("\033[1mControls (Press S, D, L, A, R, Q in 3D Window OR Terminal):\033[0m")
-        for k, v in [("S", "Start mission"), ("D", "Fly to drop target"),
-                    ("L", "Land on H-marker"), ("A", "Abort / hold"),
-                    ("1-5", "Failure Injection Tests"), ("R", "Reset"), ("Q", "Quit")]:
-            print(f"  \033[96m{k:<4}\033[0m → {v}")
+        print("\033[1mControls (Press S, D/1, 2, L/3, A, C, R, Q in 3D Window OR Terminal):\033[0m")
+        for k, v in [("S", "Start mission (TAKEOFF -> SEARCH 1KM)"),
+                    ("D / 1", "Fly to Target 1: 500m Drop Zone [500m, 100m, 3.5m]"),
+                    ("2", "Fly to Target 2: 1km Extended Target [1000m, -50m, 3.5m]"),
+                    ("L / 3", "Return Home & Land [0m, 0m, 0.08m]"),
+                    ("A", "Abort / hold position"),
+                    ("C", "Toggle Camera View (Chase Cam <-> Onboard Downward Vision <-> Spotter Cam)"),
+                    ("R", "Reset"), ("Q", "Quit")]:
+            print(f"  \033[96m{k:<6}\033[0m → {v}")
         print()
 
         has_cv2_gui = True
@@ -482,7 +485,7 @@ class SkydioX2Simulation:
             with mujoco.viewer.launch_passive(
                 self.model, self.data, key_callback=self._on_mujoco_key
             ) as viewer:
-                print("\033[92m✅ Native MuJoCo Viewer is open!\033[0m\n")
+                print("\033[92m✅ Native MuJoCo Interactive 3D Viewer is open!\033[0m\n")
 
                 PHYS_STEPS_PER_RENDER = 10
 
@@ -501,14 +504,36 @@ class SkydioX2Simulation:
                     self._auto_transitions(pos)
                     sim_t = self.data.time
 
+                    # ── Dynamic Camera Modes (mjCAMERA_FREE prevents any fixedcamid crash!) ─
+                    if self._camera_mode == 0:
+                        # Dynamic Chase Cam: Follows quadcopter 14m behind & elevated 5m
+                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
+                        viewer.cam.trackbodyid = self._x2_body_id
+                        viewer.cam.distance = 14.0
+                        viewer.cam.elevation = -18.0
+                        viewer.cam.azimuth = 90.0
+                    elif self._camera_mode == 1:
+                        # Downward Onboard Vision Cam
+                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
+                        viewer.cam.trackbodyid = self._x2_body_id
+                        viewer.cam.distance = 0.01
+                        viewer.cam.elevation = -90.0
+                        viewer.cam.azimuth = 90.0
+                    elif self._camera_mode == 2:
+                        # 1km Target Spotter Cam (FREE camera focused on active target)
+                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+                        viewer.cam.lookat[:] = [float(self._target[0]), float(self._target[1]), 2.0]
+                        viewer.cam.distance = 25.0
+                        viewer.cam.elevation = -25.0
+                        viewer.cam.azimuth = 45.0
+
                     # Sync Native 3D Viewer
                     viewer.sync()
 
-                    # Downward Drone Camera → YOLO
+                    # Downward Drone Camera -> YOLO + Gemma
                     down_frame = self._render_down()
                     detections, fps, annotated, _ = self.detector.detect(down_frame)
 
-                    # Gemma Vision Reasoning (async)
                     if self._frame_n % self.gemma_interval == 0:
                         self.analyzer.analyze_async(annotated, [])
 
@@ -518,10 +543,10 @@ class SkydioX2Simulation:
                         self._gemma_ms  = gms
                         self._vision_to_sm(result)
 
-                    # Draw Camera HUD
+                    # Draw Camera HUD Overlay Window
                     cam_hud = draw_cam_hud(
                         annotated, self.sm.state, self._gemma_res,
-                        pos, self._fps(), self._gemma_ms, sim_t)
+                        pos, self._target, self._fps(), self._gemma_ms, sim_t)
 
                     if has_cv2_gui:
                         try:
@@ -529,19 +554,20 @@ class SkydioX2Simulation:
                             key = cv2.waitKey(1) & 0xFF
                             if key in (ord("q"), 27):
                                 break
-                            elif key in (ord("s"), ord("d"), ord("l"), ord("a"), ord("r")):
+                            elif key in (ord("s"), ord("d"), ord("l"), ord("a"), ord("r"), ord("c"), ord("1"), ord("2"), ord("3")):
                                 self.process_command_key(chr(key))
                         except Exception:
                             has_cv2_gui = False
 
                     # Status Telemetry
-                    if self._frame_n % 50 == 0:
+                    dist_to_target = np.linalg.norm(self._target[:2] - pos[:2])
+                    if self._frame_n % 30 == 0:
                         print(
                             f"\r\033[96m[t={sim_t:7.2f}s]\033[0m"
-                            f" {self.sm.state:<18}"
-                            f" Alt={pos[2]:5.2f}m"
-                            f" → Target=({self._target[0]:.1f}, {self._target[1]:.1f}, {self._target[2]:.1f}m)"
-                            f" Gemma={self._gemma_ms:.0f}ms"
+                            f" {self.sm.state:<16}"
+                            f" Pos=({pos[0]:5.1f}m, {pos[1]:5.1f}m, {pos[2]:4.1f}m)"
+                            f" TargetDist={dist_to_target:5.1f}m"
+                            f" Speed={np.linalg.norm(vel):4.1f}m/s"
                             f" FPS={fps:.0f}",
                             end="", flush=True)
 
@@ -562,7 +588,7 @@ class SkydioX2Simulation:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Skydio X2 Native MuJoCo Simulation")
+    parser = argparse.ArgumentParser(description="Skydio X2 Native MuJoCo Simulation 1km Multi-Target")
     parser.add_argument("--yolo", default="yolov8n.pt", help="Path to YOLO weights")
     parser.add_argument("--gemma", default="gemma4:e4b", help="Ollama Gemma model name")
     parser.add_argument("--interval", type=int, default=40, help="Gemma frame interval")
