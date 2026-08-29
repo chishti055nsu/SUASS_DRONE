@@ -1,0 +1,28 @@
+# mission_planner node parameters
+mission_planner_node:
+  ros__parameters:
+
+    # ── Mission Type ───────────────────────────────────────────────────────
+    # Options: "search_and_drop" | "land_on_marker" | "survey"
+    mission_type: "search_and_drop"
+
+    # ── Altitude Profile (meters) ──────────────────────────────────────────
+    search_altitude_m: 15.0        # cruise/search altitude
+    approach_altitude_m: 5.0       # when approaching target/drop zone
+    land_altitude_m: 1.5           # trigger altitude for payload drop
+
+    # ── Search Area ────────────────────────────────────────────────────────
+    search_area_width_m: 40.0      # East-West extent
+    search_area_height_m: 40.0     # North-South extent
+    lane_spacing_m: 8.0            # lawnmower lane spacing
+
+    # ── Safety ────────────────────────────────────────────────────────────
+    loiter_confirm_frames: 5       # Gemma confirmations before committing
+    battery_abort_pct: 15.0        # Emergency RTL below this battery %
+    waypoint_acceptance_m: 1.5     # Radius to mark WP as reached
+
+    # ── Flight ────────────────────────────────────────────────────────────
+    max_speed_ms: 3.0              # Maximum flight speed m/s
+
+    # ── MAVROS ────────────────────────────────────────────────────────────
+    use_mavros: true               # false = simulation/debug mode

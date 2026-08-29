@@ -1,0 +1,40 @@
+# drone_vision node parameters
+drone_vision_node:
+  ros__parameters:
+
+    # ── Video Source ───────────────────────────────────────────────────────
+    # Options: "ros_topic" | "usb_cam" | "video_file"
+    source_type: "usb_cam"
+    camera_topic: "/camera/image_raw"    # used when source_type = "ros_topic"
+    usb_cam_index: 0                     # used when source_type = "usb_cam"
+    video_file_path: ""                  # used when source_type = "video_file"
+
+    # ── YOLO ──────────────────────────────────────────────────────────────
+    yolo_model: "yolov8n.pt"             # swap to .engine for TensorRT
+    yolo_conf_threshold: 0.45
+    yolo_iou_threshold: 0.45
+    use_tensorrt: false                  # set true on Jetson after export
+    target_fps: 30
+
+    # ── Gemma ─────────────────────────────────────────────────────────────
+    gemma_model: "gemma4:e4b"
+    ollama_url: "http://localhost:11434"
+    gemma_interval_frames: 10            # run Gemma every N frames
+    gemma_timeout: 8.0                   # seconds before timeout
+    jpeg_quality: 75                     # 1-100, lower=faster
+
+    # ── Class Category Overrides ───────────────────────────────────────────
+    target_classes:
+      - "person"
+      - "car"
+      - "truck"
+      - "bus"
+      - "motorcycle"
+    obstacle_classes:
+      - "potted plant"
+      - "bench"
+      - "chair"
+      - "umbrella"
+
+    # ── Debug ─────────────────────────────────────────────────────────────
+    publish_annotated_image: true

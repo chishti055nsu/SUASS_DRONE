@@ -1,0 +1,20 @@
+# ROS2 build artifacts
+build/
+install/
+log/
+.colcon/
+
+# Python & Caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# OS & Temp
+.DS_Store
+*.log
+*.tmp
+
+# Weight files (keep yolov8n.pt if needed, or exclude large binaries)
+*.engine

@@ -1,0 +1,125 @@
+<!--
+  skydio_x2_mission.xml
+  =====================
+  IUB Drone mission scene built on the official Skydio X2 from
+  MuJoCo Menagerie (google-deepmind/mujoco_menagerie/skydio_x2).
+
+  Extends the base x2.xml with:
+    - Landing H-marker (white)
+    - Target drop circle (red)
+    - Obstacle trees
+    - Person target (YOLO detection)
+    - Downward-facing camera for YOLO/Gemma
+    - Offscreen framebuffer for dual-window rendering
+-->
+<mujoco model="Skydio X2 Mission">
+
+  <!-- Include official Skydio X2 model -->
+  <include file="mujoco_menagerie/skydio_x2/x2.xml"/>
+
+  <statistic meansize=".05"/>
+
+  <!-- Offscreen framebuffer for dual rendering windows -->
+  <visual>
+    <global offwidth="1280" offheight="720"
+            azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+  </visual>
+
+  <asset>
+    <!-- Skybox -->
+    <texture type="skybox" builtin="gradient"
+             rgb1="0.52 0.72 0.92" rgb2="0.05 0.10 0.25"
+             width="512" height="3072"/>
+    <!-- Ground -->
+    <texture type="2d" name="grass_tex" builtin="gradient"
+             rgb1=".28 .48 .18" rgb2=".22 .38 .12"
+             width="256" height="256"/>
+    <texture type="2d" name="concrete_tex" builtin="flat"
+             rgb1=".62 .62 .62" rgb2=".52 .52 .52"
+             width="128" height="128"/>
+    <material name="grass_mat"    texture="grass_tex"    texrepeat="30 30"/>
+    <material name="concrete_mat" texture="concrete_tex" texrepeat="6 6" reflectance="0.15"/>
+    <material name="marker_white" rgba="1 1 1 1"         reflectance="0.25"/>
+    <material name="marker_red"   rgba=".90 .08 .08 1"   reflectance="0.1"/>
+    <material name="marker_yel"   rgba=".95 .85 .05 1"/>
+    <material name="tree_bark"    rgba=".38 .24 .10 1"/>
+    <material name="tree_leaves"  rgba=".18 .52 .12 1"/>
+    <material name="person_suit"  rgba=".18 .38 .80 1"/>
+    <material name="person_skin"  rgba=".85 .65 .50 1"/>
+  </asset>
+
+  <worldbody>
+
+    <!-- ── Lighting ──────────────────────────────────────────────────── -->
+    <light name="sun" directional="true" pos="0 0 10"
+           dir="-.3 -.2 -1" diffuse=".9 .85 .75" specular=".2 .2 .15"
+           castshadow="true"/>
+    <light name="fill" directional="true" pos="0 0 5" dir="0 0 -1"
+           diffuse=".3 .35 .4" specular="0 0 0" castshadow="false"/>
+
+    <!-- ── Ground ───────────────────────────────────────────────────── -->
+    <geom name="ground" type="plane" size="80 80 .1"
+          material="grass_mat" pos="0 0 0"/>
+
+    <!-- ── Concrete launch/landing pad ──────────────────────────────── -->
+    <geom name="pad" type="box" size="5 5 .02"
+          material="concrete_mat" pos="0 0 .02"
+          contype="0" conaffinity="0"/>
+
+    <!-- ── H-marker (landing pad) ──────────────────────────────────────
+         Three white boxes forming the letter H                         -->
+    <geom name="h_left"  type="box" size=".22 1.0 .022"
+          material="marker_white" pos="-0.85 0 .042"
+          contype="0" conaffinity="0"/>
+    <geom name="h_right" type="box" size=".22 1.0 .022"
+          material="marker_white" pos=" 0.85 0 .042"
+          contype="0" conaffinity="0"/>
+    <geom name="h_bar"   type="box" size="1.07 .22 .022"
+          material="marker_white" pos="0 0 .042"
+          contype="0" conaffinity="0"/>
+
+    <!-- ── Drop/target circle (8m east, 4m north) ──────────────────── -->
+    <geom name="drop_ring_outer" type="cylinder" size="2.2 .008"
+          material="marker_red" pos="8 4 .028"
+          contype="0" conaffinity="0"/>
+    <geom name="drop_ring_inner" type="cylinder" size="1.0 .010"
+          material="marker_white" pos="8 4 .030"
+          contype="0" conaffinity="0"/>
+    <geom name="drop_bullseye"   type="cylinder" size=".35 .012"
+          material="marker_red" pos="8 4 .032"
+          contype="0" conaffinity="0"/>
+
+    <!-- ── Obstacle: Tree cluster NW ──────────────────────────────────
+         Each tree = trunk cylinder + sphere canopy                    -->
+    <geom name="tr1_trunk" type="cylinder" size=".20 1.4" material="tree_bark"  pos="-9  4 1.4"/>
+    <geom name="tr1_top"   type="sphere"   size="1.5"     material="tree_leaves" pos="-9  4 4.0"/>
+    <geom name="tr2_trunk" type="cylinder" size=".18 1.2" material="tree_bark"  pos="-7  7 1.2"/>
+    <geom name="tr2_top"   type="sphere"   size="1.3"     material="tree_leaves" pos="-7  7 3.5"/>
+    <geom name="tr3_trunk" type="cylinder" size=".16 1.0" material="tree_bark"  pos="-5 -8 1.0"/>
+    <geom name="tr3_top"   type="sphere"   size="1.1"     material="tree_leaves" pos="-5 -8 3.0"/>
+    <geom name="tr4_trunk" type="cylinder" size=".19 1.3" material="tree_bark"  pos=" 6 -7 1.3"/>
+    <geom name="tr4_top"   type="sphere"   size="1.4"     material="tree_leaves" pos=" 6 -7 3.6"/>
+
+    <!-- ── Person target (5m west, 3m south) ────────────────────────── -->
+    <geom name="person_body" type="capsule" size=".22 .7"
+          material="person_suit" pos="-5 -3 1.45"/>
+    <geom name="person_head" type="sphere"  size=".22"
+          material="person_skin" pos="-5 -3 2.6"/>
+    <!-- Arms -->
+    <geom name="person_arm_l" type="capsule" size=".08 .35"
+          material="person_suit" pos="-5.35 -3 1.55" euler="0 1.5 0"/>
+    <geom name="person_arm_r" type="capsule" size=".08 .35"
+          material="person_suit" pos="-4.65 -3 1.55" euler="0 1.5 0"/>
+
+    <!-- ── Cameras added to the x2 body ─────────────────────────────
+         We attach extra cameras by referencing the x2 body.
+         MuJoCo allows adding cameras in worldbody with body= attr    -->
+
+  </worldbody>
+
+  <!-- Extra cameras attached to x2 body via attach mechanism.
+       We override/extend by adding a body wrapper in our scene.       -->
+
+</mujoco>

@@ -1,0 +1,45 @@
+# Docker Compose for full ROS2 testing on Mac
+# Usage:
+#   docker-compose up
+#   Then open another terminal:
+#   docker exec -it iub_drone_ros2 bash
+
+version: "3.8"
+
+services:
+  ros2:
+    image: osrf/ros:humble-desktop
+    container_name: iub_drone_ros2
+    stdin_open: true
+    tty: true
+    network_mode: host
+
+    # Mount your project into the container workspace
+    volumes:
+      - .:/root/ros2_ws/src/IUB_DRONE
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw   # For GUI (rviz2, rqt)
+
+    environment:
+      - DISPLAY=host.docker.internal:0     # Mac XQuartz display
+      - ROS_DOMAIN_ID=42
+
+    # Auto-build on start
+    command: >
+      bash -c "
+        source /opt/ros/humble/setup.bash &&
+        cd /root/ros2_ws &&
+        colcon build
+          --packages-select drone_vision_msgs drone_vision mission_planner
+          --symlink-install &&
+        source install/setup.bash &&
+        echo '✅ ROS2 workspace built!' &&
+        echo '📋 Available commands:' &&
+        echo '   ros2 launch drone_vision drone_vision.launch.py' &&
+        echo '   ros2 launch drone_vision full_system.launch.py' &&
+        echo '   ros2 topic list' &&
+        bash
+      "
+
+    # Expose ROS2 DDS ports
+    ports:
+      - "7400-7600:7400-7600/udp"

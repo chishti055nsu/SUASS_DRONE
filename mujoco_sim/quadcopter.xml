@@ -1,0 +1,201 @@
+<!--
+  quadcopter.xml
+  ==============
+  MuJoCo quadcopter model for IUB Drone simulation.
+  Generic X-frame quadrotor with:
+    - 4 rotors (two CW, two CCW)
+    - Downward-facing camera for YOLO + Gemma
+    - Gimbal-stabilised camera (simplified)
+    - Landing legs
+-->
+<mujoco model="iub_quadcopter">
+
+  <compiler angle="radian" autolimits="true"/>
+
+  <!-- Offscreen framebuffer large enough for both renderers -->
+  <visual>
+    <global offwidth="1280" offheight="720"/>
+  </visual>
+
+
+  <option gravity="0 0 -9.81" timestep="0.002" integrator="RK4">
+  </option>
+
+  <asset>
+    <!-- Ground textures -->
+    <texture name="grid"     type="2d" builtin="checker"
+             rgb1=".3 .3 .35" rgb2=".25 .25 .30"
+             width="512" height="512" mark="none"/>
+    <texture name="grass"    type="2d" builtin="gradient"
+             rgb1=".25 .45 .18" rgb2=".2 .38 .12"
+             width="256" height="256"/>
+    <texture name="concrete" type="2d" builtin="flat"
+             rgb1=".65 .65 .65" rgb2=".55 .55 .55"
+             width="256" height="256"/>
+    <texture name="skybox"   type="skybox" builtin="gradient"
+             rgb1=".52 .72 .92" rgb2=".12 .22 .52"
+             width="512" height="512"/>
+
+    <material name="grid_mat"    texture="grid"     texrepeat="8 8" reflectance="0.1"/>
+    <material name="grass_mat"   texture="grass"    texrepeat="20 20"/>
+    <material name="concrete_mat"texture="concrete" texrepeat="4 4" reflectance="0.2"/>
+    <material name="arm_mat"     rgba=".15 .15 .15 1"/>
+    <material name="rotor_mat"   rgba=".08 .08 .08 .7"/>
+    <material name="body_mat"    rgba=".9 .4 .05 1"/>   <!-- orange body -->
+    <material name="marker_mat"  rgba="1 1 1 1" reflectance="0.3"/>
+    <material name="target_mat"  rgba=".95 .1 .1 1"/>
+    <material name="hpad_mat"    rgba=".1 .6 .1 1"/>
+  </asset>
+
+  <default>
+    <joint damping="0.01" armature="0.001"/>
+    <geom contype="1" conaffinity="1" condim="3" friction=".7 .005 .0001"/>
+    <motor ctrllimited="true" ctrlrange="0 1" gear="15"/>
+  </default>
+
+  <worldbody>
+
+    <!-- ── Lighting ─────────────────────────────────────────────────── -->
+    <light name="sun" directional="true" diffuse=".9 .85 .75"
+           specular=".3 .3 .2" pos="0 0 8" dir="-.3 -.3 -1" castshadow="true"/>
+    <light name="ambient" directional="true" diffuse=".3 .35 .4"
+           specular="0 0 0" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
+
+    <!-- ── Ground plane ──────────────────────────────────────────────── -->
+    <geom name="ground" type="plane" size="80 80 .1"
+          material="grass_mat" pos="0 0 0" contype="1" conaffinity="1"/>
+
+    <!-- ── Concrete landing pad area ─────────────────────────────────── -->
+    <geom name="pad_base" type="box" size="6 6 .02"
+          material="concrete_mat" pos="0 0 .02" contype="0" conaffinity="0"/>
+
+    <!-- ── Landing H marker ────────────────────────────────────────────
+         White H shape made of 3 boxes                                  -->
+    <geom name="h_left"  type="box" size=".25 1.2 .025"
+          material="marker_mat" pos="-1.0 0 .045" contype="0" conaffinity="0"/>
+    <geom name="h_right" type="box" size=".25 1.2 .025"
+          material="marker_mat" pos=" 1.0 0 .045" contype="0" conaffinity="0"/>
+    <geom name="h_cross" type="box" size="1.25 .25 .025"
+          material="marker_mat" pos="0 0 .045" contype="0" conaffinity="0"/>
+
+    <!-- ── Target drop circle ────────────────────────────────────────── -->
+    <geom name="target_outer" type="cylinder" size="2.5 .01"
+          material="target_mat" pos="8 5 .03" contype="0" conaffinity="0"/>
+    <geom name="target_inner" type="cylinder" size="1.2 .015"
+          material="marker_mat" pos="8 5 .03" contype="0" conaffinity="0"/>
+    <geom name="target_bull"  type="cylinder" size=".4 .02"
+          material="target_mat" pos="8 5 .03" contype="0" conaffinity="0"/>
+
+    <!-- ── Obstacle trees ────────────────────────────────────────────── -->
+    <geom name="tree1_trunk" type="cylinder" size=".2 1.5"
+          rgba=".35 .22 .08 1" pos="-8 3 1.5" contype="1" conaffinity="1"/>
+    <geom name="tree1_top"   type="sphere"   size="1.5"
+          rgba=".15 .5 .1 1"  pos="-8 3 4.0" contype="1" conaffinity="1"/>
+    <geom name="tree2_trunk" type="cylinder" size=".18 1.2"
+          rgba=".35 .22 .08 1" pos="5 -6 1.2" contype="1" conaffinity="1"/>
+    <geom name="tree2_top"   type="sphere"   size="1.3"
+          rgba=".2 .55 .12 1" pos="5 -6 3.5" contype="1" conaffinity="1"/>
+    <geom name="tree3_trunk" type="cylinder" size=".15 1.0"
+          rgba=".35 .22 .08 1" pos="-4 -7 1.0" contype="1" conaffinity="1"/>
+    <geom name="tree3_top"   type="sphere"   size="1.1"
+          rgba=".18 .48 .1 1" pos="-4 -7 3.0" contype="1" conaffinity="1"/>
+
+    <!-- ── Person target (static) ────────────────────────────────────── -->
+    <geom name="person_body" type="capsule" size=".22 .7"
+          rgba=".2 .4 .8 1" pos="-5 4 1.5" contype="1" conaffinity="1"/>
+    <geom name="person_head" type="sphere"  size=".22"
+          rgba=".85 .65 .5 1" pos="-5 4 2.65" contype="1" conaffinity="1"/>
+
+    <!-- ── Quadcopter body ───────────────────────────────────────────── -->
+    <body name="drone" pos="0 0 8">
+
+      <!-- Drone free joint -->
+      <freejoint name="drone_freejoint"/>
+
+      <!-- IMU sensors -->
+      <site name="imu_site" size=".01"/>
+
+      <!-- ── Main body ─────────────────────────────────────────────── -->
+      <geom name="body"   type="box"      size=".12 .12 .04"
+            material="body_mat" mass="0.8"/>
+      <geom name="body_top" type="cylinder" size=".06 .025"
+            rgba=".15 .15 .15 1" pos="0 0 .065" mass="0.05"/>
+
+      <!-- ── Arms (X config) ────────────────────────────────────────── -->
+      <geom name="arm_fl" type="box" size=".22 .025 .015"
+            material="arm_mat" pos=" .15  .15 0" euler="0 0  .785" mass="0.05"/>
+      <geom name="arm_fr" type="box" size=".22 .025 .015"
+            material="arm_mat" pos=" .15 -.15 0" euler="0 0 -.785" mass="0.05"/>
+      <geom name="arm_rl" type="box" size=".22 .025 .015"
+            material="arm_mat" pos="-.15  .15 0" euler="0 0 -.785" mass="0.05"/>
+      <geom name="arm_rr" type="box" size=".22 .025 .015"
+            material="arm_mat" pos="-.15 -.15 0" euler="0 0  .785" mass="0.05"/>
+
+      <!-- ── Landing legs ───────────────────────────────────────────── -->
+      <geom name="leg_fl" type="capsule" size=".015 .12"
+            rgba=".2 .2 .2 1" pos=" .12  .12 -.13" euler=".3 -.3 0" mass="0.02"/>
+      <geom name="leg_fr" type="capsule" size=".015 .12"
+            rgba=".2 .2 .2 1" pos=" .12 -.12 -.13" euler=".3  .3 0" mass="0.02"/>
+      <geom name="leg_rl" type="capsule" size=".015 .12"
+            rgba=".2 .2 .2 1" pos="-.12  .12 -.13" euler="-.3 -.3 0" mass="0.02"/>
+      <geom name="leg_rr" type="capsule" size=".015 .12"
+            rgba=".2 .2 .2 1" pos="-.12 -.12 -.13" euler="-.3  .3 0" mass="0.02"/>
+
+      <!-- ── Rotors (4x) ─────────────────────────────────────────────
+           FL, FR: CCW / RL, RR: CW (standard X-config)               -->
+      <body name="rotor_fl" pos=" .28  .28 .02">
+        <geom name="prop_fl" type="cylinder" size=".16 .008"
+              material="rotor_mat" mass="0.03"/>
+        <site name="thrust_fl" pos="0 0 0"/>
+      </body>
+      <body name="rotor_fr" pos=" .28 -.28 .02">
+        <geom name="prop_fr" type="cylinder" size=".16 .008"
+              material="rotor_mat" mass="0.03"/>
+        <site name="thrust_fr" pos="0 0 0"/>
+      </body>
+      <body name="rotor_rl" pos="-.28  .28 .02">
+        <geom name="prop_rl" type="cylinder" size=".16 .008"
+              material="rotor_mat" mass="0.03"/>
+        <site name="thrust_rl" pos="0 0 0"/>
+      </body>
+      <body name="rotor_rr" pos="-.28 -.28 .02">
+        <geom name="prop_rr" type="cylinder" size=".16 .008"
+              material="rotor_mat" mass="0.03"/>
+        <site name="thrust_rr" pos="0 0 0"/>
+      </body>
+
+      <!-- ── Downward camera for YOLO/Gemma ─────────────────────────── -->
+      <camera name="drone_cam"
+              pos="0 0 -.08"
+              euler="3.14159 0 0"
+              fovy="70"/>
+
+      <!-- ── Chase camera for 3rd-person view ──────────────────────── -->
+      <camera name="chase_cam"
+              pos="-2.5 0 1.2"
+              euler=".4 0 0"
+              mode="trackcom"
+              fovy="60"/>
+
+    </body>
+
+  </worldbody>
+
+  <!-- ── Actuators (thrust forces at each rotor site) ───────────────── -->
+  <actuator>
+    <general name="thrust_fl" site="thrust_fl" gear="0 0 1 0 0 0" ctrllimited="true" ctrlrange="0 4"/>
+    <general name="thrust_fr" site="thrust_fr" gear="0 0 1 0 0 0" ctrllimited="true" ctrlrange="0 4"/>
+    <general name="thrust_rl" site="thrust_rl" gear="0 0 1 0 0 0" ctrllimited="true" ctrlrange="0 4"/>
+    <general name="thrust_rr" site="thrust_rr" gear="0 0 1 0 0 0" ctrllimited="true" ctrlrange="0 4"/>
+  </actuator>
+
+  <!-- ── Sensors ──────────────────────────────────────────────────────── -->
+  <sensor>
+    <gyro     name="gyro"  site="imu_site"/>
+    <velocimeter name="vel" site="imu_site"/>
+    <accelerometer name="acc" site="imu_site"/>
+    <framepos name="pos"   objtype="body" objname="drone"/>
+    <framequat name="quat" objtype="body" objname="drone"/>
+  </sensor>
+
+</mujoco>
