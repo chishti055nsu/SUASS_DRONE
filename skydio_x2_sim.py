@@ -308,9 +308,28 @@ class SkydioX2Simulation:
         self.data.ctrl[:] = thrusts
         mujoco.mj_step(self.model, self.data)
 
-    # ── Render downward camera ────────────────────────────────────────
-    def _render_down(self) -> np.ndarray:
-        self.drone_renderer.update_scene(self.data, camera=self._down_cam)
+    # ── Render active camera feed ──────────────────────────────────────
+    def _render_camera(self) -> np.ndarray:
+        if self._camera_mode == 0:
+            # Chase Cam perspective
+            cam = mujoco.MjvCamera()
+            cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
+            cam.trackbodyid = self._x2_body_id
+            cam.distance = 8.0
+            cam.elevation = -15.0
+            cam.azimuth = 90.0
+        elif self._camera_mode == 1:
+            # Downward Onboard camera
+            cam = self._down_cam
+        else:
+            # Target Spotter camera focused on active target
+            cam = mujoco.MjvCamera()
+            cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+            cam.lookat[:] = [float(self._target[0]), float(self._target[1]), 2.0]
+            cam.distance = 18.0
+            cam.elevation = -25.0
+            cam.azimuth = 45.0
+        self.drone_renderer.update_scene(self.data, camera=cam)
         return cv2.cvtColor(self.drone_renderer.render(), cv2.COLOR_RGB2BGR)
 
     # ── Keyboard Command Event Dispatcher ─────────────────────────────
@@ -530,8 +549,8 @@ class SkydioX2Simulation:
                     # Sync Native 3D Viewer
                     viewer.sync()
 
-                    # Downward Drone Camera -> YOLO + Gemma
-                    down_frame = self._render_down()
+                    # Render active camera feed -> YOLO + Gemma
+                    down_frame = self._render_camera()
                     detections, fps, annotated, _ = self.detector.detect(down_frame)
 
                     if self._frame_n % self.gemma_interval == 0:
@@ -552,9 +571,7 @@ class SkydioX2Simulation:
                         try:
                             cv2.imshow("Skydio X2 | Drone Camera Feed", cam_hud)
                             key = cv2.waitKey(1) & 0xFF
-                            if key in (ord("q"), 27):
-                                break
-                            elif key in (ord("s"), ord("d"), ord("l"), ord("a"), ord("r"), ord("c"), ord("1"), ord("2"), ord("3")):
+                            if key != 255 and key != 0:
                                 self.process_command_key(chr(key))
                         except Exception:
                             has_cv2_gui = False
