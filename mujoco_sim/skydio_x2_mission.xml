@@ -1,119 +1,109 @@
 <!--
   skydio_x2_mission.xml
   =====================
-  Single-Window Industry-Graded SUAS Flight & Obstacle Avoidance Environment.
+  IUB Drone mission scene built on the official Skydio X2 from
+  MuJoCo Menagerie (google-deepmind/mujoco_menagerie/skydio_x2).
 
-  - Direct Flight Corridor: Home [0,0] -> Target 1 [500,100] -> Target 2 [1000,-50]
-  - Obstacles Placed Directly in Corridor:
-      * Skyscraper 1 [120m, 24m, 25m tall]
-      * Weather Balloon 1 [250m, 50m, 15m alt]
-      * Commercial Complex 2 [360m, 72m, 35m tall]
-      * Weather Balloon 2 [440m, 88m, 18m alt]
-      * Mega Tower [800m, -40m, 50m tall]
+  Extends the base x2.xml with:
+    - Landing H-marker (white)
+    - Target drop circle (red) at [8m East, 4m North]
+    - Obstacle trees
+    - Person target (YOLO detection)
+    - Offscreen framebuffer for dual-window rendering
 -->
-<mujoco model="Skydio X2 Smart Obstacle Avoidance Mission">
+<mujoco model="Skydio X2 Mission">
 
+  <!-- Include official Skydio X2 model -->
   <include file="mujoco_menagerie/skydio_x2/x2.xml"/>
 
   <statistic meansize=".05"/>
 
+  <!-- Visual settings for dual rendering -->
   <visual>
-    <global offwidth="1920" offheight="1080"
-            azimuth="-25" elevation="-15" ellipsoidinertia="true"/>
-    <headlight diffuse="0.9 0.9 0.9" ambient="0.4 0.4 0.4" specular="0.3 0.3 0.3"/>
-    <rgba haze="0.05 0.10 0.18 1"/>
-    <map znear="0.05" zfar="2500"/>
+    <global offwidth="1280" offheight="720"
+            azimuth="-20" elevation="-20" ellipsoidinertia="true"/>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
   </visual>
 
   <asset>
+    <!-- Skybox -->
     <texture type="skybox" builtin="gradient"
-             rgb1="0.45 0.70 0.95" rgb2="0.05 0.12 0.30"
-             width="1024" height="6144"/>
+             rgb1="0.52 0.72 0.92" rgb2="0.05 0.10 0.25"
+             width="512" height="3072"/>
+    <!-- Ground -->
     <texture type="2d" name="grass_tex" builtin="gradient"
-             rgb1=".22 .45 .15" rgb2=".18 .38 .10"
-             width="512" height="512"/>
-    <texture type="2d" name="concrete_tex" builtin="flat"
-             rgb1=".65 .65 .65" rgb2=".55 .55 .55"
+             rgb1=".28 .48 .18" rgb2=".22 .38 .12"
              width="256" height="256"/>
-    <texture type="2d" name="building_tex" builtin="checker"
-             rgb1=".15 .40 .65" rgb2=".10 .25 .45"
-             width="512" height="512"/>
-
-    <material name="grass_mat"    texture="grass_tex"    texrepeat="300 300"/>
-    <material name="concrete_mat" texture="concrete_tex" texrepeat="20 20" reflectance="0.15"/>
-    <material name="building_mat" texture="building_tex" texrepeat="10 20" reflectance="0.40"/>
-
-    <material name="marker_white" rgba="1 1 1 1"         reflectance="0.30"/>
-    <material name="marker_red"   rgba=".95 .05 .05 1"   reflectance="0.15"/>
-    <material name="marker_yel"   rgba=".98 .85 .05 1"/>
-    <material name="balloon_red"  rgba="1.0 .10 .10 0.95"/>
-    <material name="balloon_yel"  rgba="1.0 .85 .05 0.95"/>
-    <material name="balloon_blu"  rgba=".10 .60 1.0 0.95"/>
-    <material name="bird_mat"     rgba=".90 .20 .10 1"/>
+    <texture type="2d" name="concrete_tex" builtin="flat"
+             rgb1=".62 .62 .62" rgb2=".52 .52 .52"
+             width="128" height="128"/>
+    <material name="grass_mat"    texture="grass_tex"    texrepeat="30 30"/>
+    <material name="concrete_mat" texture="concrete_tex" texrepeat="6 6" reflectance="0.15"/>
+    <material name="marker_white" rgba="1 1 1 1"         reflectance="0.25"/>
+    <material name="marker_red"   rgba=".90 .08 .08 1"   reflectance="0.1"/>
+    <material name="marker_yel"   rgba=".95 .85 .05 1"/>
     <material name="tree_bark"    rgba=".38 .24 .10 1"/>
     <material name="tree_leaves"  rgba=".18 .52 .12 1"/>
+    <material name="person_suit"  rgba=".18 .38 .80 1"/>
+    <material name="person_skin"  rgba=".85 .65 .50 1"/>
   </asset>
 
   <worldbody>
 
-    <light name="sun" directional="true" pos="0 0 100"
-           dir="-.4 -.3 -1" diffuse="1.0 .95 .85" specular=".3 .3 .2"
+    <!-- ── Lighting ──────────────────────────────────────────────────── -->
+    <light name="sun" directional="true" pos="0 0 10"
+           dir="-.3 -.2 -1" diffuse=".9 .85 .75" specular=".2 .2 .15"
            castshadow="true"/>
-    <light name="fill" directional="true" pos="0 0 50" dir="0 0 -1"
-           diffuse=".4 .45 .5" specular="0 0 0" castshadow="false"/>
+    <light name="fill" directional="true" pos="0 0 5" dir="0 0 -1"
+           diffuse=".3 .35 .4" specular="0 0 0" castshadow="false"/>
 
-    <!-- 1.5 KM Ground -->
-    <geom name="ground" type="plane" size="1500 1500 .1"
+    <!-- ── Ground ───────────────────────────────────────────────────── -->
+    <geom name="ground" type="plane" size="80 80 .1"
           material="grass_mat" pos="0 0 0"/>
 
-    <!-- Launch Pad [0, 0] -->
-    <geom name="pad" type="box" size="8 8 .02"
-          material="concrete_mat" pos="0 0 .02" contype="0" conaffinity="0"/>
-    <geom name="h_left"  type="box" size=".3 1.5 .022"
-          material="marker_white" pos="-1.2 0 .042" contype="0" conaffinity="0"/>
-    <geom name="h_right" type="box" size=".3 1.5 .022"
-          material="marker_white" pos=" 1.2 0 .042" contype="0" conaffinity="0"/>
-    <geom name="h_bar"   type="box" size="1.5 .3 .022"
-          material="marker_white" pos="0 0 .042" contype="0" conaffinity="0"/>
+    <!-- ── Concrete launch/landing pad ──────────────────────────────── -->
+    <geom name="pad" type="box" size="5 5 .02"
+          material="concrete_mat" pos="0 0 .02"
+          contype="0" conaffinity="0"/>
 
-    <!-- ── OBSTACLES DIRECTLY ALONG FLIGHT CORRIDOR TO 500M TARGET ────── -->
+    <!-- ── H-marker (landing pad) ────────────────────────────────────── -->
+    <geom name="h_left"  type="box" size=".22 1.0 .022"
+          material="marker_white" pos="-0.85 0 .042"
+          contype="0" conaffinity="0"/>
+    <geom name="h_right" type="box" size=".22 1.0 .022"
+          material="marker_white" pos=" 0.85 0 .042"
+          contype="0" conaffinity="0"/>
+    <geom name="h_bar"   type="box" size="1.07 .22 .022"
+          material="marker_white" pos="0 0 .042"
+          contype="0" conaffinity="0"/>
 
-    <!-- Obstacle 1: Glass Skyscraper at [120m, 24m] (Height 50m) -->
-    <geom name="skyscraper_1" type="box" size="12 12 25" material="building_mat" pos="120 24 25"/>
+    <!-- ── Drop/target circle (8m east, 4m north) ──────────────────── -->
+    <geom name="drop_ring_outer" type="cylinder" size="2.2 .008"
+          material="marker_red" pos="8 4 .028"
+          contype="0" conaffinity="0"/>
+    <geom name="drop_ring_inner" type="cylinder" size="1.0 .010"
+          material="marker_white" pos="8 4 .030"
+          contype="0" conaffinity="0"/>
+    <geom name="drop_bullseye"   type="cylinder" size=".35 .012"
+          material="marker_red" pos="8 4 .032"
+          contype="0" conaffinity="0"/>
 
-    <!-- Obstacle 2: Weather Balloon Array floating at [250m, 50m, 16m alt] -->
-    <geom name="balloon_1_sphere" type="sphere" size="4.5" material="balloon_red" pos="250 50 18"/>
-    <geom name="balloon_1_tether" type="cylinder" size=".08 9.0" material="marker_white" pos="250 50 9.0"/>
+    <!-- ── Obstacle: Tree cluster ───────────────────────────────────── -->
+    <geom name="tr1_trunk" type="cylinder" size=".20 1.4" material="tree_bark"  pos="-9  4 1.4"/>
+    <geom name="tr1_top"   type="sphere"   size="1.5"     material="tree_leaves" pos="-9  4 4.0"/>
+    <geom name="tr2_trunk" type="cylinder" size=".18 1.2" material="tree_bark"  pos="-7  7 1.2"/>
+    <geom name="tr2_top"   type="sphere"   size="1.3"     material="tree_leaves" pos="-7  7 3.5"/>
+    <geom name="tr3_trunk" type="cylinder" size=".16 1.0" material="tree_bark"  pos="-5 -8 1.0"/>
+    <geom name="tr3_top"   type="sphere"   size="1.1"     material="tree_leaves" pos="-5 -8 3.0"/>
+    <geom name="tr4_trunk" type="cylinder" size=".19 1.3" material="tree_bark"  pos=" 6 -7 1.3"/>
+    <geom name="tr4_top"   type="sphere"   size="1.4"     material="tree_leaves" pos=" 6 -7 3.6"/>
 
-    <!-- Obstacle 3: Commercial Tower at [360m, 72m] (Height 60m) -->
-    <geom name="tower_2" type="box" size="16 16 30" material="building_mat" pos="360 72 30"/>
-
-    <!-- Obstacle 4: High-Altitude Yellow Balloon at [440m, 88m, 14m alt] -->
-    <geom name="balloon_2_sphere" type="sphere" size="4.0" material="balloon_yel" pos="440 88 16"/>
-    <geom name="balloon_2_tether" type="cylinder" size=".08 8.0" material="marker_white" pos="440 88 8.0"/>
-
-    <!-- ── TARGET 1: 500M DROP ZONE BULLSEYE [500m, 100m] ───────────────── -->
-    <geom name="drop_pad_500m" type="box" size="10 10 .02"
-          material="concrete_mat" pos="500 100 .02" contype="0" conaffinity="0"/>
-    <geom name="drop_ring_outer" type="cylinder" size="4.5 .008"
-          material="marker_red" pos="500 100 .028" contype="0" conaffinity="0"/>
-    <geom name="drop_ring_inner" type="cylinder" size="2.5 .010"
-          material="marker_white" pos="500 100 .030" contype="0" conaffinity="0"/>
-    <geom name="drop_bullseye"   type="cylinder" size="0.8 .012"
-          material="marker_red" pos="500 100 .032" contype="0" conaffinity="0"/>
-
-    <!-- ── TARGET 2: 1KM EXTENDED TARGET [1000m, -50m] ─────────────────── -->
-    <geom name="pad_1km" type="box" size="12 12 .02"
-          material="concrete_mat" pos="1000 -50 .02" contype="0" conaffinity="0"/>
-    <geom name="h_left_1km"  type="box" size=".4 2.0 .022"
-          material="marker_yel" pos="998.5 -50 .042" contype="0" conaffinity="0"/>
-    <geom name="h_right_1km" type="box" size=".4 2.0 .022"
-          material="marker_yel" pos="1001.5 -50 .042" contype="0" conaffinity="0"/>
-    <geom name="h_bar_1km"   type="box" size="2.0 .4 .022"
-          material="marker_yel" pos="1000 -50 .042" contype="0" conaffinity="0"/>
-
-    <!-- Obstacle 5: Mega Skyscraper at [800m, -40m] (Height 80m) -->
-    <geom name="mega_tower" type="box" size="20 20 40" material="building_mat" pos="800 -40 40"/>
+    <!-- ── Person target ────────────────────────────────────────────── -->
+    <geom name="person_body" type="capsule" size=".22 .7"
+          material="person_suit" pos="-5 -3 1.45"/>
+    <geom name="person_head" type="sphere"  size=".22"
+          material="person_skin" pos="-5 -3 2.6"/>
 
   </worldbody>
 
