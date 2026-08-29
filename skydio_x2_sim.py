@@ -485,6 +485,7 @@ class SkydioX2Simulation:
         try:
             cv2.namedWindow("Skydio X2 | Drone Camera Feed", cv2.WINDOW_NORMAL)
             cv2.resizeWindow("Skydio X2 | Drone Camera Feed", CAM_W, CAM_H)
+            cv2.moveWindow("Skydio X2 | Drone Camera Feed", 980, 50)
         except Exception:
             has_cv2_gui = False
 
