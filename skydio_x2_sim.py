@@ -213,7 +213,7 @@ class SkydioX2Simulation:
         log.info("Skydio X2 simulation reset")
 
     # ── Sensors ───────────────────────────────────────────────────────
-    def _sensors():
+    def _sensors(self):
         gyro = self.data.sensordata[:3].copy() if self.data.sensordata.size >= 3 else np.zeros(3)
         quat = self.data.qpos[3:7].copy()
         pos  = self.data.qpos[:3].copy()
