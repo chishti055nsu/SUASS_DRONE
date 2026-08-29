@@ -1,27 +1,24 @@
 """
 skydio_x2_sim.py
 ================
-IUB Drone — Skydio X2 Single-Window Smart Obstacle Avoidance Simulation (1 KM Scale).
+IUB Drone — Skydio X2 Full Environment Wide-Angle Overview Simulation (1 KM Scale).
 
 Features:
-  - Single High-Performance Window: Native 3D Interactive MuJoCo Viewer
-  - Live Real-Time YOLOv8 Object Detection Feedback in Terminal
-  - Live Real-Time Gemma 4 e4b LLM Vision Reasoning & Obstacle Analysis Feedback in Terminal
-  - Real-time Smart AI Obstacle Detection & Dynamic Path Rerouting around Skyscrapers & Weather Balloons
-  - Target 1: 500m Drop Zone Bullseye [500m, 100m, 3.5m]
-  - Target 2: 1km Extended Base Target [1000m, -50m, 3.5m]
-  - 3D Viewer Camera Toggle (C key): Chase Cam <-> Birdseye Cam <-> Target Spotter Cam
+  - Single High-Performance Window: Fixed Wide-Angle Overview of the Entire 1 KM Airspace
+  - Panoramic View of Home Pad [0,0], Skyscraper 1, Weather Balloons, Target 1 [500m], Target 2 [1km]
+  - Live YOLOv8 & Gemma 4 e4b LLM Vision Reasoning Feedback in Terminal
+  - Real-time Smart AI Obstacle Avoidance along 500m/1km flight corridor
+  - Auto-Arming & Seamless State Machine Transitions
 
 Usage:
     mjpython skydio_x2_sim.py
 
 Controls (Press in 3D Window OR Terminal):
     S      → Start mission (TAKEOFF → SEARCH)
-    D / 1  → Fly to Target 1 (500m Drop Target) + YOLO/Gemma AI Avoidance!
-    2      → Fly to Target 2 (1km Extended Target) + YOLO/Gemma AI Avoidance!
+    D / 1  → Fly to Target 1 (500m Drop Zone) with Smart Obstacle Avoidance!
+    2      → Fly to Target 2 (1km Extended Target) with Smart Obstacle Avoidance!
     L / 3  → Return Home & Land on White H-marker
     A      → Abort / hold position
-    C      → Toggle Camera View (Chase Cam <-> Birdseye Cam <-> Spotter Cam)
     R      → Reset simulation
     Q      → Quit
 """
@@ -106,7 +103,7 @@ class SkydioX2Controller:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Skydio X2 Simulation Class with Live YOLO & Gemma Feedback
+# Skydio X2 Overview Simulation Class
 # ─────────────────────────────────────────────────────────────────────────────
 class SkydioX2Simulation:
 
@@ -129,7 +126,7 @@ class SkydioX2Simulation:
 
         banner = "─" * 65
         print(f"\n\033[1m\033[96m{banner}")
-        print("  IUB Drone  ×  Skydio X2  ×  YOLOv8 + Gemma 4 e4b Live AI Suite")
+        print("  IUB Drone  ×  Skydio X2  ×  1 KM Full Environment Overview Suite")
         print(f"{banner}\033[0m\n")
 
         print("\033[93m[1/4] Loading Skydio X2 MuJoCo model...\033[0m")
@@ -185,7 +182,6 @@ class SkydioX2Simulation:
         self._max_speed = 18.0
         self._dropped   = False
         self._should_quit = False
-        self._camera_mode = 0
         self._last_avoid_log = 0.0
         self._last_yolo_log  = 0.0
         self._gemma_res = None
@@ -261,35 +257,31 @@ class SkydioX2Simulation:
         elif ch in ("d", "1"):
             print(f"\n\033[93m📦 [COMMAND] FLY TO TARGET 1: 500M DROP ZONE (500m, 100m, 3.5m)\033[0m")
             self._dropped = False
-            if self.sm.state == "IDLE":
-                self.sm.on_start_command()
-                self.sm.on_armed()
-            self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
+            if self.sm.state in ("IDLE", "TAKEOFF", "ARMING"):
+                self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
+            else:
+                self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
             self._target = np.array(self.DROP_500M)
         elif ch == "2":
             print(f"\n\033[93m🎯 [COMMAND] FLY TO TARGET 2: 1KM EXTENDED TARGET (1000m, -50m, 3.5m)\033[0m")
             self._dropped = False
-            if self.sm.state == "IDLE":
-                self.sm.on_start_command()
-                self.sm.on_armed()
-            self.sm._transition(MissionState.APPROACH_TARGET, "fly to 1km extended target command")
+            if self.sm.state in ("IDLE", "TAKEOFF", "ARMING"):
+                self.sm._transition(MissionState.APPROACH_TARGET, "fly to 1km extended target command")
+            else:
+                self.sm._transition(MissionState.APPROACH_TARGET, "fly to 1km extended target command")
             self._target = np.array(self.TARGET_1KM)
         elif ch in ("l", "3"):
             print(f"\n\033[92m⬇ [COMMAND] RETURN HOME & LAND ON WHITE H-MARKER (0m, 0m, 0.08m)\033[0m")
-            if self.sm.state == "IDLE":
-                self.sm.on_start_command()
-                self.sm.on_armed()
-            self.sm._transition(MissionState.LAND, "land command received")
+            if self.sm.state in ("IDLE", "TAKEOFF", "ARMING"):
+                self.sm._transition(MissionState.LAND, "land command received")
+            else:
+                self.sm._transition(MissionState.LAND, "land command received")
             self._target = np.array(self.LAND_POS)
         elif ch == "a":
             print(f"\n\033[91m⛔ [COMMAND] ABORT / HOLD POSITION\033[0m")
             self.sm.on_abort_command()
             pos = self.data.qpos[:3].copy()
             self._target = np.array([pos[0], pos[1], max(pos[2], 2.0)])
-        elif ch == "c":
-            self._camera_mode = (self._camera_mode + 1) % 3
-            modes = ["CHASE CAM (Follows Drone across 1km)", "BIRDSEYE OVERHEAD CAM", "SPOTTER CAM (Target View)"]
-            print(f"\n\033[96m📷 [3D VIEWER CAMERA] {modes[self._camera_mode]}\033[0m")
         elif ch == "r":
             print(f"\n\033[93m🔄 [COMMAND] RESET SIMULATION\033[0m")
             self._reset()
@@ -345,18 +337,17 @@ class SkydioX2Simulation:
                 self.sm.on_at_home()
 
     def run(self):
-        print("\033[1mControls (Press S, D/1, 2, L/3, A, C, R, Q in 3D Window OR Terminal):\033[0m")
+        print("\033[1mControls (Press S, D/1, 2, L/3, A, R, Q in 3D Window OR Terminal):\033[0m")
         for k, v in [("S", "Start mission (TAKEOFF -> SEARCH)"),
                     ("D / 1", "Fly to Target 1: 500m Drop Zone [500m, 100m, 3.5m] + AI Avoidance"),
                     ("2", "Fly to Target 2: 1km Extended Target [1000m, -50m, 3.5m] + AI Avoidance"),
                     ("L / 3", "Return Home & Land [0m, 0m, 0.08m]"),
                     ("A", "Abort / hold position"),
-                    ("C", "Toggle 3D Camera View (Chase Cam <-> Birdseye Cam <-> Spotter Cam)"),
                     ("R", "Reset"), ("Q", "Quit")]:
             print(f"  \033[96m{k:<6}\033[0m → {v}")
         print()
 
-        print("\033[93mLaunching Single-Window Native MuJoCo Interactive 3D Viewer...\033[0m")
+        print("\033[93mLaunching Single-Window Full Environment MuJoCo Interactive 3D Viewer...\033[0m")
 
         old_termios = None
         try:
@@ -374,6 +365,15 @@ class SkydioX2Simulation:
 
                 PHYS_STEPS_PER_RENDER = 10
 
+                # ── Single Wide-Angle Full Environment Overview Camera ─────
+                viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+                viewer.cam.lookat[0] = 300.0   # Centered over the 1km flight corridor
+                viewer.cam.lookat[1] = 50.0
+                viewer.cam.lookat[2] = 5.0
+                viewer.cam.distance  = 550.0   # Wide distance framing whole 1km city & all obstacles
+                viewer.cam.elevation = -35.0   # Angle overlooking entire landscape
+                viewer.cam.azimuth   = 90.0
+
                 while viewer.is_running() and not self._should_quit:
                     self._frame_n += 1
 
@@ -386,18 +386,16 @@ class SkydioX2Simulation:
                     self._auto_transitions(pos)
                     sim_t = self.data.time
 
-                    # ── Render Downward Camera & Run YOLO + Gemma AI Pipeline ─
+                    # Downward Camera -> YOLO + Gemma AI Pipeline
                     down_frame = self._render_down()
                     detections, fps, annotated, _ = self.detector.detect(down_frame)
 
                     now = time.time()
-                    # Print YOLO feedback if objects detected
                     if len(detections) > 0 and now - self._last_yolo_log > 2.0:
                         classes = [f"{d.get('class_name','obj')} ({d.get('confidence',0):.2f})" for d in detections]
                         print(f"\n\033[93m👁️ [YOLOv8 DETECTED] {len(detections)} object(s) in drone view: {classes}\033[0m")
                         self._last_yolo_log = now
 
-                    # Trigger Gemma 4 e4b Vision Reasoning
                     if self._frame_n % self.gemma_interval == 0:
                         self.analyzer.analyze_async(annotated, [])
 
@@ -412,31 +410,8 @@ class SkydioX2Simulation:
                         print(f"   Scene Description: '{desc}'")
                         print(f"   Obstacle Density: {obs.get('density', 0.0):.2f} | Action: {rec.upper()}\033[0m")
 
-                    # ── Camera Modes ──────────────────────────────────────────
-                    if self._camera_mode == 0:
-                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
-                        viewer.cam.trackbodyid = self._x2_body_id
-                        viewer.cam.distance = 14.0
-                        viewer.cam.elevation = -18.0
-                        viewer.cam.azimuth = 90.0
-                    elif self._camera_mode == 1:
-                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
-                        viewer.cam.trackbodyid = self._x2_body_id
-                        viewer.cam.distance = 40.0
-                        viewer.cam.elevation = -89.0
-                        viewer.cam.azimuth = 90.0
-                    elif self._camera_mode == 2:
-                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
-                        viewer.cam.lookat[0] = float(self._target[0])
-                        viewer.cam.lookat[1] = float(self._target[1])
-                        viewer.cam.lookat[2] = 2.0
-                        viewer.cam.distance = 25.0
-                        viewer.cam.elevation = -25.0
-                        viewer.cam.azimuth = 45.0
-
                     viewer.sync()
 
-                    # Telemetry Logging
                     dist_to_target = np.linalg.norm(self._target[:2] - pos[:2])
                     yolo_cnt = len(detections)
                     if self._frame_n % 30 == 0:

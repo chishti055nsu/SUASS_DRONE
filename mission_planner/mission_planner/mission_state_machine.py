@@ -62,7 +62,7 @@ VALID_TRANSITIONS: Dict[MissionState, Set[MissionState]] = {
         MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.TAKEOFF: {
-        MissionState.SEARCH, MissionState.LOITER, MissionState.RETURN_HOME,
+        MissionState.SEARCH, MissionState.APPROACH_TARGET, MissionState.LOITER, MissionState.RETURN_HOME,
         MissionState.MANUAL_OVERRIDE, MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.SEARCH: {
