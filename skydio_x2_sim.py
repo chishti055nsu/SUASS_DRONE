@@ -4,11 +4,12 @@ skydio_x2_sim.py
 IUB Drone — Skydio X2 Single-Window Smart Obstacle Avoidance Simulation (1 KM Scale).
 
 Features:
-  - Single High-Performance Window: Native 3D Interactive MuJoCo Viewer ONLY
+  - Single High-Performance Window: Native 3D Interactive MuJoCo Viewer
+  - Live Real-Time YOLOv8 Object Detection Feedback in Terminal
+  - Live Real-Time Gemma 4 e4b LLM Vision Reasoning & Obstacle Analysis Feedback in Terminal
   - Real-time Smart AI Obstacle Detection & Dynamic Path Rerouting around Skyscrapers & Weather Balloons
   - Target 1: 500m Drop Zone Bullseye [500m, 100m, 3.5m]
   - Target 2: 1km Extended Base Target [1000m, -50m, 3.5m]
-  - Smooth 18 m/s Trajectory Glide with Automatic Altitude Climbing & Lateral Bypassing
   - 3D Viewer Camera Toggle (C key): Chase Cam <-> Birdseye Cam <-> Target Spotter Cam
 
 Usage:
@@ -16,8 +17,8 @@ Usage:
 
 Controls (Press in 3D Window OR Terminal):
     S      → Start mission (TAKEOFF → SEARCH)
-    D / 1  → Fly to Target 1 (500m Drop Target) with Smart Obstacle Avoidance!
-    2      → Fly to Target 2 (1km Extended Target) with Smart Obstacle Avoidance!
+    D / 1  → Fly to Target 1 (500m Drop Target) + YOLO/Gemma AI Avoidance!
+    2      → Fly to Target 2 (1km Extended Target) + YOLO/Gemma AI Avoidance!
     L / 3  → Return Home & Land on White H-marker
     A      → Abort / hold position
     C      → Toggle Camera View (Chase Cam <-> Birdseye Cam <-> Spotter Cam)
@@ -35,12 +36,15 @@ import select
 import termios
 import tty
 import numpy as np
+import cv2
 
 # ── Path setup ────────────────────────────────────────────────────────────────
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "drone_vision"))
 sys.path.insert(0, os.path.join(ROOT, "mission_planner"))
 
+from drone_vision.yolo_detector            import YOLODetector
+from drone_vision.gemma_analyzer           import GemmaAnalyzer
 from mission_planner.mission_state_machine import MissionStateMachine, MissionState
 
 logging.basicConfig(
@@ -63,6 +67,7 @@ SKYDIO_MASS       = 1.325         # kg
 GRAVITY           = 9.81
 HOVER_THRUST_EACH = SKYDIO_MASS * GRAVITY / 4.0   # ≈ 3.2496 N/rotor
 CTRL_MAX          = 13.0          # N max per motor
+CAM_W, CAM_H      = 640, 480
 
 class SkydioX2Controller:
     """High-precision PD attitude + position controller for Skydio X2."""
@@ -101,7 +106,7 @@ class SkydioX2Controller:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Skydio X2 Single-Window Simulation Class
+# Skydio X2 Simulation Class with Live YOLO & Gemma Feedback
 # ─────────────────────────────────────────────────────────────────────────────
 class SkydioX2Simulation:
 
@@ -110,7 +115,7 @@ class SkydioX2Simulation:
     TARGET_1KM = [1000.0,  -50.0,  3.5]    # Target 2
     LAND_POS   = [   0.0,    0.0,  0.08]   # Home Base H-Marker
 
-    # Known obstacles along flight path (x, y, radius, safe_alt)
+    # Obstacles along flight path
     OBSTACLES = [
         {"name": "Glass Skyscraper 1",  "pos": np.array([120.0,  24.0]), "radius": 18.0, "clear_alt": 28.0},
         {"name": "Weather Balloon 1",   "pos": np.array([250.0,  50.0]), "radius": 12.0, "clear_alt": 24.0},
@@ -119,13 +124,15 @@ class SkydioX2Simulation:
         {"name": "Mega Skyscraper 3",  "pos": np.array([800.0, -40.0]), "radius": 25.0, "clear_alt": 45.0},
     ]
 
-    def __init__(self):
-        banner = "─" * 60
+    def __init__(self, yolo_model="yolov8n.pt", gemma_model="gemma4:e4b",
+                 gemma_interval=30, ollama_url="http://localhost:11434"):
+
+        banner = "─" * 65
         print(f"\n\033[1m\033[96m{banner}")
-        print("  IUB Drone  ×  Skydio X2  ×  Single-Window Smart Avoidance Suite")
+        print("  IUB Drone  ×  Skydio X2  ×  YOLOv8 + Gemma 4 e4b Live AI Suite")
         print(f"{banner}\033[0m\n")
 
-        print("\033[93m[1/2] Loading Skydio X2 MuJoCo model...\033[0m")
+        print("\033[93m[1/4] Loading Skydio X2 MuJoCo model...\033[0m")
         cwd = os.getcwd()
         os.chdir(os.path.join(ROOT, "mujoco_sim"))
         try:
@@ -136,9 +143,35 @@ class SkydioX2Simulation:
             os.chdir(cwd)
 
         self._x2_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "x2")
+
+        # Offscreen renderer for drone downward camera
+        self.drone_renderer = mujoco.Renderer(self.model, CAM_H, CAM_W)
+        self._down_cam = mujoco.MjvCamera()
+        self._down_cam.type        = mujoco.mjtCamera.mjCAMERA_TRACKING
+        self._down_cam.trackbodyid = self._x2_body_id
+        self._down_cam.distance    = 0.01
+        self._down_cam.elevation   = -90.0
+        self._down_cam.azimuth     = 90.0
+
         print(f"\033[92m✅ Skydio X2 loaded: {self.model.nbody} bodies, {self.model.nu} actuators\033[0m")
 
-        print("\033[93m[2/2] Initialising mission planner...\033[0m")
+        # ── YOLOv8 Object Detector ───────────────────────────────────
+        print("\033[93m[2/4] Loading YOLOv8 Object Detector...\033[0m")
+        self.detector = YOLODetector(
+            model_path=yolo_model, conf_threshold=0.35, device="mps")
+        print("\033[92m✅ YOLOv8 Object Detector loaded and warmed up on MPS\033[0m")
+
+        # ── Gemma 4 e4b LLM ──────────────────────────────────────────
+        print(f"\033[93m[3/4] Connecting to Gemma 4 e4b LLM ({gemma_model})...\033[0m")
+        self.analyzer = GemmaAnalyzer(
+            model=gemma_model, ollama_url=ollama_url,
+            timeout=60.0, jpeg_quality=30,
+            inference_width=160, inference_height=120)
+        self.gemma_interval = gemma_interval
+        print("\033[92m✅ Gemma 4 e4b LLM connected & ready\033[0m")
+
+        # ── Mission SM ────────────────────────────────────────────────
+        print("\033[93m[4/4] Initialising mission state machine...\033[0m")
         self.sm = MissionStateMachine(
             mission_type="search_and_drop",
             on_state_change=self._on_state_change,
@@ -149,11 +182,15 @@ class SkydioX2Simulation:
         self._frame_n   = 0
         self._target    = np.array(self.HOME_POS, dtype=float)
         self._active_setpoint = np.array(self.HOME_POS, dtype=float)
-        self._max_speed = 18.0  # 18 m/s max trajectory glide speed
+        self._max_speed = 18.0
         self._dropped   = False
         self._should_quit = False
-        self._camera_mode = 0   # 0=Chase Cam, 1=Birdseye Cam, 2=Target Spotter
+        self._camera_mode = 0
         self._last_avoid_log = 0.0
+        self._last_yolo_log  = 0.0
+        self._gemma_res = None
+        self._gemma_ms  = 0.0
+        self._fps_times = []
 
         self._reset()
 
@@ -174,17 +211,17 @@ class SkydioX2Simulation:
         vel  = self.data.qvel[:3].copy()
         return pos, vel, quat, gyro
 
-    # ── Smart AI Obstacle Avoidance Trajectory Generator ─────────────
+    def _render_down(self) -> np.ndarray:
+        self.drone_renderer.update_scene(self.data, camera=self._down_cam)
+        return cv2.cvtColor(self.drone_renderer.render(), cv2.COLOR_RGB2BGR)
+
     def _compute_smart_target(self, pos: np.ndarray) -> np.ndarray:
-        """Dynamically computes safe waypoint around obstacles along flight path."""
         target = self._target.copy()
         now = time.time()
 
-        # Check if approaching an obstacle along current trajectory
         for obs in self.OBSTACLES:
             dist_xy = np.linalg.norm(pos[:2] - obs["pos"])
             if dist_xy < obs["radius"] + 20.0:
-                # Obstacle ahead! Execute Smart Altitude Climb Avoidance
                 target[2] = max(target[2], obs["clear_alt"])
                 if now - self._last_avoid_log > 3.0:
                     print(f"\n\033[93m🤖 [SMART AI AVOIDANCE] {obs['name']} detected at dist={dist_xy:.1f}m!")
@@ -310,8 +347,8 @@ class SkydioX2Simulation:
     def run(self):
         print("\033[1mControls (Press S, D/1, 2, L/3, A, C, R, Q in 3D Window OR Terminal):\033[0m")
         for k, v in [("S", "Start mission (TAKEOFF -> SEARCH)"),
-                    ("D / 1", "Fly to Target 1: 500m Drop Zone [500m, 100m, 3.5m] + Smart Avoidance"),
-                    ("2", "Fly to Target 2: 1km Extended Target [1000m, -50m, 3.5m] + Smart Avoidance"),
+                    ("D / 1", "Fly to Target 1: 500m Drop Zone [500m, 100m, 3.5m] + AI Avoidance"),
+                    ("2", "Fly to Target 2: 1km Extended Target [1000m, -50m, 3.5m] + AI Avoidance"),
                     ("L / 3", "Return Home & Land [0m, 0m, 0.08m]"),
                     ("A", "Abort / hold position"),
                     ("C", "Toggle 3D Camera View (Chase Cam <-> Birdseye Cam <-> Spotter Cam)"),
@@ -349,23 +386,46 @@ class SkydioX2Simulation:
                     self._auto_transitions(pos)
                     sim_t = self.data.time
 
+                    # ── Render Downward Camera & Run YOLO + Gemma AI Pipeline ─
+                    down_frame = self._render_down()
+                    detections, fps, annotated, _ = self.detector.detect(down_frame)
+
+                    now = time.time()
+                    # Print YOLO feedback if objects detected
+                    if len(detections) > 0 and now - self._last_yolo_log > 2.0:
+                        classes = [f"{d.get('class_name','obj')} ({d.get('confidence',0):.2f})" for d in detections]
+                        print(f"\n\033[93m👁️ [YOLOv8 DETECTED] {len(detections)} object(s) in drone view: {classes}\033[0m")
+                        self._last_yolo_log = now
+
+                    # Trigger Gemma 4 e4b Vision Reasoning
+                    if self._frame_n % self.gemma_interval == 0:
+                        self.analyzer.analyze_async(annotated, [])
+
+                    result, _, gms = self.analyzer.get_latest_result()
+                    if result is not None and result != self._gemma_res:
+                        self._gemma_res = result
+                        self._gemma_ms  = gms
+                        desc = result.get("scene_description", "Clear airspace")
+                        rec = result.get("mission_recommendation", {}).get("action", "proceed")
+                        obs = result.get("obstacles", {})
+                        print(f"\n\033[92m🧠 [GEMMA 4 e4b REASONING] ({gms:.0f}ms)")
+                        print(f"   Scene Description: '{desc}'")
+                        print(f"   Obstacle Density: {obs.get('density', 0.0):.2f} | Action: {rec.upper()}\033[0m")
+
                     # ── Camera Modes ──────────────────────────────────────────
                     if self._camera_mode == 0:
-                        # Chase Cam: Follows quadcopter 14m behind & elevated 5m
                         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
                         viewer.cam.trackbodyid = self._x2_body_id
                         viewer.cam.distance = 14.0
                         viewer.cam.elevation = -18.0
                         viewer.cam.azimuth = 90.0
                     elif self._camera_mode == 1:
-                        # Birdseye Overhead Cam
                         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
                         viewer.cam.trackbodyid = self._x2_body_id
                         viewer.cam.distance = 40.0
                         viewer.cam.elevation = -89.0
                         viewer.cam.azimuth = 90.0
                     elif self._camera_mode == 2:
-                        # Target Spotter Cam
                         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
                         viewer.cam.lookat[0] = float(self._target[0])
                         viewer.cam.lookat[1] = float(self._target[1])
@@ -378,13 +438,15 @@ class SkydioX2Simulation:
 
                     # Telemetry Logging
                     dist_to_target = np.linalg.norm(self._target[:2] - pos[:2])
+                    yolo_cnt = len(detections)
                     if self._frame_n % 30 == 0:
                         print(
                             f"\r\033[96m[t={sim_t:7.2f}s]\033[0m"
                             f" {self.sm.state:<16}"
                             f" Pos=({pos[0]:5.1f}m, {pos[1]:5.1f}m, {pos[2]:4.1f}m)"
                             f" TargetDist={dist_to_target:5.1f}m"
-                            f" Speed={np.linalg.norm(vel):4.1f}m/s",
+                            f" YOLO={yolo_cnt}obj"
+                            f" Gemma={self._gemma_ms:.0f}ms",
                             end="", flush=True)
 
         finally:
