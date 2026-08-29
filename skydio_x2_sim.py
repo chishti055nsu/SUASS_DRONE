@@ -426,8 +426,8 @@ class SkydioX2Simulation:
                         viewer.cam.elevation = -90.0
                         viewer.cam.azimuth = 90.0
                     elif self._camera_mode == 2:
-                        # 500m Target Spotter Cam (Fixed at 500m drop zone)
-                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
+                        # 500m Target Spotter Cam (Free camera positioned at 500m drop zone)
+                        viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FREE
                         viewer.cam.lookat[:] = [500.0, 0.0, 2.0]
                         viewer.cam.distance = 18.0
                         viewer.cam.elevation = -25.0

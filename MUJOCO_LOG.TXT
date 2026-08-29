@@ -1,2 +1,4 @@
 WARNING Sat Aug 29 19:57:20 2026: Nan, Inf or huge value in QACC at DOF 0. The simulation is unstable. Time = 6.1500.
 
+ERROR mjv_cameraFrustum (engine_vis_visualize.c:545) Sat Aug 29 23:06:00 2026: fixed camera id is outside valid range
+
