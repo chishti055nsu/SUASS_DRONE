@@ -100,7 +100,8 @@ VALID_TRANSITIONS: Dict[MissionState, Set[MissionState]] = {
         MissionState.IDLE,  # Requires manual reset
     },
     MissionState.COMPLETE: {
-        MissionState.IDLE,
+        MissionState.IDLE, MissionState.ARMING, MissionState.TAKEOFF, MissionState.SEARCH,
+        MissionState.APPROACH_TARGET, MissionState.ABORT, MissionState.TERMINATED, MissionState.MANUAL_OVERRIDE,
     },
 }
 

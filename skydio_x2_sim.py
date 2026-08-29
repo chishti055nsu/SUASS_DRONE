@@ -290,10 +290,13 @@ class SkydioX2Simulation:
             return
         if ch == "s":
             print(f"\n\033[92m▶ [COMMAND] START MISSION (TAKEOFF → SEARCH)\033[0m")
-            self.sm.on_start_command()
+            self._dropped = False
+            self.sm._transition(MissionState.ARMING, "start command received")
             self.sm.on_armed()
+            self.sm.on_altitude_reached()
         elif ch == "d":
             print(f"\n\033[93m📦 [COMMAND] FLY TO 500-METER DROP TARGET (500m, 0m, 3.5m)\033[0m")
+            self._dropped = False
             self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
             self._target = np.array(self.DROP_POS)
         elif ch == "l":
