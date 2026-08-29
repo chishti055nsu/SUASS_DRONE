@@ -1,39 +1,34 @@
 <!--
   skydio_x2_mission.xml
   =====================
-  Industry-Graded SUAS Competition Environment for Skydio X2 (1.5 km Scale).
+  Single-Window Industry-Graded SUAS Flight & Obstacle Avoidance Environment.
 
-  Includes:
-    - 1.5 km x 1.5 km Extended Terrain & Airspace (zfar="2500")
-    - Target 1: 500m Drop Zone Bullseye [500m, 100m, 0.03m]
-    - Target 2: 1 km Extended Base Pad [1000m, -50m, 0.03m]
-    - Multi-Storey Buildings & Skyscrapers (40m - 90m tall)
-    - Airborne Weather Balloons (25m - 60m altitude)
-    - Flying Birds & Airborne Obstacles (20m - 40m altitude)
-    - Base Station Launch/Landing H-Marker [0m, 0m, 0.04m]
+  - Direct Flight Corridor: Home [0,0] -> Target 1 [500,100] -> Target 2 [1000,-50]
+  - Obstacles Placed Directly in Corridor:
+      * Skyscraper 1 [120m, 24m, 25m tall]
+      * Weather Balloon 1 [250m, 50m, 15m alt]
+      * Commercial Complex 2 [360m, 72m, 35m tall]
+      * Weather Balloon 2 [440m, 88m, 18m alt]
+      * Mega Tower [800m, -40m, 50m tall]
 -->
-<mujoco model="Skydio X2 SUAS 1km Multi-Target Mission">
+<mujoco model="Skydio X2 Smart Obstacle Avoidance Mission">
 
-  <!-- Include official Skydio X2 model -->
   <include file="mujoco_menagerie/skydio_x2/x2.xml"/>
 
   <statistic meansize=".05"/>
 
-  <!-- Visual settings & camera frustum -->
   <visual>
     <global offwidth="1920" offheight="1080"
             azimuth="-25" elevation="-15" ellipsoidinertia="true"/>
-    <headlight diffuse="0.8 0.8 0.8" ambient="0.4 0.4 0.4" specular="0.2 0.2 0.2"/>
+    <headlight diffuse="0.9 0.9 0.9" ambient="0.4 0.4 0.4" specular="0.3 0.3 0.3"/>
     <rgba haze="0.05 0.10 0.18 1"/>
     <map znear="0.05" zfar="2500"/>
   </visual>
 
   <asset>
-    <!-- Skybox -->
     <texture type="skybox" builtin="gradient"
              rgb1="0.45 0.70 0.95" rgb2="0.05 0.12 0.30"
              width="1024" height="6144"/>
-    <!-- Textures -->
     <texture type="2d" name="grass_tex" builtin="gradient"
              rgb1=".22 .45 .15" rgb2=".18 .38 .10"
              width="512" height="512"/>
@@ -41,40 +36,37 @@
              rgb1=".65 .65 .65" rgb2=".55 .55 .55"
              width="256" height="256"/>
     <texture type="2d" name="building_tex" builtin="checker"
-             rgb1=".30 .35 .40" rgb2=".20 .25 .30"
+             rgb1=".15 .40 .65" rgb2=".10 .25 .45"
              width="512" height="512"/>
 
     <material name="grass_mat"    texture="grass_tex"    texrepeat="300 300"/>
     <material name="concrete_mat" texture="concrete_tex" texrepeat="20 20" reflectance="0.15"/>
-    <material name="building_mat" texture="building_tex" texrepeat="10 20" reflectance="0.25"/>
+    <material name="building_mat" texture="building_tex" texrepeat="10 20" reflectance="0.40"/>
 
     <material name="marker_white" rgba="1 1 1 1"         reflectance="0.30"/>
     <material name="marker_red"   rgba=".95 .05 .05 1"   reflectance="0.15"/>
     <material name="marker_yel"   rgba=".98 .85 .05 1"/>
-    <material name="balloon_red"  rgba="1.0 .15 .15 0.9"/>
-    <material name="balloon_yel"  rgba="1.0 .85 .10 0.9"/>
-    <material name="balloon_blu"  rgba=".15 .55 1.0 0.9"/>
-    <material name="bird_mat"     rgba=".15 .15 .15 1"/>
+    <material name="balloon_red"  rgba="1.0 .10 .10 0.95"/>
+    <material name="balloon_yel"  rgba="1.0 .85 .05 0.95"/>
+    <material name="balloon_blu"  rgba=".10 .60 1.0 0.95"/>
+    <material name="bird_mat"     rgba=".90 .20 .10 1"/>
     <material name="tree_bark"    rgba=".38 .24 .10 1"/>
     <material name="tree_leaves"  rgba=".18 .52 .12 1"/>
-    <material name="person_suit"  rgba=".18 .38 .80 1"/>
-    <material name="person_skin"  rgba=".85 .65 .50 1"/>
   </asset>
 
   <worldbody>
 
-    <!-- ── Lighting ──────────────────────────────────────────────────── -->
     <light name="sun" directional="true" pos="0 0 100"
            dir="-.4 -.3 -1" diffuse="1.0 .95 .85" specular=".3 .3 .2"
            castshadow="true"/>
     <light name="fill" directional="true" pos="0 0 50" dir="0 0 -1"
            diffuse=".4 .45 .5" specular="0 0 0" castshadow="false"/>
 
-    <!-- ── 1.5 KM Ground Terrain ─────────────────────────────────────── -->
+    <!-- 1.5 KM Ground -->
     <geom name="ground" type="plane" size="1500 1500 .1"
           material="grass_mat" pos="0 0 0"/>
 
-    <!-- ── Home Base Launch / Landing Pad [0m, 0m] ──────────────────── -->
+    <!-- Launch Pad [0, 0] -->
     <geom name="pad" type="box" size="8 8 .02"
           material="concrete_mat" pos="0 0 .02" contype="0" conaffinity="0"/>
     <geom name="h_left"  type="box" size=".3 1.5 .022"
@@ -84,7 +76,23 @@
     <geom name="h_bar"   type="box" size="1.5 .3 .022"
           material="marker_white" pos="0 0 .042" contype="0" conaffinity="0"/>
 
-    <!-- ── TARGET 1: 500-METER DROP ZONE [500m East, 100m North] ─────── -->
+    <!-- ── OBSTACLES DIRECTLY ALONG FLIGHT CORRIDOR TO 500M TARGET ────── -->
+
+    <!-- Obstacle 1: Glass Skyscraper at [120m, 24m] (Height 50m) -->
+    <geom name="skyscraper_1" type="box" size="12 12 25" material="building_mat" pos="120 24 25"/>
+
+    <!-- Obstacle 2: Weather Balloon Array floating at [250m, 50m, 16m alt] -->
+    <geom name="balloon_1_sphere" type="sphere" size="4.5" material="balloon_red" pos="250 50 18"/>
+    <geom name="balloon_1_tether" type="cylinder" size=".08 9.0" material="marker_white" pos="250 50 9.0"/>
+
+    <!-- Obstacle 3: Commercial Tower at [360m, 72m] (Height 60m) -->
+    <geom name="tower_2" type="box" size="16 16 30" material="building_mat" pos="360 72 30"/>
+
+    <!-- Obstacle 4: High-Altitude Yellow Balloon at [440m, 88m, 14m alt] -->
+    <geom name="balloon_2_sphere" type="sphere" size="4.0" material="balloon_yel" pos="440 88 16"/>
+    <geom name="balloon_2_tether" type="cylinder" size=".08 8.0" material="marker_white" pos="440 88 8.0"/>
+
+    <!-- ── TARGET 1: 500M DROP ZONE BULLSEYE [500m, 100m] ───────────────── -->
     <geom name="drop_pad_500m" type="box" size="10 10 .02"
           material="concrete_mat" pos="500 100 .02" contype="0" conaffinity="0"/>
     <geom name="drop_ring_outer" type="cylinder" size="4.5 .008"
@@ -94,7 +102,7 @@
     <geom name="drop_bullseye"   type="cylinder" size="0.8 .012"
           material="marker_red" pos="500 100 .032" contype="0" conaffinity="0"/>
 
-    <!-- ── TARGET 2: 1-KILOMETER EXTENDED BASE [1000m East, -50m North] ── -->
+    <!-- ── TARGET 2: 1KM EXTENDED TARGET [1000m, -50m] ─────────────────── -->
     <geom name="pad_1km" type="box" size="12 12 .02"
           material="concrete_mat" pos="1000 -50 .02" contype="0" conaffinity="0"/>
     <geom name="h_left_1km"  type="box" size=".4 2.0 .022"
@@ -104,42 +112,8 @@
     <geom name="h_bar_1km"   type="box" size="2.0 .4 .022"
           material="marker_yel" pos="1000 -50 .042" contype="0" conaffinity="0"/>
 
-    <!-- ── MULTI-STOREY BUILDINGS & SKYSCRAPERS ─────────────────────── -->
-    <!-- Building 1: 40m tall at [150m, 60m] -->
-    <geom name="bldg1" type="box" size="15 15 20" material="building_mat" pos="150 60 20"/>
-    <!-- Skyscraper 2: 70m tall at [300m, -100m] -->
-    <geom name="bldg2" type="box" size="20 20 35" material="building_mat" pos="300 -100 35"/>
-    <!-- Commercial Complex 3: 50m tall at [650m, 120m] -->
-    <geom name="bldg3" type="box" size="25 25 25" material="building_mat" pos="650 120 25"/>
-    <!-- Mega Tower 4: 90m tall at [850m, -120m] -->
-    <geom name="bldg4" type="box" size="22 22 45" material="building_mat" pos="850 -120 45"/>
-
-    <!-- ── AIRBORNE WEATHER BALLOONS ─────────────────────────────────── -->
-    <geom name="bal1_glob" type="sphere" size="3.5" material="balloon_red" pos="100 -30 25"/>
-    <geom name="bal1_teth" type="cylinder" size=".05 12.5" material="marker_white" pos="100 -30 12.5"/>
-
-    <geom name="bal2_glob" type="sphere" size="4.0" material="balloon_yel" pos="220 40 35"/>
-    <geom name="bal2_teth" type="cylinder" size=".05 17.5" material="marker_white" pos="220 40 17.5"/>
-
-    <geom name="bal3_glob" type="sphere" size="3.5" material="balloon_blu" pos="700 -40 40"/>
-    <geom name="bal3_teth" type="cylinder" size=".05 20.0" material="marker_white" pos="700 -40 20.0"/>
-
-    <!-- ── AIRBORNE BIRDS & DRONES ────────────────────────────────────── -->
-    <geom name="bird1" type="capsule" size=".4 1.2" material="bird_mat" pos="180 -10 20" euler="0 1.5 0"/>
-    <geom name="bird2" type="capsule" size=".4 1.2" material="bird_mat" pos="420 20 28" euler="0 1.5 0.5"/>
-    <geom name="bird3" type="capsule" size=".4 1.2" material="bird_mat" pos="780 -15 32" euler="0 1.5 -0.3"/>
-
-    <!-- ── TREES CLUSTERS ────────────────────────────────────────────── -->
-    <geom name="tr1_trunk" type="cylinder" size=".4 2.5" material="tree_bark"   pos="50 30 2.5"/>
-    <geom name="tr1_top"   type="sphere"   size="3.5"   material="tree_leaves" pos="50 30 7.5"/>
-    <geom name="tr2_trunk" type="cylinder" size=".4 2.5" material="tree_bark"   pos="480 35 2.5"/>
-    <geom name="tr2_top"   type="sphere"   size="3.5"   material="tree_leaves" pos="480 35 7.5"/>
-    <geom name="tr3_trunk" type="cylinder" size=".4 2.5" material="tree_bark"   pos="950 -80 2.5"/>
-    <geom name="tr3_top"   type="sphere"   size="3.5"   material="tree_leaves" pos="950 -80 7.5"/>
-
-    <!-- ── GROUND PERSON TARGETS ─────────────────────────────────────── -->
-    <geom name="person_body" type="capsule" size=".30 0.9" material="person_suit" pos="496 104 1.8"/>
-    <geom name="person_head" type="sphere"  size=".30"     material="person_skin" pos="496 104 3.1"/>
+    <!-- Obstacle 5: Mega Skyscraper at [800m, -40m] (Height 80m) -->
+    <geom name="mega_tower" type="box" size="20 20 40" material="building_mat" pos="800 -40 40"/>
 
   </worldbody>
 
