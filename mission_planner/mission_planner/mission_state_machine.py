@@ -54,8 +54,8 @@ class MissionState(str, Enum):
 # ── Strict Valid Transitions Matrix ───────────────────────────────────────────
 VALID_TRANSITIONS: Dict[MissionState, Set[MissionState]] = {
     MissionState.IDLE: {
-        MissionState.ARMING, MissionState.TAKEOFF, MissionState.MANUAL_OVERRIDE,
-        MissionState.ABORT, MissionState.TERMINATED,
+        MissionState.ARMING, MissionState.TAKEOFF, MissionState.SEARCH, MissionState.APPROACH_TARGET,
+        MissionState.MANUAL_OVERRIDE, MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.ARMING: {
         MissionState.TAKEOFF, MissionState.IDLE, MissionState.MANUAL_OVERRIDE,

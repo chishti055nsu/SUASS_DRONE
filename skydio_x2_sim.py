@@ -255,10 +255,16 @@ class SkydioX2Simulation:
         elif ch == "d":
             print(f"\n\033[93m📦 [COMMAND] FLY TO 500-METER DROP TARGET (500m, 0m, 3.5m)\033[0m")
             self._dropped = False
+            if self.sm.state == "IDLE":
+                self.sm.on_start_command()
+                self.sm.on_armed()
             self.sm._transition(MissionState.APPROACH_TARGET, "fly to 500m drop target command")
             self._target = np.array(self.DROP_POS)
         elif ch == "l":
             print(f"\n\033[92m⬇ [COMMAND] RETURN TO BASE & LAND ON WHITE H-MARKER\033[0m")
+            if self.sm.state == "IDLE":
+                self.sm.on_start_command()
+                self.sm.on_armed()
             self.sm._transition(MissionState.LAND, "land command received")
             self._target = np.array(self.LAND_POS)
         elif ch == "a":
