@@ -3,7 +3,7 @@
 <package format="3">
   <name>precision_landing</name>
   <version>1.0.0</version>
-  <description>Deterministic ArUco / AprilTag Precision Landing & Payload Drop Package for SUAS Drone</description>
+  <description>Deterministic ArUco / AprilTag Precision Landing &amp; Payload Drop Package for SUAS Drone</description>
   <maintainer email="iub_drone@example.com">IUB Drone Team</maintainer>
   <license>MIT</license>
 
