@@ -10,14 +10,8 @@ echo "  IUB DRONE — Jetson Nano Standalone Test Mode"
 echo "  (No Drone / Flight Controller Required)"
 echo "=================================================="
 
-# Ensure ROS 2 packages are placed directly under ~/ros2_ws/src/
-mkdir -p ~/ros2_ws/src
-if [ -d ~/ros2_ws/src/SUASS_DRONE/precision_landing ]; then
-    cp -r ~/ros2_ws/src/SUASS_DRONE/precision_landing ~/ros2_ws/src/
-    cp -r ~/ros2_ws/src/SUASS_DRONE/drone_vision ~/ros2_ws/src/
-    cp -r ~/ros2_ws/src/SUASS_DRONE/drone_vision_msgs ~/ros2_ws/src/
-    cp -r ~/ros2_ws/src/SUASS_DRONE/mission_planner ~/ros2_ws/src/
-fi
+# Clean up duplicate package folders if any exist at root src
+rm -rf ~/ros2_ws/src/drone_vision ~/ros2_ws/src/drone_vision_msgs ~/ros2_ws/src/mission_planner ~/ros2_ws/src/precision_landing 2>/dev/null || true
 
 # Reset environment & source ROS 2
 unset AMENT_PREFIX_PATH
