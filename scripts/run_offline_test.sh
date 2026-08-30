@@ -10,15 +10,23 @@ echo "  IUB DRONE — Jetson Nano Standalone Test Mode"
 echo "  (No Drone / Flight Controller Required)"
 echo "=================================================="
 
-# Source ROS 2 base
+# Ensure ROS 2 packages are placed directly under ~/ros2_ws/src/
+mkdir -p ~/ros2_ws/src
+if [ -d ~/ros2_ws/src/SUASS_DRONE/precision_landing ]; then
+    cp -r ~/ros2_ws/src/SUASS_DRONE/precision_landing ~/ros2_ws/src/
+    cp -r ~/ros2_ws/src/SUASS_DRONE/drone_vision ~/ros2_ws/src/
+    cp -r ~/ros2_ws/src/SUASS_DRONE/drone_vision_msgs ~/ros2_ws/src/
+    cp -r ~/ros2_ws/src/SUASS_DRONE/mission_planner ~/ros2_ws/src/
+fi
+
+# Reset environment & source ROS 2
+unset AMENT_PREFIX_PATH
 source /opt/ros/humble/setup.bash
 
-# Navigate to workspace, build all packages, and source
+# Build workspace cleanly
 cd ~/ros2_ws
 echo "[INFO] Building ROS 2 packages..."
-colcon build --packages-select drone_vision_msgs precision_landing drone_vision mission_planner --symlink-install
-
-# Source newly built workspace
+colcon build --symlink-install
 source install/setup.bash
 
 echo "[INFO] Launching autonomous software stack in SIM/STUB mode..."
