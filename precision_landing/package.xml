@@ -4,8 +4,7 @@
   <name>precision_landing</name>
   <version>1.0.0</version>
   <description>Deterministic ArUco / AprilTag Precision Landing & Payload Drop Package for SUAS Drone</description>
-
-  <maintainer email="drone@iub.edu.bd">IUB Drone Team</maintainer>
+  <maintainer email="iub_drone@example.com">IUB Drone Team</maintainer>
   <license>MIT</license>
 
   <depend>rclpy</depend>
@@ -13,6 +12,9 @@
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
   <depend>drone_vision_msgs</depend>
+
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>
