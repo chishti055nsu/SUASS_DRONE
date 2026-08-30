@@ -12,7 +12,8 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>drone_vision_msgs</depend>
-
+  <exec_depend>drone_vision</exec_depend>
+  <exec_depend>precision_landing</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
