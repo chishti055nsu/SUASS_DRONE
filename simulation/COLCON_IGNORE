@@ -1,0 +1,1 @@
+# Tells colcon to ignore simulation files when building production ROS2 workspace

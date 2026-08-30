@@ -44,7 +44,7 @@ jobs:
             ros-humble-sensor-msgs
           pip install opencv-python-headless numpy requests
 
-      - name: Build packages with colcon
+      - name: Build production packages with colcon
         run: |
           . /opt/ros/humble/setup.sh
-          colcon build --symlink-install
+          colcon build --packages-select drone_vision_msgs precision_landing drone_vision mission_planner --symlink-install
