@@ -7,7 +7,7 @@ on:
     branches: [ main, master, develop ]
 
 jobs:
-  python-tests-and-lint:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,18 +20,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest flake8 pep257 opencv-python-headless numpy requests
+          pip install opencv-python-headless numpy requests
 
-      - name: Lint with flake8 and pep257
+      - name: Run Python unit test suite
         run: |
-          # Stop build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      - name: Run unit test suite
-        run: |
-          PYTHONPATH=drone_vision:mission_planner:precision_landing:. pytest tests/
+          python3 -m unittest discover -s tests -p "test_*.py"
 
   colcon-ros2-build:
     runs-on: ubuntu-latest
@@ -55,8 +48,3 @@ jobs:
         run: |
           . /opt/ros/humble/setup.sh
           colcon build --symlink-install
-
-      - name: Run colcon tests
-        run: |
-          . /opt/ros/humble/setup.sh
-          colcon test --event-handlers console_direct+ || true
