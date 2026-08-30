@@ -334,16 +334,16 @@ class DroneVisionNode(Node):
                     break
 
         if matched_det:
-            msg.zone_detected  = True
-            msg.center_pixel   = [float(matched_det["center_px"][0]), float(matched_det["center_px"][1])]
-            msg.bbox_xyxy      = [float(b) for b in matched_det["bbox_xyxy"]]
-            msg.area_ratio     = float(matched_det["area_ratio"])
-            msg.confidence     = float(matched_det["confidence"])
+            msg.zone_detected        = True
+            msg.center_px            = [float(matched_det["center_px"][0]), float(matched_det["center_px"][1])]
+            msg.bbox_xyxy            = [float(b) for b in matched_det["bbox_xyxy"]]
+            msg.area_ratio           = float(matched_det["area_ratio"])
+            msg.detection_confidence = float(matched_det["confidence"])
         else:
-            msg.center_pixel   = [320.0, 240.0] if msg.zone_detected else [0.0, 0.0]
-            msg.bbox_xyxy      = [0.0, 0.0, 0.0, 0.0]
-            msg.area_ratio     = 0.05 if msg.zone_detected else 0.0
-            msg.confidence     = msg.gemma_confidence
+            msg.center_px            = [320.0, 240.0] if msg.zone_detected else [0.0, 0.0]
+            msg.bbox_xyxy            = [0.0, 0.0, 0.0, 0.0]
+            msg.area_ratio           = 0.05 if msg.zone_detected else 0.0
+            msg.detection_confidence = msg.gemma_confidence
 
         return msg
 

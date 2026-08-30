@@ -33,7 +33,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
-from std_msgs.msg import String, Header
+from std_msgs.msg import String, Header, Bool
 from geometry_msgs.msg import PoseStamped, TwistStamped
 
 from drone_vision_msgs.msg import (
@@ -43,6 +43,8 @@ from drone_vision_msgs.msg import (
 
 from .mission_state_machine import MissionStateMachine, MissionState
 from .waypoint_manager import WaypointManager
+from .flight_controller import create_flight_controller, FlightController
+from drone_vision.perception_interface import parse_action_zone_msg, parse_aruco_pose_msg, TargetDetection
 
 
 def enu_to_ned(x_east: float, y_north: float, z_up: float):
@@ -108,8 +110,13 @@ class MissionPlannerNode(Node):
         self._payload_dropped = False
         self._drop_attempt_start = 0.0
 
+        self._latest_precision: dict = {}
+
         self._init_subscribers()
         self._init_publishers()
+
+        # Instantiate Flight Controller HAL
+        self._fc = create_flight_controller(self._fc_type, self)
 
         # 1. High-frequency 20 Hz OFFBOARD Setpoint Stream Timer (PX4 Requirement)
         self.create_timer(0.05, self._publish_setpoint_stream)
@@ -121,7 +128,7 @@ class MissionPlannerNode(Node):
         self.create_timer(1.0, self._watchdog_check)
 
         self.get_logger().info(
-            f"MissionPlannerNode Ready. Type={self._mission_type}, "
+            f"MissionPlannerNode Ready. Type={self._mission_type}, HAL={self._fc_type}, "
             f"Waypoints={self._wm._plan.total() if self._wm._plan else 0}"
         )
 
@@ -139,6 +146,7 @@ class MissionPlannerNode(Node):
         self.declare_parameter("max_speed_ms",            3.0)
         self.declare_parameter("waypoint_acceptance_m",   1.5)
         self.declare_parameter("use_mavros",             True)
+        self.declare_parameter("flight_controller_type", "mavros")
 
     def _load_params(self):
         p = self.get_parameter
@@ -154,6 +162,7 @@ class MissionPlannerNode(Node):
         self._max_speed_ms          = p("max_speed_ms").value
         self._waypoint_acceptance_m = p("waypoint_acceptance_m").value
         self._use_mavros            = p("use_mavros").value
+        self._fc_type               = p("flight_controller_type").value
 
     # ── Subscribers ────────────────────────────────────────────────────────
     def _init_subscribers(self):
@@ -169,7 +178,11 @@ class MissionPlannerNode(Node):
         self.create_subscription(ObstacleArray,  "/drone_vision/obstacles",      self._obstacle_cb, reliable)
         self.create_subscription(MissionCommand, "/mission_planner/command",     self._command_cb,  reliable)
 
-        if self._use_mavros:
+        # Precision landing subscribers (ArUco / AprilTag)
+        self.create_subscription(PoseStamped, "/precision_landing/target_pose",   self._precision_pose_cb, reliable)
+        self.create_subscription(Bool,        "/precision_landing/target_locked", self._precision_lock_cb, reliable)
+
+        if self._use_mavros and self._fc_type == "mavros":
             try:
                 from mavros_msgs.msg import State
                 from sensor_msgs.msg import BatteryState
@@ -179,8 +192,9 @@ class MissionPlannerNode(Node):
                 self.create_subscription(BatteryState, "/mavros/battery",              self._battery_cb,      best_effort)
                 self.get_logger().info("MAVROS subscriptions active.")
             except ImportError:
-                self.get_logger().warning("mavros_msgs not found — MAVROS integration disabled.")
+                self.get_logger().warning("mavros_msgs not found — switching HAL to stub controller.")
                 self._use_mavros = False
+                self._fc_type = "stub"
 
     # ── Publishers ─────────────────────────────────────────────────────────
     def _init_publishers(self):
@@ -219,7 +233,7 @@ class MissionPlannerNode(Node):
             "safety_assessment": msg.safety_assessment,
             "gemma_confidence":  msg.gemma_confidence,
             "area_ratio":        msg.area_ratio,
-            "center_pixel":      list(msg.center_pixel),
+            "center_px":         list(msg.center_px),
         }
 
     def _obstacle_cb(self, msg: ObstacleArray):
@@ -228,6 +242,17 @@ class MissionPlannerNode(Node):
             "risk_level":   msg.risk_level,
             "center_clear": msg.center_clear,
         }
+
+    def _precision_pose_cb(self, msg: PoseStamped):
+        detection = parse_aruco_pose_msg(msg)
+        self._latest_precision = detection.to_dict()
+
+    def _precision_lock_cb(self, msg: Bool):
+        locked = bool(msg.data)
+        if "detected" in self._latest_precision:
+            self._latest_precision["detected"] = locked
+        else:
+            self._latest_precision["detected"] = locked
 
     # ── Command Callback ───────────────────────────────────────────────────
     def _command_cb(self, msg: MissionCommand):
@@ -310,6 +335,16 @@ class MissionPlannerNode(Node):
 
     def _set_target_enu(self, east: float, north: float, alt: float):
         self._target_setpoint_enu = [east, north, alt]
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.set_setpoint_enu(east, north, alt)
+
+    def _get_precision_target_enu(self, default_alt: float):
+        """Calculates 3D ENU setpoint using ArUco relative pose offset if target is locked."""
+        if self._latest_precision.get("detected", False):
+            pos_offset = self._latest_precision.get("position_enu", (0.0, 0.0, 0.0))
+            dx, dy = float(pos_offset[0]), float(pos_offset[1])
+            return [self._pos_enu[0] + dx, self._pos_enu[1] + dy, default_alt]
+        return [self._pos_enu[0], self._pos_enu[1], default_alt]
 
     # ── Waypoint & State Execution Logic ───────────────────────────────────
     def _execute_waypoint_logic(self):
@@ -328,8 +363,9 @@ class MissionPlannerNode(Node):
                 self._set_target_enu(wp.east_m, wp.north_m, wp.alt_m)
 
         elif state == MissionState.APPROACH_TARGET:
-            # Fly toward drop/landing zone
-            self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._approach_alt)
+            # Use ArUco pose/lock for lateral target setpoint alignment
+            target = self._get_precision_target_enu(self._approach_alt)
+            self._set_target_enu(target[0], target[1], target[2])
 
         elif state == MissionState.LOITER:
             # Hold current position
@@ -343,7 +379,9 @@ class MissionPlannerNode(Node):
             self._set_target_enu(0.0, 0.0, self._search_alt)
 
         elif state == MissionState.LAND:
-            self._set_target_enu(self._pos_enu[0], self._pos_enu[1], 0.0)
+            # Use ArUco pose/lock for lateral target setpoint alignment during landing
+            target = self._get_precision_target_enu(0.0)
+            self._set_target_enu(target[0], target[1], target[2])
 
     # ── Multi-Condition Validated Payload Release Controller Interface ─────
     def _drop_payload_sequence(self):
@@ -351,17 +389,18 @@ class MissionPlannerNode(Node):
         Production Payload Controller Interface:
         Verifies:
           1. Speed <= 0.35 m/s
-          2. Altitude error <= 0.3 m from drop altitude
+          2. Altitude error <= 0.35 m from drop altitude
           3. Horizontal position stability
           4. Target lock confirmation
-        Then triggers actuator via MAVROS MAV_CMD_DO_SET_SERVO.
+        Then triggers actuator via FlightController HAL and MAVROS MAV_CMD_DO_SET_SERVO.
         """
         if self._drop_attempt_start == 0.0:
             self._drop_attempt_start = time.time()
             self.get_logger().info("Initiating precision payload drop alignment...")
 
-        # Target drop altitude
-        self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._land_alt)
+        # Target drop altitude with ArUco lateral precision setpoint
+        target = self._get_precision_target_enu(self._land_alt)
+        self._set_target_enu(target[0], target[1], target[2])
 
         alt_err = abs(self._pos_enu[2] - self._land_alt)
         speed_ok = self._speed_ms <= 0.35
@@ -379,13 +418,17 @@ class MissionPlannerNode(Node):
                 f"Waiting for drop alignment: Speed={self._speed_ms:.2f}m/s (max 0.35), AltErr={alt_err:.2f}m (max 0.35)..."
             )
             if (time.time() - self._drop_attempt_start) > 20.0:
-                self.get_logger().error("Drop alignment timeout exceeded. Releasing payload anyway!")
-                self._trigger_payload_servo()
-                self._payload_dropped = True
-                self._sm.on_payload_dropped()
+                self.get_logger().error(
+                    "Drop alignment timeout exceeded! Aborting payload release and initiating Hold / RTL safety mode."
+                )
+                self._sm.on_abort_command()
+                self._send_hold()
 
     def _trigger_payload_servo(self):
-        """Send MAVROS CommandLong service call to set servo PWM (MAV_CMD_DO_SET_SERVO)."""
+        """Send actuator payload release signal to HAL and MAVROS service call."""
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.trigger_payload_release()
+
         if not self._use_mavros:
             return
         try:
@@ -403,7 +446,10 @@ class MissionPlannerNode(Node):
 
     # ── MAVROS Service Call Helpers ─────────────────────────────────────────
     def _arm_and_takeoff(self):
-        """Stream setpoints first (1s), then request OFFBOARD mode & ARM via MAVROS."""
+        """Stream setpoints first (1s), then request OFFBOARD mode & ARM via HAL and MAVROS."""
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.arm_and_offboard()
+
         if not self._use_mavros:
             return
 
@@ -435,6 +481,9 @@ class MissionPlannerNode(Node):
         self._send_disarm()
 
     def _send_disarm(self):
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.disarm()
+
         if not self._use_mavros:
             return
         try:
@@ -488,22 +537,28 @@ class MissionPlannerNode(Node):
         msg.header.frame_id = "map"
 
         s = self._sm.get_status_dict()
-        msg.current_state    = s["state"]
-        msg.mission_type     = s["mission_type"]
-        msg.state_duration_s = s["state_duration_s"]
-        msg.payload_dropped  = s["payload_dropped"]
-        msg.target_acquired  = s["target_acquired"]
+        msg.state                  = str(s.get("state", "IDLE"))
+        msg.current_waypoint_index = int(self._wm.current_index)
+        msg.total_waypoints        = int(self._wm.total_waypoints)
 
         wp = self._wm.current_waypoint
-        msg.target_waypoint_idx = self._wm.current_index
-        msg.total_waypoints     = self._wm.total_waypoints
         if wp:
-            msg.waypoint_north_m = wp.north_m
-            msg.waypoint_east_m  = wp.east_m
-            msg.waypoint_alt_m   = wp.alt_m
+            msg.current_target_ned = [float(wp.north_m), float(wp.east_m), float(-wp.alt_m)]
+        else:
+            n, e, d = enu_to_ned(self._target_setpoint_enu[0], self._target_setpoint_enu[1], self._target_setpoint_enu[2])
+            msg.current_target_ned = [float(n), float(e), float(d)]
 
-        msg.distance_to_waypoint_m = self._wm.distance_to_current
-        msg.battery_percentage     = self._battery_pct
-        msg.obstacle_density       = self._latest_obstacles.get("density", 0.0)
+        msg.altitude_m             = float(self._pos_enu[2])
+        msg.battery_percent        = float(self._battery_pct)
+        msg.groundspeed_ms         = float(self._speed_ms)
+        msg.distance_to_target_m   = float(self._wm.distance_to_current)
+
+        total_wp = max(self._wm.total_waypoints, 1)
+        msg.mission_progress       = float(self._wm.current_index) / float(total_wp)
+        msg.payload_dropped        = bool(s.get("payload_dropped", False))
+        msg.target_acquired        = bool(s.get("target_acquired", False))
+        msg.landing_zone_confirmed = bool(self._latest_landing.get("zone_detected", False))
+        msg.mission_elapsed_sec    = float(s.get("state_duration_s", 0.0))
+        msg.status_message         = f"State={msg.state}, Batt={msg.battery_percent:.1f}%"
 
         self._pub_status.publish(msg)

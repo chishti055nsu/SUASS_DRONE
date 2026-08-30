@@ -87,6 +87,35 @@ class TestMissionStateMachine(unittest.TestCase):
         self.sm._last_vision_time = time.time() - 10.0
         self.assertTrue(self.sm.is_vision_stale)
 
+    def test_check_timeouts(self):
+        self.sm.on_start_command()
+        # Fast forward state entry time to trigger timeout
+        self.sm._state_entry_time = time.time() - 300.0
+        self.sm.check_timeouts()
+        self.assertEqual(self.sm.state, MissionState.RETURN_HOME.value)
+
+
+class TestFlightControllerHAL(unittest.TestCase):
+
+    def test_sim_stub_controller(self):
+        from mission_planner.flight_controller import SimStubFlightController
+        fc = SimStubFlightController(initial_pos=(0.0, 0.0, 0.0))
+        self.assertTrue(fc.is_connected())
+        self.assertFalse(fc.is_armed())
+
+        fc.arm_and_offboard()
+        self.assertTrue(fc.is_armed())
+
+        fc.set_setpoint_enu(10.0, 0.0, 5.0)
+        # Advance simulation steps
+        for _ in range(50):
+            fc.update_sim_step(dt=0.1)
+
+        telem = fc.get_telemetry()
+        self.assertGreater(telem["pos_enu"][0], 0.0)
+        self.assertTrue(fc.trigger_payload_release())
+        self.assertTrue(fc.get_telemetry()["payload_released"])
+
 
 class TestWaypointManager(unittest.TestCase):
 

@@ -1,0 +1,13 @@
+# Base Configuration — Shared across environments
+mission_planner_node:
+  ros__parameters:
+    mission_type: "search_and_drop"
+    search_altitude_m: 15.0
+    approach_altitude_m: 5.0
+    land_altitude_m: 1.5
+    search_area_width_m: 40.0
+    search_area_height_m: 40.0
+    lane_spacing_m: 8.0
+    battery_abort_pct: 15.0
+    max_speed_ms: 3.0
+    waypoint_acceptance_m: 1.5

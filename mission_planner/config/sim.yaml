@@ -1,0 +1,7 @@
+# Simulation Configuration Tier (MuJoCo / Stub)
+mission_planner_node:
+  ros__parameters:
+    use_mavros: false
+    flight_controller_type: "mujoco"  # "mujoco" or "stub"
+    loiter_confirm_frames: 2          # Faster verification in sim
+    waypoint_acceptance_m: 2.0

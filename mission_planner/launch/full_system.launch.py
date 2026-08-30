@@ -1,15 +1,17 @@
 """
 full_system.launch.py
-Launches the complete IUB Drone system:
-  1. drone_vision_node  (YOLO + Gemma)
-  2. mission_planner_node (state machine + MAVROS)
+=====================
+Launches the complete production IUB Drone system for physical deployment on Skydio drone:
+  1. precision_landing_node (ArUco detector)
+  2. drone_vision_node     (YOLO + Gemma)
+  3. mission_planner_node  (State Machine + MAVROS Hardware Interface)
 """
+import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, GroupAction, TimerAction
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
-import os
 
 
 def generate_launch_description():

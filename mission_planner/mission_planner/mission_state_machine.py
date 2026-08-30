@@ -59,7 +59,7 @@ VALID_TRANSITIONS: Dict[MissionState, Set[MissionState]] = {
     },
     MissionState.ARMING: {
         MissionState.TAKEOFF, MissionState.IDLE, MissionState.MANUAL_OVERRIDE,
-        MissionState.ABORT, MissionState.TERMINATED,
+        MissionState.ABORT, MissionState.TERMINATED, MissionState.RETURN_HOME,
     },
     MissionState.TAKEOFF: {
         MissionState.SEARCH, MissionState.APPROACH_TARGET, MissionState.LOITER, MissionState.RETURN_HOME,
@@ -86,15 +86,16 @@ VALID_TRANSITIONS: Dict[MissionState, Set[MissionState]] = {
         MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.LAND: {
-        MissionState.COMPLETE, MissionState.LOITER, MissionState.MANUAL_OVERRIDE,
-        MissionState.ABORT, MissionState.TERMINATED,
+        MissionState.COMPLETE, MissionState.SEARCH, MissionState.APPROACH_TARGET, MissionState.LOITER,
+        MissionState.MANUAL_OVERRIDE, MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.MANUAL_OVERRIDE: {
         MissionState.IDLE, MissionState.RETURN_HOME, MissionState.LAND,
         MissionState.ABORT, MissionState.TERMINATED,
     },
     MissionState.ABORT: {
-        MissionState.RETURN_HOME, MissionState.LAND, MissionState.TERMINATED, MissionState.IDLE,
+        MissionState.RETURN_HOME, MissionState.LAND, MissionState.SEARCH, MissionState.APPROACH_TARGET,
+        MissionState.TERMINATED, MissionState.IDLE,
     },
     MissionState.TERMINATED: {
         MissionState.IDLE,  # Requires manual reset
@@ -231,9 +232,14 @@ class MissionStateMachine:
         if self._state == MissionState.TAKEOFF:
             self._transition(MissionState.SEARCH, "target altitude reached")
 
-    def check_timeouts() -> None:
-        """Call periodically to check per-state execution timeouts."""
+    def check_timeouts(self) -> None:
+        """Call periodically to check per-state execution timeouts and stale vision watchdogs."""
         if self._state in (MissionState.IDLE, MissionState.COMPLETE, MissionState.TERMINATED, MissionState.ABORT):
+            return
+
+        if self.is_vision_stale and self._state in (MissionState.SEARCH, MissionState.APPROACH_TARGET, MissionState.LOITER, MissionState.DROP_PAYLOAD):
+            logger.warning("[STALE VISION WATCHDOG] Vision feed lost for > 3.0s! Triggering fail-closed RETURN_HOME.")
+            self.on_rtl_command()
             return
 
         timeout = STATE_TIMEOUTS_S.get(self._state, 120.0)

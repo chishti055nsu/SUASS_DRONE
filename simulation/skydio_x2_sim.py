@@ -38,7 +38,7 @@ import numpy as np
 import cv2
 
 # ── Path setup ────────────────────────────────────────────────────────────────
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "drone_vision"))
 sys.path.insert(0, os.path.join(ROOT, "mission_planner"))
 
@@ -144,6 +144,7 @@ def draw_cam_hud(
     fps: float,
     gemma_ms: float,
     sim_time: float,
+    avoidance_msg: str = "",
 ) -> np.ndarray:
     """Draw telemetry & mission state HUD on camera feed."""
     h, w = frame.shape[:2]
@@ -154,6 +155,11 @@ def draw_cam_hud(
     cv2.circle(frame, (20, 18), 8, color, -1)
     cv2.putText(frame, f"STATE: {state}", (36, 24),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
+
+    # Obstacle Avoidance status badge
+    if avoidance_msg:
+        cv2.putText(frame, f"🛡️ {avoidance_msg}", (180, 24),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (0, 220, 255), 2)
 
     # Telemetry
     tele = f"Alt: {pos[2]:4.1f}m | Pos: ({pos[0]:.1f}, {pos[1]:.1f})m | t: {sim_time:.1f}s | FPS: {fps:.0f}"
@@ -180,35 +186,36 @@ def draw_cam_hud(
                         cv2.FONT_HERSHEY_SIMPLEX, 0.48, c, 2 if bold else 1)
 
     # Controls footer
-    cv2.putText(frame, "[S]Start [D]Drop Target [L]Land [A]Abort [R]Reset [Q]Quit",
+    cv2.putText(frame, "[S]Start [D]Drop Target [O]Avoidance Demo [L]Land [A]Abort [R]Reset [Q]Quit",
                 (10, h - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.38, (120, 120, 120), 1)
 
     return frame
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────────────────────
 # Skydio X2 Native MuJoCo Simulation Class
 # ─────────────────────────────────────────────────────────────────────────────
 class SkydioX2Simulation:
 
-    # Mission waypoints [x, y, z]
-    SEARCH_WPS  = [[ 6.0,  6.0, 10.0], [ 6.0, -6.0, 10.0], [-6.0, -6.0, 10.0], [-6.0,  6.0, 10.0]]
-    HOME_POS    = [ 0.0,  0.0, 8.0]
-    DROP_POS    = [ 8.0,  4.0, 3.5]    # Above target red bullseye
-    LAND_POS    = [ 0.0,  0.0, 0.08]   # On white H-marker
+    # Mission waypoints [x, y, z] for 500m corridor
+    SEARCH_WPS  = [[125.0, 40.0, 20.0], [250.0, -40.0, 20.0], [375.0, 40.0, 20.0], [500.0, 0.0, 20.0]]
+    HOME_POS    = [  0.0,  0.0,  8.0]
+    DROP_POS    = [500.0,  0.0,  3.5]    # Above target red bullseye at 500m East
+    LAND_POS    = [  0.0,  0.0,  0.08]   # On white H-marker at Home
 
     def __init__(self, yolo_model="yolov8n.pt", gemma_model="gemma4:e4b",
                  gemma_interval=40, ollama_url="http://localhost:11434"):
 
         banner = "─" * 54
         print(f"\n\033[1m\033[96m{banner}")
-        print("  IUB Drone  ×  Skydio X2  ×  Native MuJoCo Viewer")
+        print("  IUB Drone  ×  Skydio X2  ×  500m Obstacle Corridor")
         print(f"{banner}\033[0m\n")
 
         # ── MuJoCo Model Load ─────────────────────────────────────────
-        print("\033[93m[1/4] Loading Skydio X2 MuJoCo model...\033[0m")
+        print("\033[93m[1/4] Loading Skydio X2 500m MuJoCo model...\033[0m")
         cwd = os.getcwd()
-        os.chdir(os.path.join(ROOT, "mujoco_sim"))
+        os.chdir(os.path.join(ROOT, "simulation", "mujoco_sim"))
         try:
             self.model = mujoco.MjModel.from_xml_path("skydio_x2_mission.xml")
             self.model.opt.timestep = 0.002   # 500 Hz physics step
@@ -256,7 +263,7 @@ class SkydioX2Simulation:
         self._frame_n   = 0
         self._target    = np.array(self.HOME_POS, dtype=float)
         self._active_setpoint = np.array(self.HOME_POS, dtype=float)
-        self._max_speed = 2.5   # 2.5 m/s max trajectory glide speed
+        self._max_speed = 15.0  # 15.0 m/s max trajectory glide speed for 500m scale
         self._wp_idx    = 0
         self._gemma_res = None
         self._gemma_ms  = 0.0
@@ -285,15 +292,75 @@ class SkydioX2Simulation:
         vel  = self.data.qvel[:3].copy()
         return pos, vel, quat, gyro
 
-    # ── Smooth trajectory glide step (2.5 m/s) ───────────────────────
+    # ── Flight Controller HAL Adapter Interface ──────────────────────
+    def set_target(self, east_m: float, north_m: float, up_m: float):
+        """Sets target position setpoint in ENU coordinates."""
+        self._target = np.array([east_m, north_m, up_m], dtype=float)
+
+    def drop_payload(self):
+        """Triggers payload drop mechanism."""
+        self._dropped = True
+        if hasattr(self, "sm") and self.sm:
+            self.sm.on_payload_dropped()
+
+    def get_state(self) -> dict:
+        """Returns vehicle position and velocity telemetry in ENU coordinates."""
+        pos, vel, _, _ = self._sensors()
+        return {
+            "pos_enu": (float(pos[0]), float(pos[1]), float(pos[2])),
+            "vel_enu": (float(vel[0]), float(vel[1]), float(vel[2])),
+            "payload_dropped": self._dropped,
+        }
+
+    def arm(self):
+        """Arms vehicle motors."""
+        if hasattr(self, "sm") and self.sm:
+            self.sm.on_armed()
+
+    def disarm(self):
+        """Disarms vehicle motors."""
+        if hasattr(self, "sm") and self.sm:
+            self.sm.on_abort_command()
+
+    OBSTACLE_LOCS = [
+        np.array([100.0,  30.0, 25.0]),  # Office Building 1
+        np.array([150.0, -15.0, 28.0]),  # Balloon 1
+        np.array([220.0, -40.0, 35.0]),  # Building 2
+        np.array([300.0,  20.0, 32.0]),  # Weather Balloon 2
+        np.array([340.0,  45.0, 18.0]),  # Building 3
+        np.array([420.0,  15.0, 22.0]),  # Air Balloon 3
+        np.array([440.0, -25.0, 30.0]),  # Skyscraper 4
+    ]
+
+    # ── Smooth trajectory glide step with Obstacle Avoidance ────────
     def _smooth_trajectory_step(self, dt=0.002):
-        diff = self._target - self._active_setpoint
+        pos, _, _, _ = self._sensors()
+        avoidance_offset = np.zeros(3)
+        self._avoidance_msg = ""
+
+        # Check proximity to obstacles along flight corridor
+        for obs in self.OBSTACLE_LOCS:
+            dist_2d = np.linalg.norm(pos[:2] - obs[:2])
+            if dist_2d < 28.0 and pos[2] > 2.0:
+                diff = pos[:2] - obs[:2]
+                dist_val = max(np.linalg.norm(diff), 0.1)
+                repulsion = (28.0 - dist_2d) * 0.35
+                avoidance_offset[0] += (diff[0] / dist_val) * repulsion
+                avoidance_offset[1] += (diff[1] / dist_val) * repulsion
+                self._avoidance_msg = f"OBSTACLE AVOIDANCE ACTIVE ({repulsion:.1f}m Evasive Steer)"
+
+        if getattr(self, "_manual_avoidance_nudge", 0.0) > 0.0:
+            avoidance_offset[1] += 5.0
+            self._avoidance_msg = "MANUAL OBSTACLE DEMO (+5.0m Lateral Evasive Steer)"
+
+        effective_target = self._target + avoidance_offset
+        diff = effective_target - self._active_setpoint
         dist = np.linalg.norm(diff)
         if dist > 0.001:
             step_size = min(dist, self._max_speed * dt)
             self._active_setpoint += (diff / dist) * step_size
         else:
-            self._active_setpoint = self._target.copy()
+            self._active_setpoint = effective_target.copy()
 
     # ── Physics Step (500 Hz) ─────────────────────────────────────────
     def _step(self):
@@ -323,17 +390,22 @@ class SkydioX2Simulation:
             self.sm.on_armed()
             self.sm.on_altitude_reached()
         elif ch == "d":
-            print(f"\n\033[93m📦 [COMMAND] FLY TO DROP TARGET (8m, 4m, 3.5m)\033[0m")
+            print(f"\n\033[93m📦 [COMMAND] FLY TO DROP TARGET (500m, 0m, 3.5m)\033[0m")
             self._dropped = False
-            if self.sm.state in ("IDLE", "ARMING", "TAKEOFF", "COMPLETE"):
-                self.sm.state = MissionState.SEARCH
-            self.sm._transition(MissionState.APPROACH_TARGET, "fly to drop target command")
+            if self.sm.state != MissionState.APPROACH_TARGET.value:
+                self.sm._state = MissionState.SEARCH
+                self.sm._transition(MissionState.APPROACH_TARGET, "fly to drop target command")
             self._target = np.array(self.DROP_POS)
+        elif ch == "o":
+            nudge = 0.0 if getattr(self, "_manual_avoidance_nudge", 0.0) > 0 else 5.0
+            self._manual_avoidance_nudge = nudge
+            state_str = "ENGAGED (+5m Lateral Steering)" if nudge > 0 else "DISENGAGED"
+            print(f"\n\033[93m🛡️ [COMMAND] OBSTACLE AVOIDANCE DEMO {state_str}\033[0m")
         elif ch == "l":
             print(f"\n\033[92m⬇ [COMMAND] LAND ON WHITE H-MARKER (0m, 0m, 0.08m)\033[0m")
-            if self.sm.state in ("IDLE", "ARMING", "TAKEOFF", "COMPLETE"):
-                self.sm.state = MissionState.SEARCH
-            self.sm._transition(MissionState.LAND, "land command received")
+            if self.sm.state != MissionState.LAND.value:
+                self.sm._state = MissionState.SEARCH
+                self.sm._transition(MissionState.LAND, "land command received")
             self._target = np.array(self.LAND_POS)
         elif ch == "a":
             print(f"\n\033[91m⛔ [COMMAND] ABORT / HOLD POSITION\033[0m")
@@ -487,6 +559,15 @@ class SkydioX2Simulation:
             ) as viewer:
                 print("\033[92m✅ Native MuJoCo Viewer is open!\033[0m\n")
 
+                # Configure 3D viewer camera to track Skydio X2 quadcopter up-close
+                x2_body_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "x2")
+                if x2_body_id >= 0:
+                    viewer.cam.type = mujoco.mjtCamera.mjCAMERA_TRACKING
+                    viewer.cam.trackbodyid = x2_body_id
+                    viewer.cam.distance = 2.5
+                    viewer.cam.elevation = -15.0
+                    viewer.cam.azimuth = 135.0
+
                 PHYS_STEPS_PER_RENDER = 10
 
                 while viewer.is_running() and not self._should_quit:
@@ -524,7 +605,8 @@ class SkydioX2Simulation:
                     # Draw Camera HUD
                     cam_hud = draw_cam_hud(
                         annotated, self.sm.state, self._gemma_res,
-                        pos, self._fps(), self._gemma_ms, sim_t)
+                        pos, self._fps(), self._gemma_ms, sim_t,
+                        avoidance_msg=getattr(self, "_avoidance_msg", ""))
 
                     if has_cv2_gui:
                         try:
@@ -532,7 +614,7 @@ class SkydioX2Simulation:
                             key = cv2.waitKey(1) & 0xFF
                             if key in (ord("q"), 27):
                                 break
-                            elif key in (ord("s"), ord("d"), ord("l"), ord("a"), ord("r")):
+                            elif key in (ord("s"), ord("d"), ord("l"), ord("a"), ord("r"), ord("o")):
                                 self.process_command_key(chr(key))
                         except Exception:
                             has_cv2_gui = False

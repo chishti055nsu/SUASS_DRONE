@@ -1,4 +1,4 @@
-# ROS2 build artifacts
+# ROS 2 build artifacts
 build/
 install/
 log/
@@ -16,5 +16,8 @@ __pycache__/
 *.log
 *.tmp
 
-# Weight files (keep yolov8n.pt if needed, or exclude large binaries)
+# Weight files & engine binaries
 *.engine
+
+# Optional: Uncomment line below if you want to exclude simulation files when pushing to GitHub
+# simulation/

@@ -1,0 +1,22 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/drone_vision",
+    "${workspaceFolder}/drone_vision_msgs",
+    "${workspaceFolder}/mission_planner",
+    "${workspaceFolder}/precision_landing",
+    "${workspaceFolder}/simulation",
+    "/opt/ros/humble/lib/python3.10/site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/drone_vision",
+    "${workspaceFolder}/drone_vision_msgs",
+    "${workspaceFolder}/mission_planner",
+    "${workspaceFolder}/precision_landing",
+    "${workspaceFolder}/simulation",
+    "/opt/ros/humble/lib/python3.10/site-packages"
+  ],
+  "python.linting.enabled": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none"
+  }
+}

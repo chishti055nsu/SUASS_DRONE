@@ -1,0 +1,7 @@
+# Hardware Production Configuration Tier (PX4 / MAVROS)
+mission_planner_node:
+  ros__parameters:
+    use_mavros: true
+    flight_controller_type: "mavros"
+    loiter_confirm_frames: 5          # Strict verification on hardware
+    waypoint_acceptance_m: 1.5
