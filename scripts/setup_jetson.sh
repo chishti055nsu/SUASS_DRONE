@@ -22,26 +22,28 @@ source /opt/ros/humble/setup.bash
 echo "ROS 2 Humble loaded ($(ros2 --version))."
 
 # ── 2. Install System Dependencies ───────────────────────────────────────
-echo "[2/6] Installing system packages..."
+echo "[2/6] Installing system packages & cv_bridge..."
 sudo apt-get update -qq
 sudo apt-get install -y \
     python3-pip \
     python3-dev \
     python3-opencv \
     libopencv-dev \
+    ros-humble-cv-bridge \
     curl wget git
 
 # ── 3. Install Python Dependencies ───────────────────────────────────────
 echo "[3/6] Installing Python packages for YOLOv8 & Fast Perception..."
 pip3 install --upgrade pip
+pip3 install "numpy<2"
 pip3 install \
     ultralytics \
     requests \
-    numpy \
     opencv-python-headless \
     scipy \
     matplotlib \
     pyyaml
+
 
 # ── 4. Install MAVROS & GeographicLib ────────────────────────────────────
 echo "[4/6] Installing MAVROS hardware interface & GeographicLib..."

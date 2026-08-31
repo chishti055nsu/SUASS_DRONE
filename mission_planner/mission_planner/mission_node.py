@@ -562,3 +562,20 @@ class MissionPlannerNode(Node):
         msg.status_message         = f"State={msg.state}, Batt={msg.battery_percent:.1f}%"
 
         self._pub_status.publish(msg)
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = MissionPlannerNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
+
