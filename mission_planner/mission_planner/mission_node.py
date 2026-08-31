@@ -563,6 +563,11 @@ class MissionPlannerNode(Node):
 
         self._pub_status.publish(msg)
 
+        state_msg = String()
+        state_msg.data = msg.state
+        self._pub_state.publish(state_msg)
+
+
 
 def main(args=None):
     rclpy.init(args=args)
