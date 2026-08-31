@@ -36,14 +36,9 @@ sudo apt-get install -y \
 # ── 3. Install Python Dependencies ───────────────────────────────────────
 echo "[3/6] Installing Python packages for YOLOv8 & Fast Perception..."
 pip3 install --upgrade pip
-pip3 install "numpy<2"
-pip3 install \
-    ultralytics \
-    requests \
-    opencv-python-headless \
-    scipy \
-    matplotlib \
-    pyyaml
+pip3 install "numpy<2" requests opencv-python-headless scipy matplotlib pyyaml ultralytics
+pip3 install --force-reinstall "numpy<2"
+
 
 
 # ── 4. Install MAVROS & GeographicLib ────────────────────────────────────
