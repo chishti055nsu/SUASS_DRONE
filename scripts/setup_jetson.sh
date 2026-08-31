@@ -19,10 +19,11 @@ if [ ! -f /opt/ros/humble/setup.bash ]; then
     exit 1
 fi
 source /opt/ros/humble/setup.bash
-echo "ROS 2 Humble loaded ($(ros2 --version))."
+echo "ROS 2 Humble loaded (ROS_DISTRO: ${ROS_DISTRO:-humble})."
 
 # ── 2. Install System Dependencies ───────────────────────────────────────
 echo "[2/6] Installing system packages & cv_bridge..."
+export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -qq
 sudo apt-get install -y \
     python3-pip \
