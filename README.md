@@ -77,7 +77,7 @@ IUB_DRONE/
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone https://github.com/your-username/IUB_DRONE.git
+git clone https://github.com/chishti055nsu/SUASS_DRONE.git
 ```
 
 ### Step 2: Build Workspace with `colcon`

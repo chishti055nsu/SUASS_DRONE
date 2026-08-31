@@ -64,7 +64,7 @@ echo "Workspace: $WORKSPACE_DIR"
 cd "$WORKSPACE_DIR"
 source /opt/ros/humble/setup.bash
 colcon build \
-    --packages-select drone_vision_msgs drone_vision mission_planner \
+    --packages-select drone_vision_msgs drone_vision mission_planner precision_landing \
     --symlink-install
 
 echo ""

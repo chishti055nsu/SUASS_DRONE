@@ -1,4 +1,4 @@
-# Pinned Dependencies for IUB Drone (Jetson Orin Nano & Desktop)
+# Pinned Dependencies for IUB Drone (Jetson Orin Nano & Physical Hardware)
 ultralytics==8.2.32
 torch==2.3.0
 torchvision==0.18.0
@@ -7,5 +7,5 @@ numpy==1.26.4
 requests==2.31.0
 pyyaml==6.0.1
 scipy==1.13.0
-mujoco==3.1.6
 matplotlib==3.8.4
+
