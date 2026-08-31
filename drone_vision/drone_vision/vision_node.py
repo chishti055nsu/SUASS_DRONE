@@ -11,6 +11,7 @@ import time
 import logging
 
 import cv2
+import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
