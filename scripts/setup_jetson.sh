@@ -28,6 +28,7 @@ sudo apt-get update -qq
 sudo apt-get install -y \
     python3-pip \
     python3-dev \
+    python3-numpy \
     python3-opencv \
     libopencv-dev \
     ros-humble-cv-bridge \
