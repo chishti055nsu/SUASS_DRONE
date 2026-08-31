@@ -169,5 +169,34 @@ class TestPrecisionTargetDetector(unittest.TestCase):
         self.assertAlmostEqual(res["center_pixel"][1], 240.0, delta=5.0)
 
 
+class TestGemmaAnalyzerFallback(unittest.TestCase):
+
+    def test_heuristic_fallback_without_ollama(self):
+        from drone_vision.gemma_analyzer import GemmaAnalyzer
+        analyzer = GemmaAnalyzer(ollama_url="http://invalid-localhost-port:9999")
+        self.assertFalse(analyzer._ollama_available)
+
+        detections = [
+            {
+                "class_name": "person",
+                "category": "target",
+                "confidence": 0.88,
+                "bbox_xyxy": [100.0, 100.0, 200.0, 200.0],
+                "center_px": [150.0, 150.0],
+                "area_ratio": 0.05,
+                "placement_h": "center",
+                "placement_v": "middle",
+                "depth_estimate": "medium",
+            }
+        ]
+
+        result, raw_json = analyzer._heuristic_analysis(detections)
+        self.assertIsNotNone(result)
+        self.assertIn("mission_recommendation", result)
+        self.assertEqual(result["mission_recommendation"]["action"], "drop_payload")
+        self.assertEqual(result["mission_recommendation"]["direction"], "center")
+
+
 if __name__ == "__main__":
     unittest.main()
+

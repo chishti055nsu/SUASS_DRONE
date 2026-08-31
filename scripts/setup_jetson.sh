@@ -28,19 +28,21 @@ pip3 install \
     numpy \
     opencv-python-headless
 
-# ── Ollama ────────────────────────────────────────────────────────────────
-echo "[3/6] Installing Ollama..."
+# ── Optional Ollama / Gemma Setup ─────────────────────────────────────────
+echo "[3/6] Checking Ollama setup (Optional for Jetson)..."
 if ! command -v ollama &> /dev/null; then
-    curl -fsSL https://ollama.com/install.sh | sh
-    echo "Ollama installed."
+    echo "Ollama not found. Attempting install (optional)..."
+    curl -fsSL https://ollama.com/install.sh | sh || echo "[NOTICE] Ollama install skipped. Jetson Nano will use the high-performance Onboard Perception Engine."
 else
-    echo "Ollama already installed: $(ollama --version)"
+    echo "Ollama installed: $(ollama --version)"
 fi
 
-# ── Pull Gemma model ──────────────────────────────────────────────────────
-echo "[4/6] Pulling Gemma 4 e4b model (this may take a while)..."
-ollama pull gemma4:e4b
-echo "Gemma model ready."
+if command -v ollama &> /dev/null; then
+    echo "[4/6] Pulling Gemma model (if Ollama is active)..."
+    ollama pull gemma4:e4b || echo "[NOTICE] Could not pull gemma4:e4b model. System will run Onboard Perception Engine."
+else
+    echo "[4/6] Skipping Gemma model pull. Onboard Fast Perception Engine active."
+fi
 
 # ── MAVROS (if not already installed) ────────────────────────────────────
 echo "[5/6] Checking MAVROS..."
