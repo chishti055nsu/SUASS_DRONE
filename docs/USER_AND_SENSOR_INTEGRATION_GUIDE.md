@@ -147,9 +147,15 @@ The architecture uses standard ROS 2 topics and modular node design, making sens
    self.declare_parameter('image_topic', '/camera/color/image_raw')
    ```
 
-### C. Integrating Radar / Sonar / Rangefinders for Terrain Following
-1. ArduPilot can handle rangefinders directly via MAVLink (`RANGEFINDER` message).
-2. Alternatively, subscribe to `sensor_msgs/msg/Range` in `mission_planner/mission_planner/mission_node.py` for precision low-altitude hovering.
+### C. Integrating GPS / GNSS Navigation (M8N / M9N / HERE3)
+1. **Hardware Connection**: Connected to `UART4` + `I2C2` (Compass) on Matek H743 FCU.
+2. **ArduPilot EKF3 Fusion**: ArduPilot fuses GPS satellites + compass data into Extended Kalman Filter (EKF3) state estimates.
+3. **MAVROS ROS 2 Topics**:
+   - `/mavros/global_position/global` (`sensor_msgs/msg/NavSatFix`): Real-time Latitude, Longitude, Altitude.
+   - `/mavros/local_position/pose` (`geometry_msgs/msg/PoseStamped`): Local ENU/NED coordinate transform.
+   - `/mavros/gps1/raw` (`mavros_msgs/msg/GPSRAW`): Satellite count & HDOP quality metrics.
+4. **Mission Planner Integration**: `mission_planner_node` uses these GPS topics for 500m search corridor grid generation, geofencing, and automated Return-to-Home (RTL).
+
 
 ---
 
