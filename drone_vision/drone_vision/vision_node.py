@@ -76,6 +76,8 @@ class DroneVisionNode(Node):
         self.declare_parameter("camera_topic", "/camera/image_raw")
         self.declare_parameter("usb_cam_index", 0)
         self.declare_parameter("video_file_path", "")
+        self.declare_parameter("rtsp_url", "rtsp://192.168.144.25:8554/main.264")
+
 
         self.declare_parameter("yolo_model", "yolov8n.pt")
         self.declare_parameter("yolo_conf_threshold", 0.45)
@@ -99,6 +101,7 @@ class DroneVisionNode(Node):
         self.camera_topic    = p("camera_topic").value
         self.usb_cam_index   = p("usb_cam_index").value
         self.video_file_path = p("video_file_path").value
+        self.rtsp_url         = p("rtsp_url").value
 
         yolo_path = p("yolo_model").value
         if p("use_tensorrt").value and yolo_path.endswith(".pt"):
@@ -167,8 +170,14 @@ class DroneVisionNode(Node):
             self.get_logger().info(f"Subscribed to ROS topic: {self.camera_topic}")
             self._cap = None
         else:
-            # USB cam or video file — use OpenCV timer loop
-            idx = self.video_file_path if self.source_type == "video_file" else self.usb_cam_index
+            # USB cam, RTSP stream, or video file — use OpenCV timer loop
+            if self.source_type == "rtsp":
+                idx = self.rtsp_url
+            elif self.source_type == "video_file":
+                idx = self.video_file_path
+            else:
+                idx = self.usb_cam_index
+
             try:
                 self._cap = cv2.VideoCapture(idx)
                 if not self._cap.isOpened():
@@ -180,7 +189,8 @@ class DroneVisionNode(Node):
 
             period = 1.0 / max(self.target_fps, 1)
             self.create_timer(period, self._timer_cb)
-            self.get_logger().info(f"Video source initialized (FPS: {self.target_fps})")
+            self.get_logger().info(f"Video source initialized ({self.source_type}: {idx}, FPS: {self.target_fps})")
+
 
     # ── Callbacks ──────────────────────────────────────────────────────────
     def _ros_image_cb(self, msg: Image):
