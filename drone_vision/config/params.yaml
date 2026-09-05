@@ -3,11 +3,13 @@ drone_vision_node:
   ros__parameters:
 
     # ── Video Source ───────────────────────────────────────────────────────
-    # Options: "ros_topic" | "usb_cam" | "video_file"
-    source_type: "usb_cam"
+    # Options: "rtsp" | "ros_topic" | "usb_cam" | "video_file"
+    source_type: "rtsp"
+    rtsp_url: "rtsp://192.168.144.25:8554/main.264" # SIYI A8 Mini Camera Endpoint
     camera_topic: "/camera/image_raw"    # used when source_type = "ros_topic"
     usb_cam_index: 0                     # used when source_type = "usb_cam"
     video_file_path: ""                  # used when source_type = "video_file"
+
 
     # ── YOLO ──────────────────────────────────────────────────────────────
     yolo_model: "yolov8n.pt"             # swap to .engine for TensorRT
