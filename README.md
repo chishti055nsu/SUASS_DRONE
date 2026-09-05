@@ -143,13 +143,14 @@ ros2 launch mission_planner full_system.launch.py use_mavros:=true
 
 ---
 
-## 📖 User Guide & Sensor Extension Architecture
-For detailed instructions on testing with or without quadcopter, configuring 500m mission corridors, and integrating future sensors (LiDAR, Stereo/Thermal Cameras, Radar):
-👉 **[User & Sensor Integration Guide](docs/USER_AND_SENSOR_INTEGRATION_GUIDE.md)**
+## 📖 User Guide & Commercial Architecture
+- 👉 **[User & Sensor Integration Guide](docs/USER_AND_SENSOR_INTEGRATION_GUIDE.md)**
+- 👉 **[Commercial Hardware-Agnostic Autonomy Blueprint](docs/COMMERCIAL_AUTONOMY_PLATFORM.md)**
 
 ---
 
 ## 🧪 Unit & Integration Verification
+
 ```bash
 python3 -m unittest discover -s tests -p "test_*.py"
 ```
