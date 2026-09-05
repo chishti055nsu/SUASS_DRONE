@@ -41,22 +41,32 @@ In this mode, `SimStub` simulates flight controller telemetry, GPS position, and
    ros2 topic echo /mission_planner/status
    ```
 
-### B. Testing WITH a Quadcopter (Hardware Flight Mode)
+### B. Testing & Operating WITH a Quadcopter (Wireless Ground Control Mode)
 
 In this mode, `MAVROS` bridges ROS 2 topics directly to ArduPilot / PX4 on the Matek H743 via serial (`/dev/ttyTHS1`) or USB (`/dev/ttyACM0`).
 
-1. **Ensure Hardware Connections & ArduPilot Params**:
+1. **Hardware Connections & ArduPilot Params**:
    - `SERIAL1_PROTOCOL = 2` (MAVLink2)
    - `SERIAL1_BAUD = 9216` (921,600 baud)
-2. **Launch Hardware Flight Mode**:
+2. **Launch Hardware Flight Mode (Onboard Jetson)**:
    ```bash
    cd ~/ros2_ws/src/SUASS_DRONE
    bash scripts/run_drone_flight.sh
    ```
-3. **Command Flight Operations**:
-   - **Start Mission**: `ros2 topic pub --once /mission_planner/command drone_vision_msgs/msg/MissionCommand "{command: 'start'}"`
-   - **Return to Launch (RTL)**: `ros2 topic pub --once /mission_planner/command drone_vision_msgs/msg/MissionCommand "{command: 'rtl'}"`
-   - **Emergency Hold/Abort**: `ros2 topic pub --once /mission_planner/command drone_vision_msgs/msg/MissionCommand "{command: 'abort'}"`
+3. **Wireless Field Operations (From Ground Laptop / Phone / Tablet via Wi-Fi / Telemetry Datalink)**:
+   - **Start Autonomous Mission**:
+     ```bash
+     bash scripts/send_command.sh start
+     ```
+   - **Return to Base (RTL)**:
+     ```bash
+     bash scripts/send_command.sh rtl
+     ```
+   - **Emergency Hold/Abort**:
+     ```bash
+     bash scripts/send_command.sh abort
+     ```
+
 
 ---
 
