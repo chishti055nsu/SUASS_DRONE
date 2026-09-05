@@ -147,14 +147,19 @@ The architecture uses standard ROS 2 topics and modular node design, making sens
    self.declare_parameter('image_topic', '/camera/color/image_raw')
    ```
 
-### C. Integrating GPS / GNSS Navigation (M8N / M9N / HERE3)
-1. **Hardware Connection**: Connected to `UART4` + `I2C2` (Compass) on Matek H743 FCU.
-2. **ArduPilot EKF3 Fusion**: ArduPilot fuses GPS satellites + compass data into Extended Kalman Filter (EKF3) state estimates.
+### C. Integrating Dual Redundant GPS / GNSS Navigation (NEO-M10 + NEO-M8N)
+1. **Hardware Connections (Matek H743-Wing V3)**:
+   - **GPS 1 (NEO-M10)**: Primary GPS connected to `UART4` (`TX4`/`RX4`) + `I2C2` (Compass SDA2/SCL2).
+   - **GPS 2 (NEO-M8N)**: Secondary Redundant GPS connected to `UART6` (`TX6`/`RX6`).
+2. **ArduPilot Dual GPS Blending / Auto-Switching (EKF3)**:
+   - `GPS_TYPE = 1` (AUTO) & `GPS_TYPE2 = 1` (AUTO)
+   - `GPS_AUTO_SWITCH = 1` (Auto-switch to highest accuracy satellite fix)
 3. **MAVROS ROS 2 Topics**:
-   - `/mavros/global_position/global` (`sensor_msgs/msg/NavSatFix`): Real-time Latitude, Longitude, Altitude.
-   - `/mavros/local_position/pose` (`geometry_msgs/msg/PoseStamped`): Local ENU/NED coordinate transform.
-   - `/mavros/gps1/raw` (`mavros_msgs/msg/GPSRAW`): Satellite count & HDOP quality metrics.
-4. **Mission Planner Integration**: `mission_planner_node` uses these GPS topics for 500m search corridor grid generation, geofencing, and automated Return-to-Home (RTL).
+   - `/mavros/global_position/global` (`sensor_msgs/msg/NavSatFix`): Primary fused EKF3 position.
+   - `/mavros/gps1/raw`: Primary M10 GPS raw satellites & HDOP metrics.
+   - `/mavros/gps2/raw`: Secondary M8N GPS raw satellites & HDOP metrics.
+4. **Mission Planner Integration**: `mission_planner_node` consumes the fused `/mavros/global_position/global` for 500m search corridor grid navigation, geofencing, and automated Return-to-Home (RTL).
+
 
 
 ---
