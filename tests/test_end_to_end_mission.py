@@ -24,7 +24,9 @@ sys.path.insert(0, os.path.join(ROOT, "precision_landing"))
 
 from mission_planner.mission_state_machine import MissionStateMachine, MissionState
 from mission_planner.flight_controller import create_flight_controller, SimStubFlightController, MuJoCoFlightController
+from mission_planner.mission_node import compute_drop_decision
 from drone_vision.perception_interface import TargetDetection, parse_action_zone_msg, parse_aruco_pose_msg
+
 
 try:
     from drone_vision_msgs.msg import ActionZone, MissionStatus, MissionCommand
@@ -168,7 +170,40 @@ class TestEndToEndMissionPipeline(unittest.TestCase):
         self.assertAlmostEqual(target_lateral_setpoint[1], 19.5)
         self.assertAlmostEqual(target_lateral_setpoint[2], 2.0)
 
+    def test_compute_drop_decision(self):
+        """Tests pure decision logic function compute_drop_decision."""
+        # 1. Optimal conditions -> Release
+        release, timeout, status = compute_drop_decision(speed_ms=0.10, alt_err=0.10, elapsed_s=5.0)
+        self.assertTrue(release)
+        self.assertFalse(timeout)
+        self.assertEqual(status, "release")
+
+        # 2. Boundary conditions -> Release at exact 0.35m/s and 0.35m
+        release, timeout, status = compute_drop_decision(speed_ms=0.35, alt_err=0.35, elapsed_s=10.0)
+        self.assertTrue(release)
+        self.assertFalse(timeout)
+        self.assertEqual(status, "release")
+
+        # 3. High speed -> Aligning
+        release, timeout, status = compute_drop_decision(speed_ms=0.50, alt_err=0.10, elapsed_s=5.0)
+        self.assertFalse(release)
+        self.assertFalse(timeout)
+        self.assertEqual(status, "aligning")
+
+        # 4. High altitude error -> Aligning
+        release, timeout, status = compute_drop_decision(speed_ms=0.10, alt_err=0.80, elapsed_s=5.0)
+        self.assertFalse(release)
+        self.assertFalse(timeout)
+        self.assertEqual(status, "aligning")
+
+        # 5. Alignment timeout (> 20.0s) -> Timeout
+        release, timeout, status = compute_drop_decision(speed_ms=1.2, alt_err=1.5, elapsed_s=22.0)
+        self.assertFalse(release)
+        self.assertTrue(timeout)
+        self.assertEqual(status, "timeout")
+
     def test_payload_timeout_failsafe_no_release(self):
+
         """Ensures that payload release alignment timeout triggers abort/hold and NEVER releases payload."""
         fc = SimStubFlightController()
         fc.arm_and_offboard()

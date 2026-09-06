@@ -29,22 +29,69 @@ Subscribes:
 
 import time
 import math
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from typing import Tuple, Dict, Any, Optional
 
-from std_msgs.msg import String, Header, Bool
-from geometry_msgs.msg import PoseStamped, TwistStamped
+try:
+    import rclpy
+    from rclpy.node import Node
+    from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+except ImportError:
+    rclpy = None
+    class Node:
+        def __init__(self, name): pass
+        def get_logger(self):
+            class Logger:
+                def info(self, msg): pass
+                def warn(self, msg): pass
+                def warning(self, msg): pass
+                def error(self, msg): pass
+            return Logger()
+    class QoSProfile:
+        def __init__(self, **kwargs): pass
+    class ReliabilityPolicy:
+        BEST_EFFORT = None
+    class HistoryPolicy:
+        KEEP_LAST = None
 
-from drone_vision_msgs.msg import (
-    SceneAnalysis, ActionZone, ObstacleArray,
-    MissionStatus, MissionCommand,
-)
+
+try:
+    from std_msgs.msg import String, Header, Bool
+    from geometry_msgs.msg import PoseStamped, TwistStamped
+    from drone_vision_msgs.msg import (
+        SceneAnalysis, ActionZone, ObstacleArray,
+        MissionStatus, MissionCommand,
+    )
+except ImportError:
+    class String: pass
+    class Header: pass
+    class Bool: pass
+    class PoseStamped: pass
+    class TwistStamped: pass
+    class SceneAnalysis: pass
+    class ActionZone: pass
+    class ObstacleArray: pass
+    class MissionStatus: pass
+    class MissionCommand: pass
+
 
 from .mission_state_machine import MissionStateMachine, MissionState
 from .waypoint_manager import WaypointManager
 from .flight_controller import create_flight_controller, FlightController
 from drone_vision.perception_interface import parse_action_zone_msg, parse_aruco_pose_msg, TargetDetection
+def compute_drop_decision(speed_ms: float, alt_err: float, elapsed_s: float, max_speed: float = 0.35, max_alt_err: float = 0.35, timeout_s: float = 20.0) -> Tuple[bool, bool, str]:
+    """
+    Pure decision function for precision payload drop sequence.
+    Returns: (should_release: bool, timed_out: bool, status_msg: str)
+    """
+    speed_ok = speed_ms <= max_speed
+    alt_ok   = alt_err <= max_alt_err
+
+    if speed_ok and alt_ok:
+        return True, False, "release"
+    elif elapsed_s > timeout_s:
+        return False, True, "timeout"
+    else:
+        return False, False, "aligning"
 
 
 def enu_to_ned(x_east: float, y_north: float, z_up: float):
@@ -118,7 +165,7 @@ class MissionPlannerNode(Node):
         # Instantiate Flight Controller HAL
         self._fc = create_flight_controller(self._fc_type, self)
 
-        # 1. High-frequency 20 Hz OFFBOARD Setpoint Stream Timer (PX4 Requirement)
+        # 1. High-frequency 20 Hz OFFBOARD Position Setpoint Stream Timer (PX4 Requirement)
         self.create_timer(0.05, self._publish_setpoint_stream)
         # 2. Status publish timer (10 Hz)
         self.create_timer(0.1, self._publish_status)
@@ -201,9 +248,6 @@ class MissionPlannerNode(Node):
         self._pub_status   = self.create_publisher(MissionStatus, "/mission_planner/status", 10)
         self._pub_state    = self.create_publisher(String,        "/mission_planner/state",  10)
 
-        if self._use_mavros:
-            self._pub_setpoint = self.create_publisher(PoseStamped, "/mavros/setpoint_position/local", 10)
-
     # ── Vision Callbacks ───────────────────────────────────────────────────
     def _scene_cb(self, msg: SceneAnalysis):
         self._latest_scene = {
@@ -218,23 +262,12 @@ class MissionPlannerNode(Node):
         )
 
     def _landing_cb(self, msg: ActionZone):
-        self._latest_landing = {
-            "zone_detected":     msg.zone_detected,
-            "clearance_score":   msg.clearance_score,
-            "safety_assessment": msg.safety_assessment,
-            "gemma_confidence":  msg.gemma_confidence,
-            "area_ratio":        msg.area_ratio,
-        }
+        detection = parse_action_zone_msg(msg, zone_type="landing_zone")
+        self._latest_landing = detection.to_dict()
 
     def _drop_cb(self, msg: ActionZone):
-        self._latest_drop = {
-            "zone_detected":     msg.zone_detected,
-            "clearance_score":   msg.clearance_score,
-            "safety_assessment": msg.safety_assessment,
-            "gemma_confidence":  msg.gemma_confidence,
-            "area_ratio":        msg.area_ratio,
-            "center_px":         list(msg.center_px),
-        }
+        detection = parse_action_zone_msg(msg, zone_type="drop_zone")
+        self._latest_drop = detection.to_dict()
 
     def _obstacle_cb(self, msg: ObstacleArray):
         self._latest_obstacles = {
@@ -320,18 +353,13 @@ class MissionPlannerNode(Node):
 
     # ── 20 Hz Continuous Setpoint Stream (PX4 OFFBOARD Requirement) ────────
     def _publish_setpoint_stream(self):
-        if not self._use_mavros or not hasattr(self, "_pub_setpoint"):
-            return
-
-        # Publish target_setpoint_enu continuously
-        msg = PoseStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "map"
-        msg.pose.position.x = float(self._target_setpoint_enu[0])
-        msg.pose.position.y = float(self._target_setpoint_enu[1])
-        msg.pose.position.z = float(self._target_setpoint_enu[2])
-        msg.pose.orientation.w = 1.0
-        self._pub_setpoint.publish(msg)
+        # Continuous setpoint streaming handled by HAL FlightController
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.set_setpoint_enu(
+                self._target_setpoint_enu[0],
+                self._target_setpoint_enu[1],
+                self._target_setpoint_enu[2],
+            )
 
     def _set_target_enu(self, east: float, north: float, alt: float):
         self._target_setpoint_enu = [east, north, alt]
@@ -363,12 +391,10 @@ class MissionPlannerNode(Node):
                 self._set_target_enu(wp.east_m, wp.north_m, wp.alt_m)
 
         elif state == MissionState.APPROACH_TARGET:
-            # Use ArUco pose/lock for lateral target setpoint alignment
             target = self._get_precision_target_enu(self._approach_alt)
             self._set_target_enu(target[0], target[1], target[2])
 
         elif state == MissionState.LOITER:
-            # Hold current position
             self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._pos_enu[2])
 
         elif state == MissionState.DROP_PAYLOAD:
@@ -379,101 +405,57 @@ class MissionPlannerNode(Node):
             self._set_target_enu(0.0, 0.0, self._search_alt)
 
         elif state == MissionState.LAND:
-            # Use ArUco pose/lock for lateral target setpoint alignment during landing
             target = self._get_precision_target_enu(0.0)
             self._set_target_enu(target[0], target[1], target[2])
 
     # ── Multi-Condition Validated Payload Release Controller Interface ─────
     def _drop_payload_sequence(self):
         """
-        Production Payload Controller Interface:
-        Verifies:
-          1. Speed <= 0.35 m/s
-          2. Altitude error <= 0.35 m from drop altitude
-          3. Horizontal position stability
-          4. Target lock confirmation
-        Then triggers actuator via FlightController HAL and MAVROS MAV_CMD_DO_SET_SERVO.
+        Production Payload Controller Interface using compute_drop_decision pure function.
         """
         if self._drop_attempt_start == 0.0:
             self._drop_attempt_start = time.time()
             self.get_logger().info("Initiating precision payload drop alignment...")
 
-        # Target drop altitude with ArUco lateral precision setpoint
         target = self._get_precision_target_enu(self._land_alt)
         self._set_target_enu(target[0], target[1], target[2])
 
         alt_err = abs(self._pos_enu[2] - self._land_alt)
-        speed_ok = self._speed_ms <= 0.35
-        alt_ok   = alt_err <= 0.35
+        elapsed_s = time.time() - self._drop_attempt_start
 
-        if speed_ok and alt_ok:
+        should_release, timed_out, status = compute_drop_decision(
+            speed_ms=self._speed_ms, alt_err=alt_err, elapsed_s=elapsed_s
+        )
+
+        if should_release:
             self.get_logger().warn(
                 f"PAYLOAD RELEASE CONDITIONS MET! Speed={self._speed_ms:.2f}m/s, AltErr={alt_err:.2f}m. Triggering servo actuator!"
             )
             self._trigger_payload_servo()
             self._payload_dropped = True
             self._sm.on_payload_dropped()
+        elif timed_out:
+            self.get_logger().error(
+                "Drop alignment timeout exceeded! Aborting payload release and initiating Hold / RTL safety mode."
+            )
+            self._sm.on_abort_command()
+            self._send_hold()
         else:
             self.get_logger().info(
                 f"Waiting for drop alignment: Speed={self._speed_ms:.2f}m/s (max 0.35), AltErr={alt_err:.2f}m (max 0.35)..."
             )
-            if (time.time() - self._drop_attempt_start) > 20.0:
-                self.get_logger().error(
-                    "Drop alignment timeout exceeded! Aborting payload release and initiating Hold / RTL safety mode."
-                )
-                self._sm.on_abort_command()
-                self._send_hold()
 
     def _trigger_payload_servo(self):
-        """Send actuator payload release signal to HAL and MAVROS service call."""
+        """Send actuator payload release signal via HAL."""
         if hasattr(self, "_fc") and self._fc is not None:
             self._fc.trigger_payload_release()
 
-        if not self._use_mavros:
-            return
-        try:
-            from mavros_msgs.srv import CommandLong
-            cli = self.create_client(CommandLong, "/mavros/cmd/command")
-            if cli.wait_for_service(timeout_sec=1.0):
-                req = CommandLong.Request()
-                req.command = 183  # MAV_CMD_DO_SET_SERVO
-                req.param1 = 10.0   # Instance 10
-                req.param2 = 1900.0 # PWM 1900us (Release)
-                cli.call_async(req)
-                self.get_logger().info("MAV_CMD_DO_SET_SERVO command sent successfully.")
-        except Exception as e:
-            self.get_logger().error(f"Servo trigger error: {e}")
-
-    # ── MAVROS Service Call Helpers ─────────────────────────────────────────
+    # ── MAVROS & HAL Control Dispatches ─────────────────────────────────────
     def _arm_and_takeoff(self):
-        """Stream setpoints first (1s), then request OFFBOARD mode & ARM via HAL and MAVROS."""
+        """Stream setpoints first, then request OFFBOARD mode & ARM via HAL."""
+        self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._search_alt)
         if hasattr(self, "_fc") and self._fc is not None:
             self._fc.arm_and_offboard()
-
-        if not self._use_mavros:
-            return
-
-        self.get_logger().info("Initiating Arm & Offboard sequence...")
-        self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._search_alt)
-
-        try:
-            from mavros_msgs.srv import CommandBool, SetMode
-            # Request OFFBOARD mode
-            mode_cli = self.create_client(SetMode, "/mavros/set_mode")
-            if mode_cli.wait_for_service(timeout_sec=2.0):
-                req = SetMode.Request()
-                req.custom_mode = "OFFBOARD"
-                mode_cli.call_async(req)
-
-            # Request ARM
-            arm_cli = self.create_client(CommandBool, "/mavros/cmd/arming")
-            if arm_cli.wait_for_service(timeout_sec=2.0):
-                req = CommandBool.Request()
-                req.value = True
-                arm_cli.call_async(req)
-                self.get_logger().info("Arming command sent to MAVROS.")
-        except Exception as e:
-            self.get_logger().error(f"Arm/takeoff error: {e}")
 
     def _emergency_flight_termination(self):
         """SUAS Rule 5.3.8: Immediate emergency motor shutdown."""
@@ -484,19 +466,6 @@ class MissionPlannerNode(Node):
         if hasattr(self, "_fc") and self._fc is not None:
             self._fc.disarm()
 
-        if not self._use_mavros:
-            return
-        try:
-            from mavros_msgs.srv import CommandBool
-            disarm_cli = self.create_client(CommandBool, "/mavros/cmd/arming")
-            if disarm_cli.wait_for_service(timeout_sec=1.0):
-                req = CommandBool.Request()
-                req.value = False
-                disarm_cli.call_async(req)
-                self.get_logger().warn("DISARM / Emergency termination sent via MAVROS.")
-        except Exception as e:
-            self.get_logger().error(f"Disarm error: {e}")
-
     def _send_hold(self):
         self._set_target_enu(self._pos_enu[0], self._pos_enu[1], self._pos_enu[2])
 
@@ -504,16 +473,8 @@ class MissionPlannerNode(Node):
         self._set_target_enu(self._pos_enu[0], self._pos_enu[1], 0.0)
 
     def _send_rtl(self):
-        if self._use_mavros:
-            try:
-                from mavros_msgs.srv import SetMode
-                mode_cli = self.create_client(SetMode, "/mavros/set_mode")
-                if mode_cli.wait_for_service(timeout_sec=1.0):
-                    req = SetMode.Request()
-                    req.custom_mode = "AUTO.RTL"
-                    mode_cli.call_async(req)
-            except Exception as e:
-                self.get_logger().error(f"RTL mode set error: {e}")
+        self._set_target_enu(0.0, 0.0, self._search_alt)
+
 
     # ── Watchdog Check ───────────────────────────────────────────────────────
     def _watchdog_check(self):

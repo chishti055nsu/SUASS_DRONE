@@ -138,6 +138,13 @@ class SimStubFlightController(FlightController):
 class MuJoCoFlightController(FlightController):
     """
     Flight Controller HAL interfacing directly with MuJoCo simulator (skydio_x2_sim.py).
+
+    Expected sim_instance contract methods:
+      - sim.arm(): Arms simulated motors
+      - sim.disarm(): Disarms simulated motors
+      - sim.set_target(east_m, north_m, up_m): Sets position setpoint
+      - sim.drop_payload(): Triggers simulated payload release
+      - sim.get_state(): Returns state dict with 'pos_enu', 'vel_enu', 'payload_dropped'
     """
 
     def __init__(self, sim_instance: Optional[Any] = None):
@@ -215,6 +222,8 @@ class MuJoCoFlightController(FlightController):
 class MavrosFlightController(FlightController):
     """
     Flight Controller HAL interfacing with MAVROS / PX4 via ROS2 Node.
+    Encapsulates setpoint publishing to /mavros/setpoint_position/local and
+    MAVROS service calls (SetMode, CommandBool, CommandLong).
     """
 
     def __init__(self, node: Any):
@@ -227,28 +236,68 @@ class MavrosFlightController(FlightController):
         self._vel_enu = [0.0, 0.0, 0.0]
         self._battery_pct = 100.0
 
-        # ROS2 Service clients and publishers are managed through thin adapter node
         self._init_ros_interfaces()
 
     def _init_ros_interfaces(self) -> None:
-        from geometry_msgs.msg import PoseStamped
-        from std_msgs.msg import Header
+        if self._node is None or not hasattr(self._node, "create_publisher"):
+            return
 
+        from geometry_msgs.msg import PoseStamped
         self._setpoint_pub = self._node.create_publisher(
             PoseStamped, "/mavros/setpoint_position/local", 10
         )
 
     def arm_and_offboard(self) -> bool:
-        # Service calls are dispatched asynchronously by MissionPlannerNode thin wrapper
-        self._node.get_logger().info("[HAL Mavros] Requesting ARM + OFFBOARD mode.")
-        return True
+        """Dispatches SetMode (OFFBOARD) and CommandBool (ARM) service calls asynchronously."""
+        if self._node is None or not hasattr(self._node, "create_client"):
+            return False
+
+        self._node.get_logger().info("[HAL Mavros] Requesting ARM + OFFBOARD mode via MAVROS services...")
+        try:
+            from mavros_msgs.srv import CommandBool, SetMode
+            mode_cli = self._node.create_client(SetMode, "/mavros/set_mode")
+            if mode_cli.wait_for_service(timeout_sec=1.5):
+                req = SetMode.Request()
+                req.custom_mode = "OFFBOARD"
+                mode_cli.call_async(req)
+
+            arm_cli = self._node.create_client(CommandBool, "/mavros/cmd/arming")
+            if arm_cli.wait_for_service(timeout_sec=1.5):
+                req = CommandBool.Request()
+                req.value = True
+                arm_cli.call_async(req)
+                self._node.get_logger().info("[HAL Mavros] Arming command sent to MAVROS.")
+            return True
+        except Exception as e:
+            if hasattr(self._node, "get_logger"):
+                self._node.get_logger().error(f"[HAL Mavros] Arm/OFFBOARD error: {e}")
+            return False
 
     def disarm(self) -> bool:
-        self._node.get_logger().info("[HAL Mavros] Requesting DISARM.")
-        return True
+        """Dispatches CommandBool (DISARM) service call asynchronously."""
+        if self._node is None or not hasattr(self._node, "create_client"):
+            return False
+
+        self._node.get_logger().info("[HAL Mavros] Requesting DISARM via MAVROS service...")
+        try:
+            from mavros_msgs.srv import CommandBool
+            disarm_cli = self._node.create_client(CommandBool, "/mavros/cmd/arming")
+            if disarm_cli.wait_for_service(timeout_sec=1.5):
+                req = CommandBool.Request()
+                req.value = False
+                disarm_cli.call_async(req)
+                self._node.get_logger().warn("[HAL Mavros] DISARM command sent via MAVROS.")
+            return True
+        except Exception as e:
+            if hasattr(self._node, "get_logger"):
+                self._node.get_logger().error(f"[HAL Mavros] Disarm error: {e}")
+            return False
 
     def set_setpoint_enu(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> None:
         self._target_setpoint = [east_m, north_m, up_m]
+
+        if not hasattr(self, "_setpoint_pub") or self._setpoint_pub is None:
+            return
 
         from geometry_msgs.msg import PoseStamped
         msg = PoseStamped()
@@ -258,7 +307,6 @@ class MavrosFlightController(FlightController):
         msg.pose.position.y = float(north_m)
         msg.pose.position.z = float(up_m)
 
-        # Convert yaw to quaternion orientation if needed
         cy = math.cos(math.radians(yaw_deg) * 0.5)
         sy = math.sin(math.radians(yaw_deg) * 0.5)
         msg.pose.orientation.w = cy
@@ -267,8 +315,27 @@ class MavrosFlightController(FlightController):
         self._setpoint_pub.publish(msg)
 
     def trigger_payload_release(self) -> bool:
-        self._node.get_logger().info("[HAL Mavros] Payload release triggered.")
-        return True
+        """Dispatches CommandLong (MAV_CMD_DO_SET_SERVO) service call asynchronously."""
+        if self._node is None or not hasattr(self._node, "create_client"):
+            return False
+
+        self._node.get_logger().info("[HAL Mavros] Triggering payload release via MAVROS CommandLong...")
+        try:
+            from mavros_msgs.srv import CommandLong
+            cli = self._node.create_client(CommandLong, "/mavros/cmd/command")
+            if cli.wait_for_service(timeout_sec=1.5):
+                req = CommandLong.Request()
+                req.command = 183   # MAV_CMD_DO_SET_SERVO
+                req.param1 = 10.0    # Instance 10
+                req.param2 = 1900.0  # PWM 1900us (Release)
+                cli.call_async(req)
+                self._node.get_logger().info("[HAL Mavros] MAV_CMD_DO_SET_SERVO command sent successfully.")
+            return True
+        except Exception as e:
+            if hasattr(self._node, "get_logger"):
+                self._node.get_logger().error(f"[HAL Mavros] Servo trigger error: {e}")
+            return False
+
 
     def update_telemetry(
         self,

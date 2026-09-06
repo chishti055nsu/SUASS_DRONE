@@ -83,6 +83,16 @@
 
 ---
 
+### 3.1 Precision Landing Alignment & Target Lock Behavior
+* **Target Locked (`target_locked == True`)**:
+  When ArUco / visual target tracking confirms target lock via `/precision_landing/target_locked`, `_get_precision_target_enu` calculates the lateral 3D ENU setpoint using the relative offset ($dx, dy$):
+  $$\text{Setpoint}_{\text{enu}} = [\text{Pos}_x + dx, \text{Pos}_y + dy, \text{TargetAlt}]$$
+* **Fallback Behavior (`target_locked == False`)**:
+  If target lock is lost or unconfirmed during `APPROACH_TARGET` or `LAND`, `_get_precision_target_enu` holds the vehicle's current lateral position (`[\text{Pos}_x, \text{Pos}_y, \text{TargetAlt}]`). This prevents lateral drift while descending safely.
+
+---
+
+
 ## 4. SUAS Safety Case & Failsafes
 
 1. **Rule 5.3.1 (Manual Safety Pilot Override)**:
