@@ -504,7 +504,8 @@ class MissionPlannerNode(Node):
 
         wp = self._wm.current_waypoint
         if wp:
-            msg.current_target_ned = [float(wp.north_m), float(wp.east_m), float(-wp.alt_m)]
+            n, e, d = wp.ned
+            msg.current_target_ned = [float(n), float(e), float(d)]
         else:
             n, e, d = enu_to_ned(self._target_setpoint_enu[0], self._target_setpoint_enu[1], self._target_setpoint_enu[2])
             msg.current_target_ned = [float(n), float(e), float(d)]

@@ -297,7 +297,7 @@ class MissionStateMachine:
         """In SEARCH: Deterministic threshold checks for targets using normalized TargetDetection."""
         # Drop mission check (requires deterministic confidence >= 0.50)
         if self.mission_type == "search_and_drop" and (drop_zone.get("zone_detected") or drop_zone.get("detected")):
-            det_conf = float(drop_zone.get("confidence", 0.0) or drop_zone.get("gemma_confidence", 0.0))
+            det_conf = float(drop_zone.get("confidence", 0.0))
             if det_conf >= 0.50:
                 self._target_acquired = True
                 self._transition(MissionState.APPROACH_TARGET, "deterministic drop zone detected")
@@ -305,7 +305,7 @@ class MissionStateMachine:
 
         # Landing mission check
         if landing_zone.get("zone_detected") or landing_zone.get("detected"):
-            land_conf = float(landing_zone.get("confidence", 0.0) or landing_zone.get("clearance_score", 0.0))
+            land_conf = float(landing_zone.get("confidence", 0.0))
             if land_conf >= 0.50:
                 self._transition(MissionState.LOITER, "deterministic landing zone detected")
                 return

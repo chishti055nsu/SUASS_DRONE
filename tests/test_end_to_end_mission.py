@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(ROOT, "precision_landing"))
 
 from mission_planner.mission_state_machine import MissionStateMachine, MissionState
 from mission_planner.flight_controller import create_flight_controller, SimStubFlightController, MuJoCoFlightController
-from mission_planner.mission_node import compute_drop_decision
+from mission_planner.mission_node import compute_drop_decision, enu_to_ned, ned_to_enu
 from drone_vision.perception_interface import TargetDetection, parse_action_zone_msg, parse_aruco_pose_msg
 
 
@@ -285,6 +285,28 @@ class TestEndToEndMissionPipeline(unittest.TestCase):
 
         self.sm.on_manual_override()
         self.assertEqual(self.sm.state, MissionState.MANUAL_OVERRIDE.value)
+
+
+class TestCoordinateTransforms(unittest.TestCase):
+    """Verifies strict ENU <-> NED coordinate system transformations."""
+
+    def test_enu_to_ned(self):
+        # ENU (East=10, North=20, Up=5) -> NED (North=20, East=10, Down=-5)
+        n, e, d = enu_to_ned(10.0, 20.0, 5.0)
+        self.assertEqual((n, e, d), (20.0, 10.0, -5.0))
+
+    def test_ned_to_enu(self):
+        # NED (North=20, East=10, Down=-5) -> ENU (East=10, North=20, Up=5)
+        e, n, u = ned_to_enu(20.0, 10.0, -5.0)
+        self.assertEqual((e, n, u), (10.0, 20.0, 5.0))
+
+    def test_roundtrip_transform(self):
+        orig_enu = (15.5, -42.0, 12.3)
+        ned = enu_to_ned(*orig_enu)
+        roundtrip_enu = ned_to_enu(*ned)
+        self.assertAlmostEqual(orig_enu[0], roundtrip_enu[0])
+        self.assertAlmostEqual(orig_enu[1], roundtrip_enu[1])
+        self.assertAlmostEqual(orig_enu[2], roundtrip_enu[2])
 
 
 if __name__ == "__main__":
