@@ -23,11 +23,25 @@ def generate_launch_description():
 
     # ── Launch Arguments ───────────────────────────────────────────────────
     args = [
-        DeclareLaunchArgument("source_type",   default_value="usb_cam"),
+        DeclareLaunchArgument("source_type",   default_value="rtsp"),
+        DeclareLaunchArgument("rtsp_url",      default_value="rtsp://192.168.144.25:8554/main.264"),
         DeclareLaunchArgument("yolo_model",    default_value="yolov8n.pt"),
         DeclareLaunchArgument("mission_type",  default_value="search_and_drop"),
         DeclareLaunchArgument("use_mavros",    default_value="true"),
+        DeclareLaunchArgument("tfmini_port",   default_value="/dev/ttyUSB0"),
     ]
+
+    # ── TFmini-S LiDAR Node ───────────────────────────────────────────────────
+    tfmini_node = Node(
+        package="drone_vision",
+        executable="tfmini_node",
+        name="tfmini_lidar_node",
+        output="screen",
+        parameters=[{
+            "port": LaunchConfiguration("tfmini_port"),
+            "baudrate": 115200,
+        }],
+    )
 
     # ── Precision Landing Node ───────────────────────────────────────────────
     precision_node = Node(
@@ -41,7 +55,7 @@ def generate_launch_description():
         }],
     )
 
-    # ── Vision Node ────────────────────────────────────────────────────────
+    # ── Vision Node (SIYI A8 Mini RTSP + YOLOv8) ─────────────────────────────
     vision_node = Node(
         package="drone_vision",
         executable="vision_node",
@@ -51,12 +65,13 @@ def generate_launch_description():
             vision_params,
             {
                 "source_type": LaunchConfiguration("source_type"),
+                "rtsp_url":    LaunchConfiguration("rtsp_url"),
                 "yolo_model":  LaunchConfiguration("yolo_model"),
             }
         ],
     )
 
-    # ── Mission Planner (delayed 3s to let vision warm up) ─────────────────
+    # ── Mission Planner (delayed 3s to let vision & LiDAR warm up) ────────────
     mission_node = TimerAction(
         period=3.0,
         actions=[
@@ -76,4 +91,5 @@ def generate_launch_description():
         ]
     )
 
-    return LaunchDescription(args + [precision_node, vision_node, mission_node])
+    return LaunchDescription(args + [tfmini_node, precision_node, vision_node, mission_node])
+

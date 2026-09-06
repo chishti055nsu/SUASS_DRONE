@@ -24,6 +24,8 @@ setup(
     entry_points={
         "console_scripts": [
             "vision_node = drone_vision.vision_node:main",
+            "tfmini_node = drone_vision.tfmini_node:main",
         ],
     },
+
 )
