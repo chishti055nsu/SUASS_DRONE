@@ -143,11 +143,13 @@ ros2 launch mission_planner full_system.launch.py use_mavros:=true
 
 ---
 
-## 📖 User Guide & Commercial Architecture
+## 📖 User Guide & Hardware Documentation
+- 👉 **[Hardware Setup & Verification Guide](docs/HARDWARE_SETUP.md)**
 - 👉 **[User & Sensor Integration Guide](docs/USER_AND_SENSOR_INTEGRATION_GUIDE.md)**
 - 👉 **[Commercial Hardware-Agnostic Autonomy Blueprint](docs/COMMERCIAL_AUTONOMY_PLATFORM.md)**
 
 ---
+
 
 ## 🧪 Unit & Integration Verification
 
