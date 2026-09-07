@@ -311,6 +311,10 @@ class MissionPlannerNode(Node):
         elif cmd in ("rtl", "rth", "return_to_launch", "return_to_home", "return_home"):
             self._sm.on_rtl_command()
             self._send_rtl()
+        elif cmd == "goto":
+            n, e, d = msg.goto_ned[0], msg.goto_ned[1], msg.goto_ned[2]
+            self._set_target_enu(float(e), float(n), float(-d))
+            self.get_logger().info(f"[GOTO COMMAND] Target override set to ENU=({e:.1f}, {n:.1f}, {-d:.1f}m)")
         elif cmd == "terminate":
             self._sm.on_terminate_command()
             self._emergency_flight_termination()
