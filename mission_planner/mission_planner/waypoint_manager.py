@@ -12,10 +12,25 @@ Handles:
 
 import math
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
+
+
+def lat_lon_to_enu(lat: float, lon: float, ref_lat: float, ref_lon: float) -> Tuple[float, float]:
+    """
+    Converts global GPS (Latitude, Longitude) in decimal degrees to local ENU (East, North) meters
+    relative to reference Home GPS point using WGS-84 Earth radius projection.
+    """
+    R = 6378137.0  # WGS-84 Earth radius in meters
+    dlat = math.radians(lat - ref_lat)
+    dlon = math.radians(lon - ref_lon)
+    ref_lat_rad = math.radians(ref_lat)
+
+    north_m = dlat * R
+    east_m = dlon * R * math.cos(ref_lat_rad)
+    return float(east_m), float(north_m)
 
 
 @dataclass
@@ -182,6 +197,36 @@ class WaypointManager:
             index=idx, north_m=0.0, east_m=0.0,
             alt_m=self.search_alt, label="return_home", loiter_s=0.0,
         ))
+
+    def load_raw_gps_coordinates(
+        self,
+        home_lat: float,
+        home_lon: float,
+        gps_coords_list: List[Dict[str, float]],
+        default_alt_m: float = 15.0
+    ) -> MissionPlan:
+        """
+        Parses raw GPS coordinates list [{"latitude": lat, "longitude": lon, "altitude": alt}, ...]
+        (e.g., provided on paper, JSON, or whiteboard by competition judges) and converts them into local ENU waypoints.
+        """
+        plan = MissionPlan(name="raw_gps_mission", home_lat=home_lat, home_lon=home_lon, home_alt=default_alt_m)
+        idx = 0
+        for item in gps_coords_list:
+            lat = float(item.get("latitude", item.get("lat", home_lat)))
+            lon = float(item.get("longitude", item.get("lon", home_lon)))
+            item_alt = float(item.get("altitude", item.get("alt", default_alt_m)))
+
+            east_m, north_m = lat_lon_to_enu(lat, lon, home_lat, home_lon)
+            plan.waypoints.append(Waypoint(
+                index=idx, north_m=north_m, east_m=east_m, alt_m=item_alt,
+                label=f"gps_wp_{idx}", loiter_s=1.0
+            ))
+            idx += 1
+
+        self._plan = plan
+        self._current_idx = 0
+        logger.info(f"Loaded raw GPS plan with {len(plan.waypoints)} waypoints relative to Home ({home_lat:.6f}, {home_lon:.6f})")
+        return plan
 
     # ── Navigation & Progress Tracking ─────────────────────────────────────
     def update_position(self, north_m: float, east_m: float, alt_m: float) -> None:

@@ -443,5 +443,29 @@ class TestTargetGeolocator(unittest.TestCase):
         self.assertAlmostEqual(target.position_enu[1], 50.0, delta=0.5)
 
 
+class TestRawGPSMissionLoading(unittest.TestCase):
+    """Verifies raw GPS coordinate parsing and WGS-84 projection into local ENU waypoints."""
+
+    def test_raw_gps_coordinates_loading(self):
+        from mission_planner.waypoint_manager import WaypointManager, lat_lon_to_enu
+
+        wm = WaypointManager()
+        home_lat, home_lon = 38.145000, -76.427000
+
+        # Test points given by competition judges (Decimal Degrees)
+        gps_points = [
+            {"latitude": 38.145100, "longitude": -76.427000, "altitude": 15.0},
+            {"latitude": 38.145100, "longitude": -76.426000, "altitude": 15.0},
+        ]
+
+        plan = wm.load_raw_gps_coordinates(home_lat, home_lon, gps_points)
+        self.assertEqual(plan.total(), 2)
+
+        # 0.0001 deg North ~ 11.1 meters North
+        e0, n0 = plan.waypoints[0].east_m, plan.waypoints[0].north_m
+        self.assertAlmostEqual(e0, 0.0, delta=0.5)
+        self.assertAlmostEqual(n0, 11.1, delta=1.5)
+
+
 if __name__ == "__main__":
     unittest.main()
