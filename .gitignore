@@ -19,5 +19,9 @@ __pycache__/
 # Weight files & engine binaries
 *.engine
 
+# Orthomosaic output
+orthomosaic_output/
+tests/scratch_ortho/
+
 # Optional: Uncomment line below if you want to exclude simulation files when pushing to GitHub
 # simulation/
