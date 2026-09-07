@@ -342,6 +342,39 @@ class TestEndToEndMissionPipeline(unittest.TestCase):
         self.sm.on_landed()
         self.assertEqual(self.sm.state, MissionState.COMPLETE.value)
 
+    def test_publish_vision_pose_hal(self):
+        """Verifies publish_vision_pose across all FlightController HAL backends."""
+        stub_fc = SimStubFlightController()
+        self.assertTrue(stub_fc.publish_vision_pose(10.0, 20.0, 15.0))
+        self.assertEqual(stub_fc.get_telemetry()["pos_enu"], (10.0, 20.0, 15.0))
+
+        mujoco_fc = MuJoCoFlightController()
+        self.assertTrue(mujoco_fc.publish_vision_pose(5.0, -5.0, 10.0))
+
+        class MockNode:
+            def create_publisher(self, *args, **kwargs): return None
+            def get_logger(self):
+                class MockLogger:
+                    def info(self, msg): pass
+                    def warn(self, msg): pass
+                    def error(self, msg): pass
+                return MockLogger()
+            def get_clock(self):
+                class MockClock:
+                    def now(self):
+                        class MockTime:
+                            def to_msg(self): return None
+                        return MockTime()
+                return MockClock()
+
+        from unittest.mock import MagicMock
+        mock_srv = MagicMock()
+        mock_geom = MagicMock()
+        with unittest.mock.patch.dict("sys.modules", {"mavros_msgs.srv": mock_srv, "geometry_msgs.msg": mock_geom}):
+            mavros_fc = MavrosFlightController(MockNode())
+            mavros_fc._vision_pose_pub = MagicMock()
+            self.assertTrue(mavros_fc.publish_vision_pose(1.0, 2.0, 3.0))
+
 
 class TestCoordinateTransforms(unittest.TestCase):
     """Verifies strict ENU <-> NED coordinate system transformations."""

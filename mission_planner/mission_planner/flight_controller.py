@@ -44,6 +44,11 @@ class FlightController(ABC):
         pass
 
     @abstractmethod
+    def publish_vision_pose(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> bool:
+        """Publish VIO/Vision position estimate to flight controller EKF."""
+        pass
+
+    @abstractmethod
     def get_telemetry(self) -> Dict[str, Any]:
         """
         Returns telemetry dictionary:
@@ -105,6 +110,10 @@ class SimStubFlightController(FlightController):
     def trigger_rtl(self) -> bool:
         self._mode = "RTL"
         self._target_setpoint = [0.0, 0.0, 15.0]
+        return True
+
+    def publish_vision_pose(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> bool:
+        self._pos_enu = [east_m, north_m, up_m]
         return True
 
     def update_sim_step(self, dt: float = 0.1) -> None:
@@ -204,6 +213,11 @@ class MuJoCoFlightController(FlightController):
                 self._sim.set_target(0.0, 0.0, 15.0)
         return True
 
+    def publish_vision_pose(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> bool:
+        if self._sim is not None and hasattr(self._sim, 'set_target'):
+            self._sim.set_target(east_m, north_m, up_m)
+        return True
+
     def get_telemetry(self) -> Dict[str, Any]:
         if self._sim is not None and hasattr(self._sim, 'get_state'):
             state = self._sim.get_state()
@@ -266,6 +280,9 @@ class MavrosFlightController(FlightController):
             from geometry_msgs.msg import PoseStamped
             self._setpoint_pub = self._node.create_publisher(
                 PoseStamped, "/mavros/setpoint_position/local", 10
+            )
+            self._vision_pose_pub = self._node.create_publisher(
+                PoseStamped, "/mavros/vision_pose/pose", 10
             )
         except ImportError:
             pass
@@ -377,6 +394,23 @@ class MavrosFlightController(FlightController):
         except Exception as e:
             if hasattr(self._node, "get_logger"):
                 self._node.get_logger().error(f"[HAL Mavros] RTL error: {e}")
+            return False
+
+    def publish_vision_pose(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> bool:
+        """Publishes VIO / RealSense D455 pose into MAVROS EKF /mavros/vision_pose/pose."""
+        if not hasattr(self, "_vision_pose_pub") or self._vision_pose_pub is None:
+            return False
+        try:
+            from geometry_msgs.msg import PoseStamped
+            msg = PoseStamped()
+            msg.header.stamp = self._node.get_clock().now().to_msg()
+            msg.header.frame_id = "map"
+            msg.pose.position.x = float(east_m)
+            msg.pose.position.y = float(north_m)
+            msg.pose.position.z = float(up_m)
+            self._vision_pose_pub.publish(msg)
+            return True
+        except Exception:
             return False
 
 

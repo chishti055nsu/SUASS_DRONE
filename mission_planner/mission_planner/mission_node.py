@@ -158,6 +158,9 @@ class MissionPlannerNode(Node):
         self._drop_attempt_start = 0.0
 
         self._latest_precision: dict = {}
+        self._home_pose_map: tuple = (0.0, 0.0, 0.0)
+        self._localization_source: str = "GPS_EKF"  # "GPS_EKF" | "VISUAL_VIO"
+        self._last_vio_time: float = 0.0
 
         self._init_subscribers()
         self._init_publishers()
@@ -225,9 +228,10 @@ class MissionPlannerNode(Node):
         self.create_subscription(ObstacleArray,  "/drone_vision/obstacles",      self._obstacle_cb, reliable)
         self.create_subscription(MissionCommand, "/mission_planner/command",     self._command_cb,  reliable)
 
-        # Precision landing subscribers (ArUco / AprilTag)
+        # Precision landing & RealSense VIO subscribers
         self.create_subscription(PoseStamped, "/precision_landing/target_pose",   self._precision_pose_cb, reliable)
         self.create_subscription(Bool,        "/precision_landing/target_locked", self._precision_lock_cb, reliable)
+        self.create_subscription(PoseStamped, "/camera/odom/sample",             self._vio_pose_cb,       best_effort)
 
         if self._use_mavros and self._fc_type == "mavros":
             try:
@@ -329,19 +333,35 @@ class MissionPlannerNode(Node):
 
     def _pose_cb(self, msg: PoseStamped):
         p = msg.pose.position
-        self._pos_enu = [p.x, p.y, p.z]
-        self._last_pose_time = time.time()
-        self._wm.update_position(p.y, p.x, p.z)  # Update North, East, Alt
+        if self._localization_source == "GPS_EKF":
+            self._pos_enu = [p.x, p.y, p.z]
+            self._last_pose_time = time.time()
+            self._wm.update_position(p.y, p.x, p.z)  # Update North, East, Alt
+
+            # Snapshot home pose in map frame during takeoff
+            if self._sm.state in (MissionState.ARMING, MissionState.TAKEOFF) and self._home_pose_map == (0.0, 0.0, 0.0):
+                self._home_pose_map = (float(p.x), float(p.y), float(p.z))
 
         # Check altitude for TAKEOFF -> SEARCH transition
         if self._sm.state == MissionState.TAKEOFF:
-            if p.z >= self._search_alt * 0.92:
+            if self._pos_enu[2] >= self._search_alt * 0.92:
                 self._sm.on_altitude_reached()
 
-        # Check home distance for RETURN_HOME -> LAND
-        dist_home = math.hypot(p.x, p.y)
+        # Check map-frame home distance for RETURN_HOME -> LAND
+        dist_home = math.hypot(self._pos_enu[0] - self._home_pose_map[0], self._pos_enu[1] - self._home_pose_map[1])
         if self._sm.state == MissionState.RETURN_HOME and dist_home < 2.0:
             self._sm.on_at_home()
+
+    def _vio_pose_cb(self, msg: PoseStamped):
+        """RealSense D455 Visual Inertial Odometry callback for GPS-denied navigation."""
+        p = msg.pose.position
+        self._last_vio_time = time.time()
+        if self._localization_source == "VISUAL_VIO":
+            self._pos_enu = [p.x, p.y, p.z]
+            self._last_pose_time = time.time()
+            self._wm.update_position(p.y, p.x, p.z)
+            if hasattr(self, "_fc") and self._fc is not None:
+                self._fc.publish_vision_pose(p.x, p.y, p.z)
 
     def _vel_cb(self, msg: TwistStamped):
         v = msg.twist.linear
@@ -402,10 +422,10 @@ class MissionPlannerNode(Node):
                 self._drop_payload_sequence()
 
         elif state == MissionState.RETURN_HOME:
-            self._set_target_enu(0.0, 0.0, self._search_alt)
-            dist_home = math.sqrt(self._pos_enu[0]**2 + self._pos_enu[1]**2)
+            self._set_target_enu(self._home_pose_map[0], self._home_pose_map[1], self._search_alt)
+            dist_home = math.hypot(self._pos_enu[0] - self._home_pose_map[0], self._pos_enu[1] - self._home_pose_map[1])
             if dist_home < self._waypoint_acceptance_m:
-                self.get_logger().info("Home position reached! Transitioning RETURN_HOME -> LAND.")
+                self.get_logger().info("Home map position reached! Transitioning RETURN_HOME -> LAND.")
                 self._sm.on_at_home()
 
         elif state == MissionState.LAND:
@@ -477,19 +497,26 @@ class MissionPlannerNode(Node):
         self._set_target_enu(self._pos_enu[0], self._pos_enu[1], 0.0)
 
     def _send_rtl(self):
-        self._set_target_enu(0.0, 0.0, self._search_alt)
+        self._set_target_enu(self._home_pose_map[0], self._home_pose_map[1], self._search_alt)
         if hasattr(self, "_fc") and self._fc is not None:
             self._fc.trigger_rtl()
 
 
     # ── Watchdog Check ───────────────────────────────────────────────────────
     def _watchdog_check(self):
-        """Check position telemetry freshness & connection state."""
+        """Check position telemetry freshness & connection state with VIO fallback."""
         if self._use_mavros:
             dt = time.time() - self._last_pose_time
-            if dt > 3.0 and self._sm.state_enum not in (MissionState.IDLE, MissionState.COMPLETE, MissionState.TERMINATED):
-                self.get_logger().error(f"[WATCHDOG FAILURE] Telemetry pose lost for {dt:.1f}s! Triggering RTL.")
-                self._sm.on_rtl_command()
+            if dt > 2.5 and self._sm.state_enum not in (MissionState.IDLE, MissionState.COMPLETE, MissionState.TERMINATED):
+                dt_vio = time.time() - self._last_vio_time
+                if dt_vio < 2.0 and self._localization_source == "GPS_EKF":
+                    self.get_logger().warn(
+                        "[WATCHDOG] GPS Pose Stale > 2.5s! Switching active localization source to RealSense VISUAL_VIO!"
+                    )
+                    self._localization_source = "VISUAL_VIO"
+                else:
+                    self.get_logger().error(f"[WATCHDOG FAILURE] Telemetry pose lost for {dt:.1f}s! Triggering RTL.")
+                    self._sm.on_rtl_command()
 
     # ── State Change Callback & Status ─────────────────────────────────────
     def _on_state_change(self, old_state: str, new_state: str):
