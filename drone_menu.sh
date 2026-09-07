@@ -1,0 +1,1 @@
+scripts/drone_control_center.sh
