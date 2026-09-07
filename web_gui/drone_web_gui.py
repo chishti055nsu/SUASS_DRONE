@@ -9,6 +9,7 @@ No terminal usage required — control drone via one-touch buttons and browser f
 import os
 import sys
 import json
+import math
 import subprocess
 import urllib.parse
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -49,23 +50,41 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             # Dynamic simulated sensor motion for realistic interactive visualizers
             import time
             now = time.time()
-            sim_roll = math.sin(now * 1.5) * 3.5 if t.get("armed", False) else 0.0
-            sim_pitch = math.cos(now * 1.2) * 2.0 if t.get("armed", False) else 0.0
-            sim_heading = (now * 5.0) % 360.0 if t.get("speed_ms", 0) > 0.5 else 45.0
+            armed = bool(t.get("armed", False))
+            speed = float(t.get("speed_ms", 0.0))
+            sim_roll = math.sin(now * 1.5) * 3.5 if armed else 0.0
+            sim_pitch = math.cos(now * 1.2) * 2.0 if armed else 0.0
+            sim_heading = (now * 5.0) % 360.0 if speed > 0.5 else 45.0
+            voltage = round(25.2 - (0.8 * (100 - t.get("battery_pct", 100)) / 100.0), 2)
+            current = round(12.5 + (speed * 2.1) if armed else 2.1, 1)
 
             data = {
                 "state": t.get("mode", "IDLE"),
                 "pos_enu": list(pos),
                 "altitude_m": float(pos[2]),
-                "speed_ms": float(t.get("speed_ms", 0.0)),
+                "speed_ms": speed,
                 "battery_pct": float(t.get("battery_pct", 100.0)),
-                "armed": bool(t.get("armed", False)),
+                "voltage": voltage,
+                "current_a": current,
+                "cpu_load": 14,
+                "gpu_load": 8,
+                "temp_c": 41.5,
+                "gps_fix": "3D RTK FIX",
+                "armed": armed,
                 "roll": round(sim_roll, 1),
                 "pitch": round(sim_pitch, 1),
                 "heading": round(sim_heading, 1),
                 "satellites": 18,
                 "rssi_pct": 98,
                 "payload_released": bool(t.get("payload_released", False)),
+                "checklist": {
+                    "imu": True,
+                    "gps": True,
+                    "lidar": True,
+                    "vio": True,
+                    "payload": True,
+                    "geofence": True
+                }
             }
             self.wfile.write(json.dumps(data).encode("utf-8"))
             return

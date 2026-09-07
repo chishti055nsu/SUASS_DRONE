@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IUB DRONE SUAS 2026 — Tactical Ground Control Station</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>IUB DRONE SUAS 2026 — Commercial Autonomy Ground Control Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-base: #060911;
-            --bg-panel: rgba(12, 18, 30, 0.88);
-            --bg-panel-border: rgba(0, 240, 255, 0.18);
+            --bg-base: #05070d;
+            --bg-panel: rgba(10, 15, 26, 0.92);
+            --bg-panel-border: rgba(0, 240, 255, 0.2);
             --accent-cyan: #00f0ff;
-            --accent-cyan-glow: rgba(0, 240, 255, 0.35);
+            --accent-cyan-glow: rgba(0, 240, 255, 0.3);
             --accent-green: #10b981;
             --accent-yellow: #f59e0b;
             --accent-red: #ef4444;
@@ -33,55 +33,55 @@
             background-color: var(--bg-base);
             color: var(--text-primary);
             min-height: 100vh;
-            padding: 16px;
+            padding: 12px;
             overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 10% 10%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+                radial-gradient(circle at 10% 10%, rgba(0, 240, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
             background-attachment: fixed;
         }
 
-        /* Glassmorphism Panel Component */
+        /* Glassmorphism Tactical Panel */
         .glass-panel {
             background: var(--bg-panel);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--bg-panel-border);
-            border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
             transform: translateZ(0);
             transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
 
         .glass-panel:hover {
             border-color: rgba(0, 240, 255, 0.35);
-            box-shadow: 0 12px 35px rgba(0, 240, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.12);
         }
 
-        /* Tactical Header */
+        /* Commercial Header Bar */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 24px;
-            margin-bottom: 16px;
+            padding: 12px 20px;
+            margin-bottom: 12px;
         }
 
         .brand-title {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
         .brand-badge {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.2));
             border: 1px solid var(--accent-cyan);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -89,13 +89,13 @@
         }
 
         .brand-badge svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             fill: var(--accent-cyan);
         }
 
         .brand-text h1 {
-            font-size: 1.35rem;
+            font-size: 1.2rem;
             font-weight: 800;
             letter-spacing: 1px;
             background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 100%);
@@ -105,51 +105,68 @@
         }
 
         .brand-text p {
-            font-size: 0.76rem;
+            font-size: 0.72rem;
             color: var(--text-secondary);
             font-weight: 600;
             letter-spacing: 0.5px;
         }
 
-        .header-indicators {
+        .telemetry-strip {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
         }
 
-        .sys-stat {
+        .strip-item {
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
+            align-items: flex-start;
         }
 
-        .sys-stat-val {
+        .strip-label {
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .strip-val {
             color: var(--accent-cyan);
             font-weight: 700;
         }
 
-        .status-pill {
+        .armed-status-badge {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 18px;
-            border-radius: 30px;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid var(--accent-green);
-            color: var(--accent-green);
-            font-weight: 700;
-            font-size: 0.82rem;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            font-weight: 800;
+            font-size: 0.78rem;
             letter-spacing: 0.5px;
+        }
+
+        .armed-status-badge.armed {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
         }
 
         .pulse-dot {
             width: 8px;
             height: 8px;
-            background-color: var(--accent-green);
             border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent-green);
+            background: currentColor;
+            box-shadow: 0 0 10px currentColor;
             animation: pulse-glow 1.5s infinite;
         }
 
@@ -159,78 +176,86 @@
             100% { opacity: 0.3; transform: scale(0.8); }
         }
 
-        /* Navigation Tab Switcher */
-        .tab-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            padding: 6px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px 16px;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            color: var(--text-secondary);
-            font-weight: 700;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        /* Flight State Machine Step Visualizer */
+        .fsm-pipeline {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            text-transform: uppercase;
+            justify-content: space-between;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            background: rgba(6, 10, 18, 0.85);
+            border: 1px solid rgba(0, 240, 255, 0.12);
+            border-radius: 10px;
         }
 
-        .tab-btn svg {
-            width: 18px;
-            height: 18px;
-            fill: currentColor;
+        .fsm-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            font-weight: 700;
+            position: relative;
         }
 
-        .tab-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .tab-btn.active {
-            background: rgba(0, 240, 255, 0.12);
-            border-color: var(--accent-cyan);
+        .fsm-step.active {
             color: var(--accent-cyan);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
         }
 
-        /* Main View Container */
-        .view-section {
-            display: none;
+        .fsm-step.active .fsm-node {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 12px var(--accent-cyan);
+            border-color: #fff;
         }
 
-        .view-section.active {
-            display: block;
+        .fsm-step.completed {
+            color: var(--accent-green);
         }
 
-        /* Dashboard Grid */
-        .dashboard-grid {
+        .fsm-step.completed .fsm-node {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .fsm-node {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--text-dim);
+            background: var(--bg-base);
+            transition: all 0.3s ease;
+        }
+
+        .fsm-line {
+            flex: 1;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 0 8px;
+        }
+
+        /* Main Workspace Workstation Grid */
+        .workstation-grid {
             display: grid;
-            grid-template-columns: 2.2fr 1fr;
-            gap: 16px;
+            grid-template-columns: 2.2fr 1.3fr 1fr;
+            gap: 12px;
         }
 
-        @media (max-width: 1150px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
+        @media (max-width: 1300px) {
+            .workstation-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .workstation-grid { grid-template-columns: 1fr; }
         }
 
         .panel-header {
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 800;
             color: var(--accent-cyan);
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -243,84 +268,120 @@
         }
 
         .panel-header-title svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             fill: var(--accent-cyan);
         }
 
-        /* Telemetry Cards */
-        .telemetry-row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 16px;
+        /* View Mode Selector Tabs */
+        .view-mode-tabs {
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .telemetry-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 10px;
-            padding: 14px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .telemetry-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--accent-cyan);
-        }
-
-        .telemetry-card.alt::before { background: var(--accent-cyan); }
-        .telemetry-card.speed::before { background: var(--accent-yellow); }
-        .telemetry-card.batt::before { background: var(--accent-green); }
-        .telemetry-card.mode::before { background: var(--accent-purple); }
-
-        .tel-label {
-            font-size: 0.7rem;
+        .view-btn {
+            padding: 4px 10px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
             color: var(--text-secondary);
+            font-size: 0.7rem;
             font-weight: 700;
+            cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
         }
 
-        .tel-value {
-            font-size: 1.6rem;
-            font-weight: 900;
+        .view-btn.active {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+
+        /* Canvas & Display Windows */
+        .canvas-window {
+            position: relative;
+            width: 100%;
+            height: 340px;
+            background: #03050c;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        #tactical-canvas, #vision-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .window-overlay-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(5, 7, 13, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            color: var(--text-primary);
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            pointer-events: none;
         }
 
-        .tel-unit {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-dim);
-            margin-left: 2px;
+        /* Primary Flight Display & HUD Instruments */
+        .pfd-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .pfd-card {
+            background: #03050c;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pfd-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        #horizon-svg, #compass-svg {
+            width: 150px;
+            height: 150px;
         }
 
         /* Tactical Command Buttons */
-        .control-panel {
-            padding: 20px;
-            margin-bottom: 16px;
+        .cmd-panel {
+            padding: 16px;
+            margin-bottom: 12px;
         }
 
         .btn-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
         }
 
         .btn-gcs {
             border: none;
-            border-radius: 10px;
-            padding: 15px 18px;
-            font-size: 0.88rem;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 0.82rem;
             font-weight: 800;
             letter-spacing: 0.5px;
             cursor: pointer;
@@ -328,35 +389,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .btn-gcs svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             fill: currentColor;
         }
 
-        .btn-gcs:active {
-            transform: scale(0.97);
-        }
+        .btn-gcs:active { transform: scale(0.96); }
 
-        .btn-primary-mission {
+        .btn-primary-start {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #022010;
-            grid-column: span 3;
-            font-size: 1.05rem;
-            padding: 18px;
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+            grid-column: span 2;
+            font-size: 0.95rem;
+            padding: 16px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-primary-mission:hover {
-            box-shadow: 0 0 35px rgba(16, 185, 129, 0.5);
-            transform: translateY(-2px);
+        .btn-primary-start:hover {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
         }
 
         .btn-rtl {
@@ -377,130 +433,58 @@
         .btn-emergency {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
-            grid-column: span 3;
-            margin-top: 6px;
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+            grid-column: span 2;
+            margin-top: 4px;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
         }
 
-        .btn-emergency:hover {
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
-        }
+        .btn-emergency:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
 
-        /* Tactical 2D Interactive Map Canvas */
-        .map-container {
-            position: relative;
-            width: 100%;
-            height: 380px;
-            background: #040711;
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 16px;
-        }
-
-        #tactical-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            cursor: crosshair;
-        }
-
-        .canvas-overlay {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: rgba(6, 9, 17, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            color: var(--accent-cyan);
-            pointer-events: none;
-        }
-
-        /* Attitude Visualizer Instrument Panel */
-        .instrument-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .instrument-card {
-            background: #040711;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .instrument-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        /* Interlock Checklist Panel */
+        .checklist-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 12px;
             margin-bottom: 12px;
         }
 
-        #horizon-svg, #compass-svg {
-            width: 180px;
-            height: 180px;
-        }
-
-        /* Directional Jog Keypad */
-        .jog-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 320px;
-            margin: 0 auto 16px auto;
-        }
-
-        .btn-jog {
-            padding: 14px;
-            background: rgba(0, 240, 255, 0.08);
-            border: 1px solid var(--accent-cyan);
-            border-radius: 8px;
-            color: var(--accent-cyan);
-            font-weight: 800;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.15s ease;
+        .check-item {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .btn-jog:hover {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 15px var(--accent-cyan-glow);
+        .check-item:last-child { border-bottom: none; }
+
+        .check-tag {
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.68rem;
         }
 
-        .btn-jog:active {
-            transform: scale(0.95);
+        .check-tag.pass {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
         }
 
         /* Form Inputs */
-        .form-section {
-            padding: 20px;
-        }
+        .form-section { padding: 16px; margin-bottom: 12px; }
 
-        .field-group {
-            margin-bottom: 12px;
-        }
+        .field-group { margin-bottom: 10px; }
 
         .field-label {
             display: block;
-            font-size: 0.76rem;
+            font-size: 0.72rem;
             color: var(--text-secondary);
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -508,20 +492,19 @@
         .input-tactical {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 8px;
-            padding: 10px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 9px 12px;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             transition: all 0.2s ease;
         }
 
         .input-tactical:focus {
             border-color: var(--accent-cyan);
             outline: none;
-            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
-            background: rgba(0, 240, 255, 0.02);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
         }
 
         .btn-action {
@@ -529,52 +512,45 @@
             background: rgba(0, 240, 255, 0.12);
             border: 1px solid var(--accent-cyan);
             color: var(--accent-cyan);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             font-weight: 800;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
             transition: all 0.2s ease;
-            margin-top: 6px;
+            margin-top: 4px;
         }
 
         .btn-action:hover {
             background: var(--accent-cyan);
             color: #000;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
         }
 
-        /* Console Output Box */
+        /* Console Stream Box */
         .console-box {
-            background: #04060a;
+            background: #03050a;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            height: 200px;
+            border-radius: 8px;
+            height: 180px;
             overflow-y: auto;
-            padding: 14px;
+            padding: 12px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.76rem;
             color: var(--accent-green);
         }
 
         .console-line {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             line-height: 1.4;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .console-time {
-            color: var(--text-dim);
-            flex-shrink: 0;
-        }
-
-        .console-tag {
-            color: var(--accent-cyan);
-            font-weight: 700;
-        }
+        .console-time { color: var(--text-dim); flex-shrink: 0; }
+        .console-tag { color: var(--accent-cyan); font-weight: 700; }
 
         /* Modal Overlay for Emergency Disarm Confirmation */
         .modal-overlay {
@@ -594,327 +570,330 @@
         .modal-card {
             background: #0b111e;
             border: 2px solid var(--accent-red);
-            border-radius: 14px;
-            padding: 28px;
-            max-width: 440px;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 420px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 0 50px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
         }
 
         .modal-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 900;
             color: var(--accent-red);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .modal-desc {
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            margin-bottom: 24px;
-            line-height: 1.5;
+            margin-bottom: 20px;
+            line-height: 1.4;
         }
 
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-        }
+        .modal-actions { display: flex; gap: 10px; }
 
         .modal-btn {
             flex: 1;
-            padding: 14px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 6px;
             font-weight: 800;
             cursor: pointer;
             border: none;
             text-transform: uppercase;
         }
 
-        .modal-cancel {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-        }
-
-        .modal-confirm {
-            background: var(--accent-red);
-            color: #fff;
-        }
+        .modal-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+        .modal-confirm { background: var(--accent-red); color: #fff; }
     </style>
 </head>
 <body>
 
-    <!-- Header Navigation -->
+    <!-- Header Telemetry Navigation Bar -->
     <header class="glass-panel">
         <div class="brand-title">
             <div class="brand-badge">
-                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
             </div>
             <div class="brand-text">
-                <h1>IUB DRONE GROUND CONTROL STATION</h1>
-                <p>SUAS 2026 Competition-Grade Autonomous Tactical Flight Platform</p>
+                <h1>IUB DRONE COMMERCIAL AUTONOMY PLATFORM</h1>
+                <p>SUAS 2026 Aerospace-Grade Tactical Ground Control Station</p>
             </div>
         </div>
-        <div class="header-indicators">
-            <div class="sys-stat">
-                <span>SAT / RSSI</span>
-                <span class="sys-stat-val" id="head-sat">18 SATS | 98%</span>
+
+        <div class="telemetry-strip">
+            <div class="strip-item">
+                <span class="strip-label">MAVLink FC</span>
+                <span class="strip-val" id="st-mav">400Hz OK</span>
             </div>
-            <div class="status-pill" id="pill-conn">
-                <div class="pulse-dot"></div>
-                <span id="txt-conn">SYSTEM READY</span>
+            <div class="strip-item">
+                <span class="strip-label">GPS RTK</span>
+                <span class="strip-val" id="st-gps">3D RTK (18 SAT)</span>
             </div>
+            <div class="strip-item">
+                <span class="strip-label">Power (6S)</span>
+                <span class="strip-val" id="st-pwr">25.2V | 12.5A</span>
+            </div>
+            <div class="strip-item">
+                <span class="strip-label">Jetson Load</span>
+                <span class="strip-val" id="st-cpu">CPU 14% | GPU 8%</span>
+            </div>
+        </div>
+
+        <div class="armed-status-badge" id="badge-armed">
+            <div class="pulse-dot"></div>
+            <span id="txt-armed">DISARMED - READY</span>
         </div>
     </header>
 
-    <!-- Navigation Tab Switcher -->
-    <div class="glass-panel tab-bar">
-        <button class="tab-btn active" onclick="switchTab('tab-mission', this)">
-            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg>
-            MISSION CONTROL
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-map', this)">
-            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            2D TACTICAL MAP
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-instruments', this)">
-            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
-            INSTRUMENT HUDS
-        </button>
-        <button class="tab-btn" onclick="switchTab('tab-nudge', this)">
-            <svg viewBox="0 0 24 24"><path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
-            MANUAL NUDGE CONTROL
-        </button>
+    <!-- Flight State Machine Step Pipeline Visualizer -->
+    <div class="fsm-pipeline">
+        <div class="fsm-step active" id="fsm-idle">
+            <div class="fsm-node"></div>
+            <span>1. IDLE</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-arming">
+            <div class="fsm-node"></div>
+            <span>2. ARMING</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-takeoff">
+            <div class="fsm-node"></div>
+            <span>3. TAKEOFF</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-nav">
+            <div class="fsm-node"></div>
+            <span>4. WAYPOINT NAV</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-search">
+            <div class="fsm-node"></div>
+            <span>5. AUTO SEARCH</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-drop">
+            <div class="fsm-node"></div>
+            <span>6. DROP ALIGN</span>
+        </div>
+        <div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-rtl">
+            <div class="fsm-node"></div>
+            <span>7. AUTO RTL</span>
+        </div>
     </div>
 
-    <!-- Main View Section: Mission Control -->
-    <div id="tab-mission" class="view-section active">
-        <div class="dashboard-grid">
-            
-            <!-- Left Side: Telemetry, Controls & Logs -->
-            <div>
-                <!-- Real-Time Telemetry Bar -->
-                <div class="glass-panel control-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M7,10H9V17H7V10M11,7H13V17H11V7M15,13H17V17H15V13Z"/></svg>
-                            Flight Telemetry & System Status
-                        </div>
-                        <span style="font-size: 0.74rem; color: var(--text-dim);" id="last-update">Updated 0ms ago</span>
+    <!-- Main Commercial Workstation Grid -->
+    <div class="workstation-grid">
+        
+        <!-- Left Column: Primary Display Windows (Map / Perception Camera) -->
+        <div>
+            <div class="glass-panel cmd-panel">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        Flight Display & Spatial Tracking
                     </div>
-                    <div class="telemetry-row">
-                        <div class="telemetry-card mode">
-                            <div class="tel-label">Mission State</div>
-                            <div class="tel-value" id="disp-state" style="color: var(--accent-purple);">IDLE</div>
-                        </div>
-                        <div class="telemetry-card alt">
-                            <div class="tel-label">Altitude (AGL)</div>
-                            <div class="tel-value" id="disp-alt">0.0<span class="tel-unit">m</span></div>
-                        </div>
-                        <div class="telemetry-card speed">
-                            <div class="tel-label">Groundspeed</div>
-                            <div class="tel-value" id="disp-speed">0.0<span class="tel-unit">m/s</span></div>
-                        </div>
-                        <div class="telemetry-card batt">
-                            <div class="tel-label">Battery Power</div>
-                            <div class="tel-value" id="disp-batt" style="color: var(--accent-green);">100<span class="tel-unit">%</span></div>
-                        </div>
+                    <div class="view-mode-tabs">
+                        <button class="view-btn active" id="vbtn-map" onclick="switchCanvasView('map')">TACTICAL RADAR</button>
+                        <button class="view-btn" id="vbtn-cam" onclick="switchCanvasView('cam')">D455 VISION FEED</button>
                     </div>
                 </div>
 
-                <!-- Action Button Grid -->
-                <div class="glass-panel control-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
-                            Tactical Flight Command Panel
-                        </div>
+                <div class="canvas-window">
+                    <canvas id="tactical-canvas"></canvas>
+                    <canvas id="vision-canvas" style="display: none;"></canvas>
+                    <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
+                </div>
+            </div>
+
+            <!-- Activity Event Console Stream -->
+            <div class="glass-panel cmd-panel">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                        MAVLink & Vision Event Log Stream
                     </div>
-                    <div class="btn-grid">
-                        <button class="btn-gcs btn-primary-mission" id="btn-start" onclick="dispatchCommand('start')">
-                            <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
-                            START FULL AUTONOMOUS MISSION
-                        </button>
-                        <button class="btn-gcs btn-rtl" id="btn-rtl" onclick="dispatchCommand('rtl')">
-                            <svg viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
-                            RETURN HOME (RTL)
-                        </button>
-                        <button class="btn-gcs btn-hold" id="btn-hold" onclick="dispatchCommand('hold')">
-                            <svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
-                            HOVER / HOLD
-                        </button>
-                        <button class="btn-gcs btn-land" id="btn-land" onclick="dispatchCommand('land')">
-                            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                            LAND NOW
-                        </button>
-                        <button class="btn-gcs btn-emergency" id="btn-kill" onclick="confirmEmergencyKill()">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M13,13H11V7H13V13M13,17H11V15H13V17Z"/></svg>
-                            EMERGENCY MOTOR KILL / DISARM
-                        </button>
+                    <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.72rem; font-weight: 700;" onclick="clearConsole()">CLEAR LOG</button>
+                </div>
+                <div class="console-box" id="console-stream">
+                    <div class="console-line">
+                        <span class="console-time">[00:00:00]</span>
+                        <span class="console-tag">[INIT]</span>
+                        <span>Aerospace Commercial Workstation online. All safety interlocks verified.</span>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- System Activity Log -->
-                <div class="glass-panel control-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-                            System Event Activity Log
-                        </div>
-                        <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.75rem; font-weight: 700;" onclick="clearConsole()">CLEAR LOG</button>
+        <!-- Center Column: Primary Flight Instruments & One-Touch Actions -->
+        <div>
+            <!-- PFD Instruments -->
+            <div class="glass-panel cmd-panel">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
+                        Primary Flight Instruments (PFD)
                     </div>
-                    <div class="console-box" id="console-stream">
-                        <div class="console-line">
-                            <span class="console-time">[00:00:00]</span>
-                            <span class="console-tag">[INIT]</span>
-                            <span>Tactical GCS initialized. Core telemetry stream active.</span>
-                        </div>
+                </div>
+                <div class="pfd-container">
+                    <div class="pfd-card">
+                        <div class="pfd-title">Horizon (Roll / Pitch)</div>
+                        <svg id="horizon-svg" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
+                            <g id="horizon-pitch-group">
+                                <rect x="15" y="15" width="170" height="85" fill="#0284c7" opacity="0.6"/>
+                                <rect x="15" y="100" width="170" height="85" fill="#78350f" opacity="0.6"/>
+                                <line x1="20" y1="100" x2="180" y2="100" stroke="#fff" stroke-width="2"/>
+                            </g>
+                            <line x1="60" y1="100" x2="85" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                            <line x1="115" y1="100" x2="140" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                            <circle cx="100" cy="100" r="4" fill="#f59e0b"/>
+                        </svg>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-attitude">R: 0.0° | P: 0.0°</div>
+                    </div>
+
+                    <div class="pfd-card">
+                        <div class="pfd-title">Heading Compass Rose</div>
+                        <svg id="compass-svg" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
+                            <text x="100" y="32" fill="#ef4444" font-weight="900" font-size="13" text-anchor="middle">N</text>
+                            <text x="172" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">E</text>
+                            <text x="100" y="178" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">S</text>
+                            <text x="28" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">W</text>
+                            <g id="compass-needle">
+                                <polygon points="100,42 94,100 106,100" fill="#ef4444"/>
+                                <polygon points="100,158 94,100 106,100" fill="#64748b"/>
+                            </g>
+                        </svg>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-heading">HDG: 045°</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side: Forms & Target Overrides -->
-            <div>
-                <!-- Judge GPS Grid Input -->
-                <div class="glass-panel form-section mb-16" style="margin-bottom: 16px;">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
-                            Judge GPS Coordinates Input
-                        </div>
+            <!-- Command Action Panel -->
+            <div class="glass-panel cmd-panel">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
+                        Tactical Execution Commands
                     </div>
-                    <div class="field-group">
-                        <label class="field-label">Home Latitude</label>
-                        <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Home Longitude</label>
-                        <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
-                        <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
-                    </div>
-                    <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
                 </div>
+                <div class="btn-grid">
+                    <button class="btn-gcs btn-primary-start" onclick="dispatchCommand('start')">
+                        <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
+                        START AUTONOMOUS MISSION
+                    </button>
+                    <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">
+                        <svg viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
+                        RETURN HOME (RTL)
+                    </button>
+                    <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">
+                        <svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+                        HOVER / HOLD
+                    </button>
+                    <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">
+                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        LAND NOW
+                    </button>
+                    <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M13,13H11V7H13V13M13,17H11V15H13V17Z"/></svg>
+                        EMERGENCY MOTOR DISARM
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                <!-- Direct Target GOTO Override -->
-                <div class="glass-panel form-section">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                            Target Coordinate Override (GOTO)
-                        </div>
+        <!-- Right Column: Safety Checklist & Forms -->
+        <div>
+            <!-- Pre-Flight Safety Interlock Checklist -->
+            <div class="glass-panel form-section">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8L10,17Z"/></svg>
+                        Pre-Flight Interlocks
                     </div>
+                </div>
+                <div class="checklist-box">
+                    <div class="check-item">
+                        <span>1. IMU 400Hz PID Loop</span>
+                        <span class="check-tag pass">PASS</span>
+                    </div>
+                    <div class="check-item">
+                        <span>2. GPS 3D RTK Fix</span>
+                        <span class="check-tag pass">PASS</span>
+                    </div>
+                    <div class="check-item">
+                        <span>3. TFmini LiDAR Range</span>
+                        <span class="check-tag pass">PASS</span>
+                    </div>
+                    <div class="check-item">
+                        <span>4. RealSense D455 VIO</span>
+                        <span class="check-tag pass">LOCK</span>
+                    </div>
+                    <div class="check-item">
+                        <span>5. Payload Servo Latch</span>
+                        <span class="check-tag pass">LOCKED</span>
+                    </div>
+                    <div class="check-item">
+                        <span>6. SUAS Geofence (100m)</span>
+                        <span class="check-tag pass">ENFORCED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Judge GPS Grid Loader -->
+            <div class="glass-panel form-section">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
+                        Judge GPS Coordinates Input
+                    </div>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Home Latitude</label>
+                    <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Home Longitude</label>
+                    <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
+                    <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
+                </div>
+                <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
+            </div>
+
+            <!-- Target Coordinate Override (GOTO) -->
+            <div class="glass-panel form-section">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
+                        Target Coordinate Override
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
                     <div class="field-group">
-                        <label class="field-label">Target North (meters)</label>
+                        <label class="field-label">North (m)</label>
                         <input type="number" class="input-tactical" id="in-goto-n" value="50.0">
                     </div>
                     <div class="field-group">
-                        <label class="field-label">Target East (meters)</label>
+                        <label class="field-label">East (m)</label>
                         <input type="number" class="input-tactical" id="in-goto-e" value="20.0">
                     </div>
                     <div class="field-group">
-                        <label class="field-label">Target Altitude (meters)</label>
+                        <label class="field-label">Alt (m)</label>
                         <input type="number" class="input-tactical" id="in-goto-alt" value="15.0">
                     </div>
-                    <button class="btn-action" onclick="submitGOTOTarget()">FLY TO COORDINATE</button>
                 </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- Main View Section: 2D Tactical Map -->
-    <div id="tab-map" class="view-section">
-        <div class="glass-panel control-panel">
-            <div class="panel-header">
-                <div class="panel-header-title">
-                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                    Interactive 2D Flight Area Map & Target Dispatcher
-                </div>
-                <span style="font-size: 0.74rem; color: var(--accent-cyan);">Click map to dispatch GOTO Target</span>
-            </div>
-            <div class="map-container">
-                <canvas id="tactical-canvas"></canvas>
-                <div class="canvas-overlay" id="map-coord-tag">CURSOR ENU: N=0.0m | E=0.0m</div>
+                <button class="btn-action" onclick="submitGOTOTarget()">DISPATCH GOTO</button>
             </div>
         </div>
-    </div>
 
-    <!-- Main View Section: Instruments -->
-    <div id="tab-instruments" class="view-section">
-        <div class="glass-panel control-panel">
-            <div class="panel-header">
-                <div class="panel-header-title">
-                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
-                    Attitude & Direction Primary Flight Display (PFD)
-                </div>
-            </div>
-            <div class="instrument-grid">
-                <div class="instrument-card">
-                    <div class="instrument-title">Artificial Horizon (Roll / Pitch)</div>
-                    <svg id="horizon-svg" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="90" fill="#060a14" stroke="#00f0ff" stroke-width="2"/>
-                        <g id="horizon-pitch-group">
-                            <rect x="10" y="10" width="180" height="90" fill="#0284c7" opacity="0.6"/>
-                            <rect x="10" y="100" width="180" height="90" fill="#78350f" opacity="0.6"/>
-                            <line x1="20" y1="100" x2="180" y2="100" stroke="#fff" stroke-width="2"/>
-                        </g>
-                        <!-- Aircraft Fixed Pointer -->
-                        <line x1="60" y1="100" x2="90" y2="100" stroke="#f59e0b" stroke-width="4"/>
-                        <line x1="110" y1="100" x2="140" y2="100" stroke="#f59e0b" stroke-width="4"/>
-                        <circle cx="100" cy="100" r="4" fill="#f59e0b"/>
-                    </svg>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; margin-top: 10px; color: var(--accent-cyan);" id="txt-attitude">ROLL: 0.0° | PITCH: 0.0°</div>
-                </div>
-
-                <div class="instrument-card">
-                    <div class="instrument-title">Heading Compass Rose</div>
-                    <svg id="compass-svg" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="90" fill="#060a14" stroke="#00f0ff" stroke-width="2"/>
-                        <text x="100" y="32" fill="#ef4444" font-weight="900" font-size="14" text-anchor="middle">N</text>
-                        <text x="175" y="105" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">E</text>
-                        <text x="100" y="180" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">S</text>
-                        <text x="25" y="105" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">W</text>
-                        <g id="compass-needle">
-                            <polygon points="100,40 93,100 107,100" fill="#ef4444"/>
-                            <polygon points="100,160 93,100 107,100" fill="#64748b"/>
-                        </g>
-                    </svg>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; margin-top: 10px; color: var(--accent-cyan);" id="txt-heading">HEADING: 045°</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main View Section: Nudge Control -->
-    <div id="tab-nudge" class="view-section">
-        <div class="glass-panel control-panel" style="max-width: 600px; margin: 0 auto;">
-            <div class="panel-header">
-                <div class="panel-header-title">
-                    <svg viewBox="0 0 24 24"><path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
-                    Manual Directional Nudge Keypad
-                </div>
-            </div>
-            <div class="jog-grid">
-                <div></div>
-                <button class="btn-jog" onclick="dispatchJog('n', 2.0)">NORTH (+2m)</button>
-                <div></div>
-                <button class="btn-jog" onclick="dispatchJog('w', 2.0)">WEST (-2m)</button>
-                <button class="btn-jog" style="border-color: var(--accent-purple); color: var(--accent-purple);" onclick="dispatchCommand('hold')">HOLD</button>
-                <button class="btn-jog" onclick="dispatchJog('e', 2.0)">EAST (+2m)</button>
-                <div></div>
-                <button class="btn-jog" onclick="dispatchJog('s', 2.0)">SOUTH (-2m)</button>
-                <div></div>
-            </div>
-            <div style="display: flex; gap: 12px;">
-                <button class="btn-action" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-green); color: var(--accent-green);" onclick="dispatchJog('up', 1.0)">ALTITUDE UP (+1m)</button>
-                <button class="btn-action" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-yellow); color: var(--accent-yellow);" onclick="dispatchJog('down', 1.0)">ALTITUDE DOWN (-1m)</button>
-            </div>
-        </div>
     </div>
 
     <!-- Emergency Disarm Confirmation Modal -->
@@ -938,21 +917,30 @@
             alt: 0.0,
             speed: 0.0,
             batt: 100,
+            voltage: 25.2,
+            current: 12.5,
             mode: 'IDLE',
             roll: 0.0,
             pitch: 0.0,
             heading: 45.0,
+            armed: false,
             trail: []
         };
 
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-            if (tabId === 'tab-map') {
-                renderMapCanvas();
-            }
+        let currentView = 'map';
+
+        function switchCanvasView(mode) {
+            currentView = mode;
+            document.getElementById('vbtn-map').classList.toggle('active', mode === 'map');
+            document.getElementById('vbtn-cam').classList.toggle('active', mode === 'cam');
+            document.getElementById('tactical-canvas').style.display = (mode === 'map') ? 'block' : 'none';
+            document.getElementById('vision-canvas').style.display = (mode === 'cam') ? 'block' : 'none';
+            document.getElementById('window-tag').innerText = (mode === 'map') 
+                ? 'RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)'
+                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC)';
+            
+            if (mode === 'cam') renderVisionCanvas();
+            else renderMapCanvas();
         }
 
         function appendConsole(tag, text) {
@@ -970,18 +958,11 @@
         }
 
         function dispatchCommand(cmd) {
-            appendConsole('[CMD]', `Dispatching command: <b>${cmd.toUpperCase()}</b>...`);
+            appendConsole('[CMD]', `Dispatching flight command: <b>${cmd.toUpperCase()}</b>...`);
             fetch(`/api/command?cmd=${cmd}`)
                 .then(res => res.json())
                 .then(data => appendConsole('[ACK]', data.message))
                 .catch(err => appendConsole('[ERR]', `Failed: ${err}`));
-        }
-
-        function dispatchJog(axis, val) {
-            fetch(`/api/jog?axis=${axis}&val=${val}`)
-                .then(res => res.json())
-                .then(data => appendConsole('[JOG]', data.message))
-                .catch(err => appendConsole('[ERR]', `Jog error: ${err}`));
         }
 
         function confirmEmergencyKill() {
@@ -1025,7 +1006,7 @@
                 .catch(err => appendConsole('[ERR]', `GOTO Error: ${err}`));
         }
 
-        // 2D Tactical Canvas Renderer
+        // 2D Tactical Radar Canvas Renderer
         const canvas = document.getElementById('tactical-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -1039,18 +1020,20 @@
         resizeCanvas();
 
         canvas.addEventListener('mousemove', (e) => {
+            if (currentView !== 'map') return;
             const rect = canvas.getBoundingClientRect();
             const cx = e.clientX - rect.left;
             const cy = e.clientY - rect.top;
-            const scale = 3.0; // 3px per meter
+            const scale = 3.0;
             const originX = canvas.width / 2;
             const originY = canvas.height / 2;
             const eastM = ((cx - originX) / scale).toFixed(1);
             const northM = (-(cy - originY) / scale).toFixed(1);
-            document.getElementById('map-coord-tag').innerText = `CURSOR ENU: N=${northM}m | E=${eastM}m`;
+            document.getElementById('window-tag').innerText = `RADAR ENU: N=${northM}m | E=${eastM}m (CLICK MAP TO DISPATCH GOTO)`;
         });
 
         canvas.addEventListener('click', (e) => {
+            if (currentView !== 'map') return;
             const rect = canvas.getBoundingClientRect();
             const cx = e.clientX - rect.left;
             const cy = e.clientY - rect.top;
@@ -1066,6 +1049,7 @@
         });
 
         function renderMapCanvas() {
+            if (currentView !== 'map') return;
             resizeCanvas();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -1083,11 +1067,18 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Crosshair Home (0,0)
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+            // Geofence Outer Boundary (100m radius)
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
             ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(originX - 15, originY); ctx.lineTo(originX + 15, originY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(originX, originY - 15); ctx.lineTo(originX, originY + 15); ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(originX, originY, 100 * scale, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Home Crosshair (0,0)
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(originX - 12, originY); ctx.lineTo(originX + 12, originY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(originX, originY - 12); ctx.lineTo(originX, originY + 12); ctx.stroke();
             ctx.fillStyle = '#10b981';
             ctx.font = '10px JetBrains Mono';
             ctx.fillText("HOME (0,0)", originX + 6, originY - 6);
@@ -1106,7 +1097,7 @@
                 ctx.stroke();
             }
 
-            // Drone Symbol
+            // Drone Spatial Indicator
             const dx = originX + droneState.east * scale;
             const dy = originY - droneState.north * scale;
 
@@ -1128,10 +1119,45 @@
             ctx.fillText(`DRONE (E:${droneState.east.toFixed(1)}m, N:${droneState.north.toFixed(1)}m)`, dx + 12, dy + 4);
         }
 
-        // Update Attitude Instruments
+        // Vision Perception Camera Canvas Simulator
+        const vCanvas = document.getElementById('vision-canvas');
+        const vCtx = vCanvas.getContext('2d');
+
+        function renderVisionCanvas() {
+            if (currentView !== 'cam') return;
+            vCanvas.width = vCanvas.parentElement.clientWidth;
+            vCanvas.height = vCanvas.parentElement.clientHeight;
+
+            vCtx.fillStyle = '#050a14';
+            vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
+
+            // Crosshair Precision Reticle
+            const cx = vCanvas.width / 2;
+            const cy = vCanvas.height / 2;
+
+            vCtx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+            vCtx.lineWidth = 1;
+            vCtx.beginPath(); vCtx.moveTo(cx - 30, cy); vCtx.lineTo(cx + 30, cy); vCtx.stroke();
+            vCtx.beginPath(); vCtx.moveTo(cx, cy - 30); vCtx.lineTo(cx, cy + 30); vCtx.stroke();
+            vCtx.beginPath(); vCtx.arc(cx, cy, 20, 0, Math.PI * 2); vCtx.stroke();
+
+            // Simulated Target Bounding Box
+            vCtx.strokeStyle = '#10b981';
+            vCtx.lineWidth = 2;
+            const bx = cx + 25;
+            const by = cy - 20;
+            vCtx.strokeRect(bx, by, 70, 70);
+
+            vCtx.fillStyle = '#10b981';
+            vCtx.font = '11px JetBrains Mono';
+            vCtx.fillText("TARGET DETECTED", bx, by - 18);
+            vCtx.fillText("MANNEQUIN (94.2%)", bx, by - 6);
+        }
+
+        // Update Attitude PFD Instruments
         function updateInstruments(roll, pitch, heading) {
-            document.getElementById('txt-attitude').innerText = `ROLL: ${roll.toFixed(1)}° | PITCH: ${pitch.toFixed(1)}°`;
-            document.getElementById('txt-heading').innerText = `HEADING: ${Math.round(heading).toString().padStart(3, '0')}°`;
+            document.getElementById('txt-attitude').innerText = `R: ${roll.toFixed(1)}° | P: ${pitch.toFixed(1)}°`;
+            document.getElementById('txt-heading').innerText = `HDG: ${Math.round(heading).toString().padStart(3, '0')}°`;
 
             const pitchGroup = document.getElementById('horizon-pitch-group');
             if (pitchGroup) {
@@ -1142,6 +1168,25 @@
             if (needle) {
                 needle.setAttribute('transform', `rotate(${heading}, 100, 100)`);
             }
+        }
+
+        function updateFSMState(state) {
+            const steps = ['idle', 'arming', 'takeoff', 'nav', 'search', 'drop', 'rtl'];
+            let matchedIdx = 0;
+            if (state.includes('ARM')) matchedIdx = 1;
+            else if (state.includes('TAKEOFF')) matchedIdx = 2;
+            else if (state.includes('WAYPOINT') || state.includes('GOTO')) matchedIdx = 3;
+            else if (state.includes('SEARCH')) matchedIdx = 4;
+            else if (state.includes('DROP')) matchedIdx = 5;
+            else if (state.includes('RTL')) matchedIdx = 6;
+
+            steps.forEach((s, idx) => {
+                const el = document.getElementById(`fsm-${s}`);
+                if (!el) return;
+                el.classList.remove('active', 'completed');
+                if (idx < matchedIdx) el.classList.add('completed');
+                else if (idx === matchedIdx) el.classList.add('active');
+            });
         }
 
         // Fast Polling Telemetry Loop (Zero Lag)
@@ -1155,23 +1200,36 @@
                     droneState.alt = data.altitude_m || 0.0;
                     droneState.speed = data.speed_ms || 0.0;
                     droneState.batt = data.battery_pct || 100;
+                    droneState.voltage = data.voltage || 25.2;
+                    droneState.current = data.current_a || 12.5;
                     droneState.roll = data.roll || 0.0;
                     droneState.pitch = data.pitch || 0.0;
                     droneState.heading = data.heading || 45.0;
+                    droneState.armed = data.armed || false;
 
                     // Update trail
                     droneState.trail.push({e: droneState.east, n: droneState.north});
                     if (droneState.trail.length > 50) droneState.trail.shift();
 
-                    document.getElementById('disp-state').innerText = droneState.mode;
-                    document.getElementById('disp-alt').innerHTML = `${droneState.alt.toFixed(1)}<span class="tel-unit">m</span>`;
-                    document.getElementById('disp-speed').innerHTML = `${droneState.speed.toFixed(1)}<span class="tel-unit">m/s</span>`;
-                    document.getElementById('disp-batt').innerHTML = `${droneState.batt.toFixed(0)}<span class="tel-unit">%</span>`;
-                    document.getElementById('last-update').innerText = `Updated ${new Date().toLocaleTimeString()}`;
-                    document.getElementById('head-sat').innerText = `${data.satellites || 18} SATS | ${data.rssi_pct || 98}%`;
+                    document.getElementById('st-pwr').innerText = `${droneState.voltage}V | ${droneState.current}A`;
+                    document.getElementById('st-cpu').innerText = `CPU ${data.cpu_load || 14}% | GPU ${data.gpu_load || 8}%`;
+                    document.getElementById('st-gps').innerText = `${data.gps_fix || '3D RTK'} (${data.satellites || 18} SAT)`;
+                    
+                    const badge = document.getElementById('badge-armed');
+                    const txt = document.getElementById('txt-armed');
+                    if (droneState.armed) {
+                        badge.classList.add('armed');
+                        txt.innerText = 'ARMED - MOTORS ACTIVE';
+                    } else {
+                        badge.classList.remove('armed');
+                        txt.innerText = 'DISARMED - READY';
+                    }
 
+                    updateFSMState(droneState.mode);
                     updateInstruments(droneState.roll, droneState.pitch, droneState.heading);
-                    renderMapCanvas();
+                    
+                    if (currentView === 'map') renderMapCanvas();
+                    else renderVisionCanvas();
                 })
                 .catch(() => {});
         }, 500);
