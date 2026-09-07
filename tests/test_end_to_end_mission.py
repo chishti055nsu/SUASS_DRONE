@@ -467,5 +467,22 @@ class TestRawGPSMissionLoading(unittest.TestCase):
         self.assertAlmostEqual(n0, 11.1, delta=1.5)
 
 
+class TestWebGCSServer(unittest.TestCase):
+    """Verifies Web Ground Control Station (GCS) Dashboard REST API routes."""
+
+    def test_web_gcs_handler(self):
+        from web_gui.drone_web_gui import WebGCSHandler
+        from unittest.mock import MagicMock
+        import io
+
+        handler = MagicMock(spec=WebGCSHandler)
+        handler.path = "/api/telemetry"
+        handler.wfile = io.BytesIO()
+
+        # Execute GET request logic directly
+        WebGCSHandler.do_GET(handler)
+        handler.send_response.assert_called_with(200)
+
+
 if __name__ == "__main__":
     unittest.main()
