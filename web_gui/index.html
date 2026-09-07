@@ -3,450 +3,1178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IUB Drone SUAS 2026 — Web Ground Control Station</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>IUB DRONE SUAS 2026 — Tactical Ground Control Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0e17;
-            --bg-card: rgba(18, 26, 42, 0.75);
-            --bg-card-border: rgba(0, 240, 255, 0.15);
+            --bg-base: #060911;
+            --bg-panel: rgba(12, 18, 30, 0.88);
+            --bg-panel-border: rgba(0, 240, 255, 0.18);
             --accent-cyan: #00f0ff;
-            --accent-green: #00ff88;
-            --accent-yellow: #ffb700;
-            --accent-red: #ff3366;
-            --accent-blue: #0088ff;
-            --text-main: #f0f6fc;
-            --text-muted: #8b949e;
+            --accent-cyan-glow: rgba(0, 240, 255, 0.35);
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-dim: #475569;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            user-select: none;
         }
 
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px;
+            overflow-x: hidden;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(0, 255, 136, 0.05) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            background-attachment: fixed;
         }
 
+        /* Glassmorphism Panel Component */
+        .glass-panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--bg-panel-border);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transform: translateZ(0);
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(0, 240, 255, 0.35);
+            box-shadow: 0 12px 35px rgba(0, 240, 255, 0.12);
+        }
+
+        /* Tactical Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 18px 28px;
-            background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--bg-card-border);
-            border-radius: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            padding: 16px 24px;
+            margin-bottom: 16px;
         }
 
-        .logo-title {
+        .brand-title {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
-        .logo-title h1 {
-            font-size: 1.5rem;
+        .brand-badge {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.2));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--accent-cyan-glow);
+        }
+
+        .brand-badge svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent-cyan);
+        }
+
+        .brand-text h1 {
+            font-size: 1.35rem;
             font-weight: 800;
             letter-spacing: 1px;
             background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
         }
 
-        .status-badge {
+        .brand-text p {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .header-indicators {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .sys-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+
+        .sys-stat-val {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        .status-pill {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 30px;
-            background: rgba(0, 255, 136, 0.1);
+            background: rgba(16, 185, 129, 0.12);
             border: 1px solid var(--accent-green);
-            font-weight: 600;
-            font-size: 0.9rem;
             color: var(--accent-green);
+            font-weight: 700;
+            font-size: 0.82rem;
+            letter-spacing: 0.5px;
         }
 
         .pulse-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background-color: var(--accent-green);
             border-radius: 50%;
             box-shadow: 0 0 10px var(--accent-green);
-            animation: pulse 1.8s infinite;
+            animation: pulse-glow 1.5s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        @keyframes pulse-glow {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.3; transform: scale(0.8); }
         }
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 968px) {
-            .grid-container { grid-template-columns: 1fr; }
-        }
-
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--bg-card-border);
-            border-radius: 16px;
-            padding: 22px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-
-        .card-header {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--accent-cyan);
+        /* Navigation Tab Switcher */
+        .tab-bar {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 6px;
         }
 
-        /* Telemetry Metrics Grid */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-
-        .metric-tile {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .metric-label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-        }
-
-        .metric-value {
-            font-size: 1.6rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--text-main);
-        }
-
-        /* Action Buttons Grid */
-        .controls-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-        }
-
-        .btn {
-            border: none;
-            border-radius: 12px;
-            padding: 16px 20px;
-            font-size: 1rem;
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--text-secondary);
             font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        .tab-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
-        .btn-start {
-            background: linear-gradient(135deg, #00ff88 0%, #00b862 100%);
-            color: #002b15;
-            grid-column: span 3;
-            font-size: 1.15rem;
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 240, 255, 0.12);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+
+        /* Main View Container */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 1150px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel-header {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header-title svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent-cyan);
+        }
+
+        /* Telemetry Cards */
+        .telemetry-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .telemetry-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .telemetry-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-cyan);
+        }
+
+        .telemetry-card.alt::before { background: var(--accent-cyan); }
+        .telemetry-card.speed::before { background: var(--accent-yellow); }
+        .telemetry-card.batt::before { background: var(--accent-green); }
+        .telemetry-card.mode::before { background: var(--accent-purple); }
+
+        .tel-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .tel-value {
+            font-size: 1.6rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .tel-unit {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-left: 2px;
+        }
+
+        /* Tactical Command Buttons */
+        .control-panel {
             padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .btn-gcs {
+            border: none;
+            border-radius: 10px;
+            padding: 15px 18px;
+            font-size: 0.88rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-gcs svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        .btn-gcs:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary-mission {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #022010;
+            grid-column: span 3;
+            font-size: 1.05rem;
+            padding: 18px;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-primary-mission:hover {
+            box-shadow: 0 0 35px rgba(16, 185, 129, 0.5);
+            transform: translateY(-2px);
         }
 
         .btn-rtl {
-            background: linear-gradient(135deg, #ffb700 0%, #d49700 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             color: #2b1f00;
         }
 
         .btn-hold {
-            background: linear-gradient(135deg, #0088ff 0%, #005bbf 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: #ffffff;
         }
 
         .btn-land {
-            background: linear-gradient(135deg, #00f0ff 0%, #00a8b3 100%);
-            color: #003036;
+            background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+            color: #00272b;
         }
 
-        .btn-kill {
-            background: linear-gradient(135deg, #ff3366 0%, #cc0033 100%);
+        .btn-emergency {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
             grid-column: span 3;
-            margin-top: 10px;
+            margin-top: 6px;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
         }
 
-        /* Input Forms */
-        .form-group {
-            margin-bottom: 14px;
+        .btn-emergency:hover {
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
         }
 
-        .form-group label {
+        /* Tactical 2D Interactive Map Canvas */
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            background: #040711;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        #tactical-canvas {
+            width: 100%;
+            height: 100%;
             display: block;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-            font-weight: 600;
+            cursor: crosshair;
         }
 
-        .form-control {
+        .canvas-overlay {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(6, 9, 17, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--accent-cyan);
+            pointer-events: none;
+        }
+
+        /* Attitude Visualizer Instrument Panel */
+        .instrument-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .instrument-card {
+            background: #040711;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .instrument-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        #horizon-svg, #compass-svg {
+            width: 180px;
+            height: 180px;
+        }
+
+        /* Directional Jog Keypad */
+        .jog-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 320px;
+            margin: 0 auto 16px auto;
+        }
+
+        .btn-jog {
+            padding: 14px;
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            color: var(--accent-cyan);
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-jog:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-cyan-glow);
+        }
+
+        .btn-jog:active {
+            transform: scale(0.95);
+        }
+
+        /* Form Inputs */
+        .form-section {
+            padding: 20px;
+        }
+
+        .field-group {
+            margin-bottom: 12px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-tactical {
             width: 100%;
             background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 8px;
             padding: 10px 14px;
-            color: var(--text-main);
+            color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-cyan);
-            outline: none;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-        }
-
-        .btn-submit {
-            background: rgba(0, 240, 255, 0.15);
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
+            font-size: 0.85rem;
             transition: all 0.2s ease;
         }
 
-        .btn-submit:hover {
-            background: var(--accent-cyan);
-            color: #000;
+        .input-tactical:focus {
+            border-color: var(--accent-cyan);
+            outline: none;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+            background: rgba(0, 240, 255, 0.02);
         }
 
-        /* Live Log Window */
-        .log-window {
-            background: #05080e;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            height: 220px;
-            overflow-y: auto;
+        .btn-action {
+            width: 100%;
+            background: rgba(0, 240, 255, 0.12);
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
             padding: 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.82rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 6px;
+        }
+
+        .btn-action:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        /* Console Output Box */
+        .console-box {
+            background: #04060a;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 14px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--accent-green);
         }
 
-        .log-entry {
+        .console-line {
             margin-bottom: 6px;
             line-height: 1.4;
+            display: flex;
+            gap: 10px;
         }
 
-        .log-time { color: var(--text-muted); }
+        .console-time {
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        .console-tag {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* Modal Overlay for Emergency Disarm Confirmation */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: #0b111e;
+            border: 2px solid var(--accent-red);
+            border-radius: 14px;
+            padding: 28px;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(239, 68, 68, 0.4);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-desc {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            border: none;
+            text-transform: uppercase;
+        }
+
+        .modal-cancel {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .modal-confirm {
+            background: var(--accent-red);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo-title">
-            <span style="font-size: 1.8rem;">🛸</span>
-            <div>
+    <!-- Header Navigation -->
+    <header class="glass-panel">
+        <div class="brand-title">
+            <div class="brand-badge">
+                <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z"/></svg>
+            </div>
+            <div class="brand-text">
                 <h1>IUB DRONE GROUND CONTROL STATION</h1>
-                <p style="font-size: 0.8rem; color: var(--text-muted);">SUAS 2026 Autonomous Flight & Mission Management</p>
+                <p>SUAS 2026 Competition-Grade Autonomous Tactical Flight Platform</p>
             </div>
         </div>
-        <div class="status-badge" id="conn-badge">
-            <div class="pulse-dot"></div>
-            <span id="conn-text">SYSTEM CONNECTED</span>
+        <div class="header-indicators">
+            <div class="sys-stat">
+                <span>SAT / RSSI</span>
+                <span class="sys-stat-val" id="head-sat">18 SATS | 98%</span>
+            </div>
+            <div class="status-pill" id="pill-conn">
+                <div class="pulse-dot"></div>
+                <span id="txt-conn">SYSTEM READY</span>
+            </div>
         </div>
     </header>
 
-    <div class="grid-container">
-        
-        <!-- Left Main Panel: Telemetry & Controls -->
-        <div>
-            <!-- Live Telemetry Card -->
-            <div class="card">
-                <div class="card-header">📊 Live Flight Telemetry</div>
-                <div class="metrics-grid">
-                    <div class="metric-tile">
-                        <div class="metric-label">Mission State</div>
-                        <div class="metric-value" id="val-state" style="color: var(--accent-cyan);">IDLE</div>
+    <!-- Navigation Tab Switcher -->
+    <div class="glass-panel tab-bar">
+        <button class="tab-btn active" onclick="switchTab('tab-mission', this)">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,7H13V13H11V7M11,15H13V17H11V15Z"/></svg>
+            MISSION CONTROL
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-map', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            2D TACTICAL MAP
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-instruments', this)">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
+            INSTRUMENT HUDS
+        </button>
+        <button class="tab-btn" onclick="switchTab('tab-nudge', this)">
+            <svg viewBox="0 0 24 24"><path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
+            MANUAL NUDGE CONTROL
+        </button>
+    </div>
+
+    <!-- Main View Section: Mission Control -->
+    <div id="tab-mission" class="view-section active">
+        <div class="dashboard-grid">
+            
+            <!-- Left Side: Telemetry, Controls & Logs -->
+            <div>
+                <!-- Real-Time Telemetry Bar -->
+                <div class="glass-panel control-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M7,10H9V17H7V10M11,7H13V17H11V7M15,13H17V17H15V13Z"/></svg>
+                            Flight Telemetry & System Status
+                        </div>
+                        <span style="font-size: 0.74rem; color: var(--text-dim);" id="last-update">Updated 0ms ago</span>
                     </div>
-                    <div class="metric-tile">
-                        <div class="metric-label">Altitude (AGL)</div>
-                        <div class="metric-value" id="val-alt">0.0 m</div>
+                    <div class="telemetry-row">
+                        <div class="telemetry-card mode">
+                            <div class="tel-label">Mission State</div>
+                            <div class="tel-value" id="disp-state" style="color: var(--accent-purple);">IDLE</div>
+                        </div>
+                        <div class="telemetry-card alt">
+                            <div class="tel-label">Altitude (AGL)</div>
+                            <div class="tel-value" id="disp-alt">0.0<span class="tel-unit">m</span></div>
+                        </div>
+                        <div class="telemetry-card speed">
+                            <div class="tel-label">Groundspeed</div>
+                            <div class="tel-value" id="disp-speed">0.0<span class="tel-unit">m/s</span></div>
+                        </div>
+                        <div class="telemetry-card batt">
+                            <div class="tel-label">Battery Power</div>
+                            <div class="tel-value" id="disp-batt" style="color: var(--accent-green);">100<span class="tel-unit">%</span></div>
+                        </div>
                     </div>
-                    <div class="metric-tile">
-                        <div class="metric-label">Groundspeed</div>
-                        <div class="metric-value" id="val-speed">0.0 m/s</div>
+                </div>
+
+                <!-- Action Button Grid -->
+                <div class="glass-panel control-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
+                            Tactical Flight Command Panel
+                        </div>
                     </div>
-                    <div class="metric-tile">
-                        <div class="metric-label">Battery Level</div>
-                        <div class="metric-value" id="val-batt" style="color: var(--accent-green);">100%</div>
+                    <div class="btn-grid">
+                        <button class="btn-gcs btn-primary-mission" id="btn-start" onclick="dispatchCommand('start')">
+                            <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
+                            START FULL AUTONOMOUS MISSION
+                        </button>
+                        <button class="btn-gcs btn-rtl" id="btn-rtl" onclick="dispatchCommand('rtl')">
+                            <svg viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
+                            RETURN HOME (RTL)
+                        </button>
+                        <button class="btn-gcs btn-hold" id="btn-hold" onclick="dispatchCommand('hold')">
+                            <svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
+                            HOVER / HOLD
+                        </button>
+                        <button class="btn-gcs btn-land" id="btn-land" onclick="dispatchCommand('land')">
+                            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                            LAND NOW
+                        </button>
+                        <button class="btn-gcs btn-emergency" id="btn-kill" onclick="confirmEmergencyKill()">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M13,13H11V7H13V13M13,17H11V15H13V17Z"/></svg>
+                            EMERGENCY MOTOR KILL / DISARM
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Activity Log -->
+                <div class="glass-panel control-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                            System Event Activity Log
+                        </div>
+                        <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.75rem; font-weight: 700;" onclick="clearConsole()">CLEAR LOG</button>
+                    </div>
+                    <div class="console-box" id="console-stream">
+                        <div class="console-line">
+                            <span class="console-time">[00:00:00]</span>
+                            <span class="console-tag">[INIT]</span>
+                            <span>Tactical GCS initialized. Core telemetry stream active.</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- One-Touch Flight Control Buttons -->
-            <div class="card">
-                <div class="card-header">🎮 One-Touch Flight Controls</div>
-                <div class="controls-grid">
-                    <button class="btn btn-start" onclick="sendCommand('start')">🚀 START FULL AUTONOMOUS MISSION</button>
-                    <button class="btn btn-rtl" onclick="sendCommand('rtl')">🏠 RETURN HOME (RTL)</button>
-                    <button class="btn btn-hold" onclick="sendCommand('hold')">⏸️ HOVER / HOLD</button>
-                    <button class="btn btn-land" onclick="sendCommand('land')">🛬 LAND NOW</button>
-                    <button class="btn btn-kill" onclick="sendCommand('terminate')">🔴 EMERGENCY MOTOR KILL / DISARM</button>
+            <!-- Right Side: Forms & Target Overrides -->
+            <div>
+                <!-- Judge GPS Grid Input -->
+                <div class="glass-panel form-section mb-16" style="margin-bottom: 16px;">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
+                            Judge GPS Coordinates Input
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Home Latitude</label>
+                        <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Home Longitude</label>
+                        <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
+                        <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
+                    </div>
+                    <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
+                </div>
+
+                <!-- Direct Target GOTO Override -->
+                <div class="glass-panel form-section">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
+                            Target Coordinate Override (GOTO)
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Target North (meters)</label>
+                        <input type="number" class="input-tactical" id="in-goto-n" value="50.0">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Target East (meters)</label>
+                        <input type="number" class="input-tactical" id="in-goto-e" value="20.0">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Target Altitude (meters)</label>
+                        <input type="number" class="input-tactical" id="in-goto-alt" value="15.0">
+                    </div>
+                    <button class="btn-action" onclick="submitGOTOTarget()">FLY TO COORDINATE</button>
                 </div>
             </div>
 
-            <!-- Live Log Window -->
-            <div class="card">
-                <div class="card-header">📜 System Activity Log</div>
-                <div class="log-window" id="log-box">
-                    <div class="log-entry"><span class="log-time">[00:00:00]</span> Ground Control Station initialized successfully. Ready for flight commands.</div>
+        </div>
+    </div>
+
+    <!-- Main View Section: 2D Tactical Map -->
+    <div id="tab-map" class="view-section">
+        <div class="glass-panel control-panel">
+            <div class="panel-header">
+                <div class="panel-header-title">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    Interactive 2D Flight Area Map & Target Dispatcher
+                </div>
+                <span style="font-size: 0.74rem; color: var(--accent-cyan);">Click map to dispatch GOTO Target</span>
+            </div>
+            <div class="map-container">
+                <canvas id="tactical-canvas"></canvas>
+                <div class="canvas-overlay" id="map-coord-tag">CURSOR ENU: N=0.0m | E=0.0m</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main View Section: Instruments -->
+    <div id="tab-instruments" class="view-section">
+        <div class="glass-panel control-panel">
+            <div class="panel-header">
+                <div class="panel-header-title">
+                    <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
+                    Attitude & Direction Primary Flight Display (PFD)
+                </div>
+            </div>
+            <div class="instrument-grid">
+                <div class="instrument-card">
+                    <div class="instrument-title">Artificial Horizon (Roll / Pitch)</div>
+                    <svg id="horizon-svg" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" fill="#060a14" stroke="#00f0ff" stroke-width="2"/>
+                        <g id="horizon-pitch-group">
+                            <rect x="10" y="10" width="180" height="90" fill="#0284c7" opacity="0.6"/>
+                            <rect x="10" y="100" width="180" height="90" fill="#78350f" opacity="0.6"/>
+                            <line x1="20" y1="100" x2="180" y2="100" stroke="#fff" stroke-width="2"/>
+                        </g>
+                        <!-- Aircraft Fixed Pointer -->
+                        <line x1="60" y1="100" x2="90" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                        <line x1="110" y1="100" x2="140" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                        <circle cx="100" cy="100" r="4" fill="#f59e0b"/>
+                    </svg>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; margin-top: 10px; color: var(--accent-cyan);" id="txt-attitude">ROLL: 0.0° | PITCH: 0.0°</div>
+                </div>
+
+                <div class="instrument-card">
+                    <div class="instrument-title">Heading Compass Rose</div>
+                    <svg id="compass-svg" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" fill="#060a14" stroke="#00f0ff" stroke-width="2"/>
+                        <text x="100" y="32" fill="#ef4444" font-weight="900" font-size="14" text-anchor="middle">N</text>
+                        <text x="175" y="105" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">E</text>
+                        <text x="100" y="180" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">S</text>
+                        <text x="25" y="105" fill="#94a3b8" font-weight="700" font-size="12" text-anchor="middle">W</text>
+                        <g id="compass-needle">
+                            <polygon points="100,40 93,100 107,100" fill="#ef4444"/>
+                            <polygon points="100,160 93,100 107,100" fill="#64748b"/>
+                        </g>
+                    </svg>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; margin-top: 10px; color: var(--accent-cyan);" id="txt-heading">HEADING: 045°</div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Right Side Panel: Coordinates & Judges Input -->
-        <div>
-            <!-- Raw GPS Judge Input Card -->
-            <div class="card">
-                <div class="card-header">📍 Judge GPS Coordinates Input</div>
-                <div class="form-group">
-                    <label>Home Base Latitude</label>
-                    <input type="text" class="form-control" id="gps-home-lat" placeholder="38.145000" value="38.145000">
+    <!-- Main View Section: Nudge Control -->
+    <div id="tab-nudge" class="view-section">
+        <div class="glass-panel control-panel" style="max-width: 600px; margin: 0 auto;">
+            <div class="panel-header">
+                <div class="panel-header-title">
+                    <svg viewBox="0 0 24 24"><path d="M13,3A9,9 0 0,0 4,12H1L4.89,15.89L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z"/></svg>
+                    Manual Directional Nudge Keypad
                 </div>
-                <div class="form-group">
-                    <label>Home Base Longitude</label>
-                    <input type="text" class="form-control" id="gps-home-lon" placeholder="-76.427000" value="-76.427000">
-                </div>
-                <div class="form-group">
-                    <label>Target Waypoints (lat,lon;lat,lon)</label>
-                    <input type="text" class="form-control" id="gps-points" placeholder="38.1451,-76.427;38.1451,-76.426">
-                </div>
-                <button class="btn-submit" onclick="submitRawGPS()">LOAD COMPETITION GPS GRID</button>
             </div>
-
-            <!-- Direct Coordinate Override (GOTO) -->
-            <div class="card">
-                <div class="card-header">🎯 Target Coordinate Override (GOTO)</div>
-                <div class="form-group">
-                    <label>Target North (meters)</label>
-                    <input type="number" class="form-control" id="goto-north" placeholder="50.0" value="50.0">
-                </div>
-                <div class="form-group">
-                    <label>Target East (meters)</label>
-                    <input type="number" class="form-control" id="goto-east" placeholder="20.0" value="20.0">
-                </div>
-                <div class="form-group">
-                    <label>Target Altitude (meters)</label>
-                    <input type="number" class="form-control" id="goto-alt" placeholder="15.0" value="15.0">
-                </div>
-                <button class="btn-submit" onclick="submitGOTO()">FLY TO COORDINATE</button>
+            <div class="jog-grid">
+                <div></div>
+                <button class="btn-jog" onclick="dispatchJog('n', 2.0)">NORTH (+2m)</button>
+                <div></div>
+                <button class="btn-jog" onclick="dispatchJog('w', 2.0)">WEST (-2m)</button>
+                <button class="btn-jog" style="border-color: var(--accent-purple); color: var(--accent-purple);" onclick="dispatchCommand('hold')">HOLD</button>
+                <button class="btn-jog" onclick="dispatchJog('e', 2.0)">EAST (+2m)</button>
+                <div></div>
+                <button class="btn-jog" onclick="dispatchJog('s', 2.0)">SOUTH (-2m)</button>
+                <div></div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn-action" style="background: rgba(16, 185, 129, 0.15); border-color: var(--accent-green); color: var(--accent-green);" onclick="dispatchJog('up', 1.0)">ALTITUDE UP (+1m)</button>
+                <button class="btn-action" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-yellow); color: var(--accent-yellow);" onclick="dispatchJog('down', 1.0)">ALTITUDE DOWN (-1m)</button>
             </div>
         </div>
+    </div>
 
+    <!-- Emergency Disarm Confirmation Modal -->
+    <div class="modal-overlay" id="disarm-modal">
+        <div class="modal-card">
+            <div class="modal-title">CONFIRM EMERGENCY DISARM</div>
+            <div class="modal-desc">
+                Are you sure you want to trigger <b>IMMEDIATE EMERGENCY MOTOR KILL</b>? Motor power will cut instantly (SUAS Rule 5.3.8).
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-cancel" onclick="closeDisarmModal()">CANCEL</button>
+                <button class="modal-btn modal-confirm" onclick="executeEmergencyKill()">CONFIRM KILL</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        function addLog(msg) {
-            const logBox = document.getElementById('log-box');
-            const now = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${now}]</span> ${msg}`;
-            logBox.appendChild(entry);
-            logBox.scrollTop = logBox.scrollHeight;
+        let droneState = {
+            east: 0.0,
+            north: 0.0,
+            alt: 0.0,
+            speed: 0.0,
+            batt: 100,
+            mode: 'IDLE',
+            roll: 0.0,
+            pitch: 0.0,
+            heading: 45.0,
+            trail: []
+        };
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            if (tabId === 'tab-map') {
+                renderMapCanvas();
+            }
         }
 
-        function sendCommand(cmd) {
-            addLog(`Sending command: <b>${cmd.toUpperCase()}</b>...`);
+        function appendConsole(tag, text) {
+            const stream = document.getElementById('console-stream');
+            const now = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `<span class="console-time">[${now}]</span> <span class="console-tag">${tag}</span> <span>${text}</span>`;
+            stream.appendChild(line);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console-stream').innerHTML = '';
+        }
+
+        function dispatchCommand(cmd) {
+            appendConsole('[CMD]', `Dispatching command: <b>${cmd.toUpperCase()}</b>...`);
             fetch(`/api/command?cmd=${cmd}`)
                 .then(res => res.json())
-                .then(data => {
-                    addLog(`Server Response: ${data.message}`);
-                })
-                .catch(err => {
-                    addLog(`<span style="color: var(--accent-red)">Command Error: ${err}</span>`);
-                });
+                .then(data => appendConsole('[ACK]', data.message))
+                .catch(err => appendConsole('[ERR]', `Failed: ${err}`));
         }
 
-        function submitRawGPS() {
-            const homeLat = document.getElementById('gps-home-lat').value;
-            const homeLon = document.getElementById('gps-home-lon').value;
-            const pts = document.getElementById('gps-points').value;
-            addLog(`Submitting raw GPS Grid: Home=(${homeLat}, ${homeLon})...`);
-            
+        function dispatchJog(axis, val) {
+            fetch(`/api/jog?axis=${axis}&val=${val}`)
+                .then(res => res.json())
+                .then(data => appendConsole('[JOG]', data.message))
+                .catch(err => appendConsole('[ERR]', `Jog error: ${err}`));
+        }
+
+        function confirmEmergencyKill() {
+            document.getElementById('disarm-modal').style.display = 'flex';
+        }
+
+        function closeDisarmModal() {
+            document.getElementById('disarm-modal').style.display = 'none';
+        }
+
+        function executeEmergencyKill() {
+            closeDisarmModal();
+            dispatchCommand('terminate');
+        }
+
+        function submitRawGPSGrid() {
+            const hLat = document.getElementById('in-home-lat').value;
+            const hLon = document.getElementById('in-home-lon').value;
+            const pts = document.getElementById('in-gps-pts').value;
+
+            appendConsole('[GPS]', `Converting raw WGS-84 coordinates for Home (${hLat}, ${hLon})...`);
             fetch('/api/load_gps', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({home_lat: homeLat, home_lon: homeLon, points: pts})
+                body: JSON.stringify({home_lat: hLat, home_lon: hLon, points: pts})
             })
             .then(res => res.json())
-            .then(data => addLog(`GPS Grid Loaded: ${data.message}`))
-            .catch(err => addLog(`<span style="color: var(--accent-red)">GPS Load Error: ${err}</span>`));
+            .then(data => appendConsole('[ACK]', data.message))
+            .catch(err => appendConsole('[ERR]', `GPS Load Error: ${err}`));
         }
 
-        function submitGOTO() {
-            const n = document.getElementById('goto-north').value;
-            const e = document.getElementById('goto-east').value;
-            const alt = document.getElementById('goto-alt').value;
-            addLog(`Sending GOTO Target: North=${n}m, East=${e}m, Alt=${alt}m...`);
+        function submitGOTOTarget() {
+            const n = document.getElementById('in-goto-n').value;
+            const e = document.getElementById('in-goto-e').value;
+            const alt = document.getElementById('in-goto-alt').value;
+
+            appendConsole('[GOTO]', `Targeting ENU position North=${n}m, East=${e}m, Alt=${alt}m...`);
             fetch(`/api/goto?n=${n}&e=${e}&alt=${alt}`)
                 .then(res => res.json())
-                .then(data => addLog(`GOTO Dispatched: ${data.message}`))
-                .catch(err => addLog(`<span style="color: var(--accent-red)">GOTO Error: ${err}</span>`));
+                .then(data => appendConsole('[ACK]', data.message))
+                .catch(err => appendConsole('[ERR]', `GOTO Error: ${err}`));
         }
 
-        // Poll Telemetry every 1 second
+        // 2D Tactical Canvas Renderer
+        const canvas = document.getElementById('tactical-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            if (canvas.parentElement) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            const scale = 3.0; // 3px per meter
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            const eastM = ((cx - originX) / scale).toFixed(1);
+            const northM = (-(cy - originY) / scale).toFixed(1);
+            document.getElementById('map-coord-tag').innerText = `CURSOR ENU: N=${northM}m | E=${eastM}m`;
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const cx = e.clientX - rect.left;
+            const cy = e.clientY - rect.top;
+            const scale = 3.0;
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            const eastM = ((cx - originX) / scale).toFixed(1);
+            const northM = (-(cy - originY) / scale).toFixed(1);
+            
+            document.getElementById('in-goto-e').value = eastM;
+            document.getElementById('in-goto-n').value = northM;
+            submitGOTOTarget();
+        });
+
+        function renderMapCanvas() {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const originX = canvas.width / 2;
+            const originY = canvas.height / 2;
+            const scale = 3.0;
+
+            // Grid Lines
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Crosshair Home (0,0)
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(originX - 15, originY); ctx.lineTo(originX + 15, originY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(originX, originY - 15); ctx.lineTo(originX, originY + 15); ctx.stroke();
+            ctx.fillStyle = '#10b981';
+            ctx.font = '10px JetBrains Mono';
+            ctx.fillText("HOME (0,0)", originX + 6, originY - 6);
+
+            // Flight Path Trail
+            if (droneState.trail.length > 1) {
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                droneState.trail.forEach((pt, i) => {
+                    const px = originX + pt.e * scale;
+                    const py = originY - pt.n * scale;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                });
+                ctx.stroke();
+            }
+
+            // Drone Symbol
+            const dx = originX + droneState.east * scale;
+            const dy = originY - droneState.north * scale;
+
+            ctx.save();
+            ctx.translate(dx, dy);
+            ctx.rotate((droneState.heading * Math.PI) / 180);
+            
+            ctx.fillStyle = '#00f0ff';
+            ctx.beginPath();
+            ctx.moveTo(0, -12);
+            ctx.lineTo(8, 10);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(-8, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillText(`DRONE (E:${droneState.east.toFixed(1)}m, N:${droneState.north.toFixed(1)}m)`, dx + 12, dy + 4);
+        }
+
+        // Update Attitude Instruments
+        function updateInstruments(roll, pitch, heading) {
+            document.getElementById('txt-attitude').innerText = `ROLL: ${roll.toFixed(1)}° | PITCH: ${pitch.toFixed(1)}°`;
+            document.getElementById('txt-heading').innerText = `HEADING: ${Math.round(heading).toString().padStart(3, '0')}°`;
+
+            const pitchGroup = document.getElementById('horizon-pitch-group');
+            if (pitchGroup) {
+                pitchGroup.setAttribute('transform', `rotate(${-roll}, 100, 100) translate(0, ${pitch * 2})`);
+            }
+
+            const needle = document.getElementById('compass-needle');
+            if (needle) {
+                needle.setAttribute('transform', `rotate(${heading}, 100, 100)`);
+            }
+        }
+
+        // Fast Polling Telemetry Loop (Zero Lag)
         setInterval(() => {
             fetch('/api/telemetry')
                 .then(res => res.json())
                 .then(data => {
-                    document.getElementById('val-state').innerText = data.state || 'IDLE';
-                    document.getElementById('val-alt').innerText = `${data.altitude_m ? data.altitude_m.toFixed(1) : '0.0'} m`;
-                    document.getElementById('val-speed').innerText = `${data.speed_ms ? data.speed_ms.toFixed(1) : '0.0'} m/s`;
-                    document.getElementById('val-batt').innerText = `${data.battery_pct ? data.battery_pct.toFixed(0) : '100'}%`;
+                    droneState.mode = data.state || 'IDLE';
+                    droneState.east = data.pos_enu ? data.pos_enu[0] : 0.0;
+                    droneState.north = data.pos_enu ? data.pos_enu[1] : 0.0;
+                    droneState.alt = data.altitude_m || 0.0;
+                    droneState.speed = data.speed_ms || 0.0;
+                    droneState.batt = data.battery_pct || 100;
+                    droneState.roll = data.roll || 0.0;
+                    droneState.pitch = data.pitch || 0.0;
+                    droneState.heading = data.heading || 45.0;
+
+                    // Update trail
+                    droneState.trail.push({e: droneState.east, n: droneState.north});
+                    if (droneState.trail.length > 50) droneState.trail.shift();
+
+                    document.getElementById('disp-state').innerText = droneState.mode;
+                    document.getElementById('disp-alt').innerHTML = `${droneState.alt.toFixed(1)}<span class="tel-unit">m</span>`;
+                    document.getElementById('disp-speed').innerHTML = `${droneState.speed.toFixed(1)}<span class="tel-unit">m/s</span>`;
+                    document.getElementById('disp-batt').innerHTML = `${droneState.batt.toFixed(0)}<span class="tel-unit">%</span>`;
+                    document.getElementById('last-update').innerText = `Updated ${new Date().toLocaleTimeString()}`;
+                    document.getElementById('head-sat').innerText = `${data.satellites || 18} SATS | ${data.rssi_pct || 98}%`;
+
+                    updateInstruments(droneState.roll, droneState.pitch, droneState.heading);
+                    renderMapCanvas();
                 })
                 .catch(() => {});
-        }, 1000);
+        }, 500);
     </script>
 </body>
 </html>

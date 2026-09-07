@@ -44,11 +44,28 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             t = STUB_FC.get_telemetry()
+            pos = t.get("pos_enu", (0.0, 0.0, 0.0))
+            
+            # Dynamic simulated sensor motion for realistic interactive visualizers
+            import time
+            now = time.time()
+            sim_roll = math.sin(now * 1.5) * 3.5 if t.get("armed", False) else 0.0
+            sim_pitch = math.cos(now * 1.2) * 2.0 if t.get("armed", False) else 0.0
+            sim_heading = (now * 5.0) % 360.0 if t.get("speed_ms", 0) > 0.5 else 45.0
+
             data = {
                 "state": t.get("mode", "IDLE"),
-                "altitude_m": float(t.get("pos_enu", (0, 0, 0))[2]),
+                "pos_enu": list(pos),
+                "altitude_m": float(pos[2]),
                 "speed_ms": float(t.get("speed_ms", 0.0)),
                 "battery_pct": float(t.get("battery_pct", 100.0)),
+                "armed": bool(t.get("armed", False)),
+                "roll": round(sim_roll, 1),
+                "pitch": round(sim_pitch, 1),
+                "heading": round(sim_heading, 1),
+                "satellites": 18,
+                "rssi_pct": 98,
+                "payload_released": bool(t.get("payload_released", False)),
             }
             self.wfile.write(json.dumps(data).encode("utf-8"))
             return
@@ -57,13 +74,25 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             cmd = query.get("cmd", ["start"])[0]
             logger.info(f"[Web GCS] Command received: {cmd}")
 
-            # Execute send_command.sh script
-            script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
-            try:
-                subprocess.run(["bash", script_path, cmd], check=False)
-                resp = {"status": "ok", "message": f"Command '{cmd}' executed successfully."}
-            except Exception as e:
-                resp = {"status": "error", "message": str(e)}
+            if cmd == "arm":
+                STUB_FC.arm_and_offboard()
+                resp = {"status": "ok", "message": "Motors ARMED & OFFBOARD Mode Enabled."}
+            elif cmd == "disarm" or cmd == "terminate":
+                STUB_FC.disarm()
+                resp = {"status": "ok", "message": "Motors DISARMED & EMERGENCY KILLED."}
+            elif cmd == "rtl":
+                STUB_FC.trigger_rtl()
+                resp = {"status": "ok", "message": "RTL Triggered. Returning to Home pose."}
+            elif cmd == "payload":
+                STUB_FC.trigger_payload_release()
+                resp = {"status": "ok", "message": "Payload Servo Release Triggered."}
+            else:
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, cmd], check=False)
+                    resp = {"status": "ok", "message": f"Command '{cmd}' executed successfully."}
+                except Exception as e:
+                    resp = {"status": "error", "message": str(e)}
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -72,17 +101,45 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             return
 
         elif path == "/api/goto":
-            n = query.get("n", ["0.0"])[0]
-            e = query.get("e", ["0.0"])[0]
-            alt = query.get("alt", ["15.0"])[0]
-            down = str(-abs(float(alt)))
+            n = float(query.get("n", ["0.0"])[0])
+            e = float(query.get("e", ["0.0"])[0])
+            alt = float(query.get("alt", ["15.0"])[0])
+            STUB_FC.set_setpoint_enu(e, n, alt)
 
             script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
             try:
-                subprocess.run(["bash", script_path, "goto", n, e, down], check=False)
+                subprocess.run(["bash", script_path, "goto", str(n), str(e), str(-abs(alt))], check=False)
                 resp = {"status": "ok", "message": f"GOTO Dispatched: North={n}m, East={e}m, Alt={alt}m."}
             except Exception as err:
                 resp = {"status": "error", "message": str(err)}
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(resp).encode("utf-8"))
+            return
+
+        elif path == "/api/jog":
+            axis = query.get("axis", ["n"])[0]
+            val = float(query.get("val", ["1.0"])[0])
+            t = STUB_FC.get_telemetry()
+            curr_pos = list(t.get("pos_enu", [0.0, 0.0, 15.0]))
+            
+            if axis == "n":
+                curr_pos[1] += val
+            elif axis == "s":
+                curr_pos[1] -= val
+            elif axis == "e":
+                curr_pos[0] += val
+            elif axis == "w":
+                curr_pos[0] -= val
+            elif axis == "up":
+                curr_pos[2] += val
+            elif axis == "down":
+                curr_pos[2] = max(1.0, curr_pos[2] - val)
+
+            STUB_FC.set_setpoint_enu(curr_pos[0], curr_pos[1], curr_pos[2])
+            resp = {"status": "ok", "message": f"Nudged {axis.upper()} by {val}m. New Target: E={curr_pos[0]}m, N={curr_pos[1]}m, Alt={curr_pos[2]}m."}
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
