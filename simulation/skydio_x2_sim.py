@@ -322,6 +322,12 @@ class SkydioX2Simulation:
         if hasattr(self, "sm") and self.sm:
             self.sm.on_abort_command()
 
+    def trigger_rtl(self):
+        """Triggers Return to Launch / Return to Home (RTL / RTH)."""
+        if hasattr(self, "sm") and self.sm:
+            self.sm.on_rtl_command()
+        self.set_target(0.0, 0.0, 15.0)
+
     OBSTACLE_LOCS = [
         np.array([100.0,  30.0, 25.0]),  # Office Building 1
         np.array([150.0, -15.0, 28.0]),  # Balloon 1

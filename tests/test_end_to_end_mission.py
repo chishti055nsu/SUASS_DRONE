@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(ROOT, "mission_planner"))
 sys.path.insert(0, os.path.join(ROOT, "precision_landing"))
 
 from mission_planner.mission_state_machine import MissionStateMachine, MissionState
-from mission_planner.flight_controller import create_flight_controller, SimStubFlightController, MuJoCoFlightController
+from mission_planner.flight_controller import create_flight_controller, SimStubFlightController, MuJoCoFlightController, MavrosFlightController
 from mission_planner.mission_node import compute_drop_decision, enu_to_ned, ned_to_enu
 from drone_vision.perception_interface import TargetDetection, parse_action_zone_msg, parse_aruco_pose_msg
 
@@ -285,6 +285,62 @@ class TestEndToEndMissionPipeline(unittest.TestCase):
 
         self.sm.on_manual_override()
         self.assertEqual(self.sm.state, MissionState.MANUAL_OVERRIDE.value)
+
+    def test_rtl_hal_integration(self):
+        """Verifies trigger_rtl across all FlightController HAL backends."""
+        stub_fc = SimStubFlightController()
+        self.assertTrue(stub_fc.trigger_rtl())
+        self.assertEqual(stub_fc.get_telemetry()["mode"], "RTL")
+
+        mujoco_fc = MuJoCoFlightController()
+        self.assertTrue(mujoco_fc.trigger_rtl())
+        self.assertEqual(mujoco_fc.get_telemetry()["mode"], "RTL")
+
+        class MockNode:
+            def create_publisher(self, *args, **kwargs): return None
+            def create_client(self, *args, **kwargs):
+                class MockClient:
+                    def wait_for_service(self, timeout_sec=1.5): return True
+                    def call_async(self, req): pass
+                return MockClient()
+            def get_logger(self):
+                class MockLogger:
+                    def info(self, msg): pass
+                    def warn(self, msg): pass
+                    def error(self, msg): pass
+                return MockLogger()
+            def get_clock(self):
+                class MockClock:
+                    def now(self):
+                        class MockTime:
+                            def to_msg(self): return None
+                        return MockTime()
+                return MockClock()
+
+        from unittest.mock import MagicMock
+        mock_srv = MagicMock()
+        with unittest.mock.patch.dict("sys.modules", {"mavros_msgs.srv": mock_srv}):
+            mavros_fc = MavrosFlightController(MockNode())
+            self.assertTrue(mavros_fc.trigger_rtl())
+
+    def test_rtl_auto_land_transition(self):
+        """Verifies RETURN_HOME -> LAND transition when home position is reached."""
+        self.sm.on_start_command()
+        self.sm.on_armed()
+        self.sm.on_altitude_reached()
+        self.assertEqual(self.sm.state, MissionState.SEARCH.value)
+
+        # Trigger RTL
+        self.sm.on_rtl_command()
+        self.assertEqual(self.sm.state, MissionState.RETURN_HOME.value)
+
+        # Arrive at home position
+        self.sm.on_at_home()
+        self.assertEqual(self.sm.state, MissionState.LAND.value)
+
+        # Touchdown
+        self.sm.on_landed()
+        self.assertEqual(self.sm.state, MissionState.COMPLETE.value)
 
 
 class TestCoordinateTransforms(unittest.TestCase):

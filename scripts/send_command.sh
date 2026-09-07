@@ -2,7 +2,7 @@
 # ============================================================
 # send_command.sh
 # User-friendly helper to send flight commands to the drone
-# Usage: ./send_command.sh [start | abort | rtl | land]
+# Usage: ./send_command.sh [start | abort | rtl | rth | land]
 # ============================================================
 
 CMD=${1:-start}

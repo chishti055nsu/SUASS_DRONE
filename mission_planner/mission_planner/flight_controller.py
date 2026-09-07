@@ -39,6 +39,11 @@ class FlightController(ABC):
         pass
 
     @abstractmethod
+    def trigger_rtl(self) -> bool:
+        """Trigger Return to Launch / Return to Home mode (AUTO.RTL or RTL)."""
+        pass
+
+    @abstractmethod
     def get_telemetry(self) -> Dict[str, Any]:
         """
         Returns telemetry dictionary:
@@ -95,6 +100,11 @@ class SimStubFlightController(FlightController):
 
     def trigger_payload_release(self) -> bool:
         self._payload_released = True
+        return True
+
+    def trigger_rtl(self) -> bool:
+        self._mode = "RTL"
+        self._target_setpoint = [0.0, 0.0, 15.0]
         return True
 
     def update_sim_step(self, dt: float = 0.1) -> None:
@@ -184,6 +194,16 @@ class MuJoCoFlightController(FlightController):
             self._sim.drop_payload()
         return True
 
+    def trigger_rtl(self) -> bool:
+        self._mode = "RTL"
+        self._target_setpoint = [0.0, 0.0, 15.0]
+        if self._sim is not None:
+            if hasattr(self._sim, 'trigger_rtl'):
+                self._sim.trigger_rtl()
+            elif hasattr(self._sim, 'set_target'):
+                self._sim.set_target(0.0, 0.0, 15.0)
+        return True
+
     def get_telemetry(self) -> Dict[str, Any]:
         if self._sim is not None and hasattr(self._sim, 'get_state'):
             state = self._sim.get_state()
@@ -242,10 +262,13 @@ class MavrosFlightController(FlightController):
         if self._node is None or not hasattr(self._node, "create_publisher"):
             return
 
-        from geometry_msgs.msg import PoseStamped
-        self._setpoint_pub = self._node.create_publisher(
-            PoseStamped, "/mavros/setpoint_position/local", 10
-        )
+        try:
+            from geometry_msgs.msg import PoseStamped
+            self._setpoint_pub = self._node.create_publisher(
+                PoseStamped, "/mavros/setpoint_position/local", 10
+            )
+        except ImportError:
+            pass
 
     def arm_and_offboard(self) -> bool:
         """Dispatches SetMode (OFFBOARD) and CommandBool (ARM) service calls asynchronously."""
@@ -334,6 +357,26 @@ class MavrosFlightController(FlightController):
         except Exception as e:
             if hasattr(self._node, "get_logger"):
                 self._node.get_logger().error(f"[HAL Mavros] Servo trigger error: {e}")
+            return False
+
+    def trigger_rtl(self) -> bool:
+        """Dispatches SetMode (AUTO.RTL / RTL) via MAVROS service call asynchronously."""
+        if self._node is None or not hasattr(self._node, "create_client"):
+            return False
+
+        self._node.get_logger().info("[HAL Mavros] Requesting RTL / AUTO.RTL mode via MAVROS service...")
+        try:
+            from mavros_msgs.srv import SetMode
+            cli = self._node.create_client(SetMode, "/mavros/set_mode")
+            if cli.wait_for_service(timeout_sec=1.5):
+                req = SetMode.Request()
+                req.custom_mode = "AUTO.RTL"
+                cli.call_async(req)
+                self._node.get_logger().warn("[HAL Mavros] RTL (AUTO.RTL) command sent to MAVROS.")
+            return True
+        except Exception as e:
+            if hasattr(self._node, "get_logger"):
+                self._node.get_logger().error(f"[HAL Mavros] RTL error: {e}")
             return False
 
 

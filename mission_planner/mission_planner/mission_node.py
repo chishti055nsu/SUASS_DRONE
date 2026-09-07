@@ -304,7 +304,7 @@ class MissionPlannerNode(Node):
         elif cmd == "land_now":
             self._sm.on_abort_command()
             self._send_land()
-        elif cmd == "rtl":
+        elif cmd in ("rtl", "rth", "return_to_launch", "return_to_home", "return_home"):
             self._sm.on_rtl_command()
             self._send_rtl()
         elif cmd == "terminate":
@@ -403,6 +403,10 @@ class MissionPlannerNode(Node):
 
         elif state == MissionState.RETURN_HOME:
             self._set_target_enu(0.0, 0.0, self._search_alt)
+            dist_home = math.sqrt(self._pos_enu[0]**2 + self._pos_enu[1]**2)
+            if dist_home < self._waypoint_acceptance_m:
+                self.get_logger().info("Home position reached! Transitioning RETURN_HOME -> LAND.")
+                self._sm.on_at_home()
 
         elif state == MissionState.LAND:
             target = self._get_precision_target_enu(0.0)
@@ -474,6 +478,8 @@ class MissionPlannerNode(Node):
 
     def _send_rtl(self):
         self._set_target_enu(0.0, 0.0, self._search_alt)
+        if hasattr(self, "_fc") and self._fc is not None:
+            self._fc.trigger_rtl()
 
 
     # ── Watchdog Check ───────────────────────────────────────────────────────
