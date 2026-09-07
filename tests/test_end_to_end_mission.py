@@ -26,6 +26,8 @@ from mission_planner.mission_state_machine import MissionStateMachine, MissionSt
 from mission_planner.flight_controller import create_flight_controller, SimStubFlightController, MuJoCoFlightController, MavrosFlightController
 from mission_planner.mission_node import compute_drop_decision, enu_to_ned, ned_to_enu
 from drone_vision.perception_interface import TargetDetection, parse_action_zone_msg, parse_aruco_pose_msg
+from drone_vision.orthomosaic_mapper import OrthomosaicMapper
+from drone_vision.target_geolocator import TargetGeolocator, SUAStarget
 
 
 try:
@@ -396,6 +398,49 @@ class TestCoordinateTransforms(unittest.TestCase):
         self.assertAlmostEqual(orig_enu[0], roundtrip_enu[0])
         self.assertAlmostEqual(orig_enu[1], roundtrip_enu[1])
         self.assertAlmostEqual(orig_enu[2], roundtrip_enu[2])
+
+
+class TestOrthomosaicMapper(unittest.TestCase):
+    """Verifies Orthomosaic Map generation and geotagged keyframe logging for Risk Mapping."""
+
+    def test_keyframe_capture_and_stitching(self):
+        import numpy as np
+        mapper = OrthomosaicMapper(output_dir="tests/scratch_ortho", min_interval_m=5.0)
+
+        # Create dummy image frames
+        img1 = np.full((400, 600, 3), 100, dtype=np.uint8)
+        img2 = np.full((400, 600, 3), 150, dtype=np.uint8)
+
+        # First frame capture
+        self.assertTrue(mapper.add_keyframe(img1, (0.0, 0.0, 15.0)))
+        # Too close (< 5.0m)
+        self.assertFalse(mapper.add_keyframe(img2, (2.0, 0.0, 15.0)))
+        # Sufficient distance (> 5.0m)
+        self.assertTrue(mapper.add_keyframe(img2, (10.0, 0.0, 15.0)))
+
+        self.assertEqual(len(mapper.keyframes), 2)
+        out_file = mapper.generate_orthomosaic(save_filename="test_orthomosaic.jpg")
+        self.assertIsNotNone(out_file)
+        self.assertTrue(os.path.exists(out_file))
+
+
+class TestTargetGeolocator(unittest.TestCase):
+    """Verifies SUAS Target Geolocation & Payload Assignment."""
+
+    def test_target_geolocation_computation(self):
+        geolocator = TargetGeolocator(fov_deg_h=80.0, fov_deg_v=60.0, img_w=1280, img_h=720)
+        # Center pixel (640, 360) at drone pose (100.0, 50.0, 15.0) heading 0 deg
+        target = geolocator.geolocate_target(
+            center_px=(640.0, 360.0),
+            drone_pos_enu=(100.0, 50.0, 15.0),
+            drone_yaw_deg=0.0,
+            target_class="mannequin"
+        )
+
+        self.assertEqual(target.target_class, "mannequin")
+        self.assertEqual(target.payload_assigned, "water_bottle")
+        self.assertAlmostEqual(target.position_enu[0], 100.0, delta=0.5)
+        self.assertAlmostEqual(target.position_enu[1], 50.0, delta=0.5)
 
 
 if __name__ == "__main__":
