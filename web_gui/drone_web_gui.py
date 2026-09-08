@@ -58,8 +58,12 @@ class AsyncFrameGrabber:
         import cv2
         import numpy as np
 
-        # Force TCP transport for RTSP streams over SIYI HM30 wireless datalink
-        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|max_delay;500000"
+        os.environ["OPENCV_LOG_LEVEL"] = "OFF"
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;2000000|max_delay;500000|allowed_media_types;video"
+        try:
+            cv2.setLogLevel(0)
+        except Exception:
+            pass
 
         cap = None
         last_check = 0
@@ -183,6 +187,12 @@ class RealSenseD455Grabber:
         import cv2
         import numpy as np
 
+        os.environ["OPENCV_LOG_LEVEL"] = "OFF"
+        try:
+            cv2.setLogLevel(0)
+        except Exception:
+            pass
+
         cap = None
         last_check = 0
 
@@ -201,7 +211,7 @@ class RealSenseD455Grabber:
 
                 if cap is None and (now - last_check > 5.0):
                     last_check = now
-                    for idx in [0, 2, 4]:
+                    for idx in [4, 2, 0, 6]:
                         dev_path = f"/dev/video{idx}"
                         if not os.path.exists(dev_path):
                             continue
