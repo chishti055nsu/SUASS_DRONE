@@ -169,11 +169,13 @@ class MuJoCoFlightController(FlightController):
     def __init__(self, sim_instance: Optional[Any] = None):
         self._sim = sim_instance
         self._target_setpoint = [0.0, 0.0, 0.0]
+        self._current_pos = [0.0, 0.0, 0.0]
         self._armed = False
         self._connected = True
         self._mode = "SIM_IDLE"
         self._battery_pct = 98.0
         self._payload_released = False
+        self._last_time = time.time()
 
     def attach_sim(self, sim_instance: Any) -> None:
         self._sim = sim_instance
@@ -235,10 +237,39 @@ class MuJoCoFlightController(FlightController):
                 "mode": self._mode,
                 "payload_released": payload_dropped,
             }
+        
+        # Smooth Kinematic Simulation Interpolation when in Stub Mode
+        now = time.time()
+        dt = min(0.5, max(0.01, now - self._last_time))
+        self._last_time = now
+
+        speed = 0.0
+        if self._armed:
+            max_vel = 4.0  # 4.0 m/s cruise speed
+            dx = self._target_setpoint[0] - self._current_pos[0]
+            dy = self._target_setpoint[1] - self._current_pos[1]
+            dz = self._target_setpoint[2] - self._current_pos[2]
+            dist = math.sqrt(dx**2 + dy**2 + dz**2)
+
+            if dist > 0.05:
+                step = min(dist, max_vel * dt)
+                self._current_pos[0] += (dx / dist) * step
+                self._current_pos[1] += (dy / dist) * step
+                self._current_pos[2] += (dz / dist) * step
+                speed = step / dt
+            else:
+                self._current_pos = list(self._target_setpoint)
+                speed = 0.0
+        else:
+            # Descend smoothly when disarmed
+            if self._current_pos[2] > 0.0:
+                self._current_pos[2] = max(0.0, self._current_pos[2] - 3.0 * dt)
+                speed = 3.0
+
         return {
-            "pos_enu": tuple(self._target_setpoint),
+            "pos_enu": tuple(self._current_pos),
             "vel_enu": (0.0, 0.0, 0.0),
-            "speed_ms": 0.0,
+            "speed_ms": round(speed, 1),
             "battery_pct": self._battery_pct,
             "armed": self._armed,
             "connected": self._connected,

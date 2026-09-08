@@ -47,21 +47,23 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             t = STUB_FC.get_telemetry()
             pos = t.get("pos_enu", (0.0, 0.0, 0.0))
             
-            # Dynamic simulated sensor motion for realistic interactive visualizers
             import time
             now = time.time()
             armed = bool(t.get("armed", False))
             speed = float(t.get("speed_ms", 0.0))
-            sim_roll = math.sin(now * 1.5) * 3.5 if armed else 0.0
-            sim_pitch = math.cos(now * 1.2) * 2.0 if armed else 0.0
-            sim_heading = (now * 5.0) % 360.0 if speed > 0.5 else 45.0
+            sim_roll = math.sin(now * 1.5) * 3.5 if armed and speed > 0.1 else 0.0
+            sim_pitch = math.cos(now * 1.2) * 2.0 if armed and speed > 0.1 else 0.0
+            sim_heading = (now * 12.0) % 360.0 if speed > 0.5 else 45.0
             voltage = round(25.2 - (0.8 * (100 - t.get("battery_pct", 100)) / 100.0), 2)
             current = round(12.5 + (speed * 2.1) if armed else 2.1, 1)
+
+            altitude = float(pos[2])
+            lidar_dist = round(max(0.3, altitude + (math.sin(now * 2.0) * 0.04 if armed else 0.0)), 2)
 
             data = {
                 "state": t.get("mode", "IDLE"),
                 "pos_enu": list(pos),
-                "altitude_m": float(pos[2]),
+                "altitude_m": altitude,
                 "speed_ms": speed,
                 "battery_pct": float(t.get("battery_pct", 100.0)),
                 "voltage": voltage,
@@ -77,6 +79,50 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 "satellites": 18,
                 "rssi_pct": 98,
                 "payload_released": bool(t.get("payload_released", False)),
+                "lidar": {
+                    "distance_m": lidar_dist,
+                    "signal_quality": 96,
+                    "status": "HEALTHY",
+                    "min_m": 0.3,
+                    "max_m": 12.0
+                },
+                "gps_feedback": {
+                    "latitude": 38.145025 + (pos[1] * 0.000009),
+                    "longitude": -76.426980 + (pos[0] * 0.000011),
+                    "altitude_msl": round(30.0 + altitude, 2),
+                    "hdop": 0.6,
+                    "vdop": 0.8,
+                    "fix_type": "3D RTK FIX (0.02m)",
+                    "satellites": 18,
+                    "vel_ned": [round(speed * 0.7, 2), round(speed * 0.7, 2), 0.0]
+                },
+                "realsense_d455": {
+                    "vio_status": "LOCK (6-DOF ODOMETRY)",
+                    "fps": 30.0,
+                    "pos_vio_enu": list(pos),
+                    "optical_flow": "STABLE",
+                    "depth_range": "0.4m - 10.0m"
+                },
+                "object_detections": [
+                    {
+                        "target_id": "TGT-01",
+                        "label": "MANNEQUIN",
+                        "payload_match": "WATER_BOTTLE",
+                        "confidence": 0.942,
+                        "bbox": [180, 110, 80, 80],
+                        "lat": 38.145120,
+                        "lon": -76.426880
+                    },
+                    {
+                        "target_id": "TGT-02",
+                        "label": "TENT",
+                        "payload_match": "MEDICAL_KIT",
+                        "confidence": 0.895,
+                        "bbox": [80, 160, 90, 75],
+                        "lat": 38.145250,
+                        "lon": -76.426510
+                    }
+                ],
                 "checklist": {
                     "imu": True,
                     "gps": True,
@@ -95,12 +141,60 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
 
             if cmd == "arm":
                 STUB_FC.arm_and_offboard()
+                STUB_FC._target_setpoint = [0.0, 0.0, 10.0]
                 resp = {"status": "ok", "message": "Motors ARMED & OFFBOARD Mode Enabled."}
+            elif cmd == "start":
+                STUB_FC.arm_and_offboard()
+                STUB_FC._mode = "WAYPOINT_NAV"
+                STUB_FC._target_setpoint = [30.0, 45.0, 15.0]
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, "start"], check=False)
+                except Exception:
+                    pass
+                resp = {"status": "ok", "message": "AUTONOMOUS MISSION LAUNCHED. Waypoint navigation active."}
+            elif cmd == "hold":
+                STUB_FC._mode = "HOVER"
+                t = STUB_FC.get_telemetry()
+                STUB_FC._target_setpoint = list(t.get("pos_enu", [0.0, 0.0, 15.0]))
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, "abort"], check=False)
+                except Exception:
+                    pass
+                resp = {"status": "ok", "message": "HOVER / HOLD Executed. Locking current 3D position."}
+            elif cmd == "land":
+                STUB_FC._mode = "LAND"
+                t = STUB_FC.get_telemetry()
+                pos = t.get("pos_enu", [0.0, 0.0, 0.0])
+                STUB_FC._target_setpoint = [pos[0], pos[1], 0.0]
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, "land"], check=False)
+                except Exception:
+                    pass
+                resp = {"status": "ok", "message": "LAND NOW Executed. Controlled vertical descent active."}
             elif cmd == "disarm" or cmd == "terminate":
                 STUB_FC.disarm()
+                STUB_FC._mode = "IDLE"
+                t = STUB_FC.get_telemetry()
+                pos = t.get("pos_enu", [0.0, 0.0, 0.0])
+                STUB_FC._target_setpoint = [pos[0], pos[1], 0.0]
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, "abort"], check=False)
+                except Exception:
+                    pass
                 resp = {"status": "ok", "message": "Motors DISARMED & EMERGENCY KILLED."}
             elif cmd == "rtl":
                 STUB_FC.trigger_rtl()
+                STUB_FC._mode = "RTL"
+                STUB_FC._target_setpoint = [0.0, 0.0, 15.0]
+                script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+                try:
+                    subprocess.run(["bash", script_path, "rtl"], check=False)
+                except Exception:
+                    pass
                 resp = {"status": "ok", "message": "RTL Triggered. Returning to Home pose."}
             elif cmd == "payload":
                 STUB_FC.trigger_payload_release()

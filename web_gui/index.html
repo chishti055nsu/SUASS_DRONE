@@ -199,20 +199,14 @@
             position: relative;
         }
 
-        .fsm-step.active {
-            color: var(--accent-cyan);
-        }
-
+        .fsm-step.active { color: var(--accent-cyan); }
         .fsm-step.active .fsm-node {
             background: var(--accent-cyan);
             box-shadow: 0 0 12px var(--accent-cyan);
             border-color: #fff;
         }
 
-        .fsm-step.completed {
-            color: var(--accent-green);
-        }
-
+        .fsm-step.completed { color: var(--accent-green); }
         .fsm-step.completed .fsm-node {
             background: var(--accent-green);
             border-color: var(--accent-green);
@@ -234,7 +228,76 @@
             margin: 0 8px;
         }
 
-        /* Main Workspace Workstation Grid */
+        /* Sensor HUD Grid Row */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .sensor-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+
+        .sensor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .sensor-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .sensor-body {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.76rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .sensor-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .sensor-label { color: var(--text-secondary); }
+
+        /* Meter Progress Bar for LiDAR */
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-cyan), var(--accent-green));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Workstation Main Grid */
         .workstation-grid {
             display: grid;
             grid-template-columns: 2.2fr 1.3fr 1fr;
@@ -304,7 +367,7 @@
         .canvas-window {
             position: relative;
             width: 100%;
-            height: 340px;
+            height: 330px;
             background: #03050c;
             border: 1px solid rgba(0, 240, 255, 0.15);
             border-radius: 10px;
@@ -332,6 +395,38 @@
             pointer-events: none;
         }
 
+        /* Target Detections Table */
+        .target-table-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .target-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            text-align: left;
+        }
+
+        .target-table th {
+            color: var(--text-dim);
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+        }
+
+        .target-table td {
+            padding: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+        }
+
         /* Primary Flight Display & HUD Instruments */
         .pfd-container {
             display: grid;
@@ -344,7 +439,7 @@
             background: #03050c;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -352,24 +447,21 @@
         }
 
         .pfd-title {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         #horizon-svg, #compass-svg {
-            width: 150px;
-            height: 150px;
+            width: 140px;
+            height: 140px;
         }
 
         /* Tactical Command Buttons */
-        .cmd-panel {
-            padding: 16px;
-            margin-bottom: 12px;
-        }
+        .cmd-panel { padding: 14px; margin-bottom: 12px; }
 
         .btn-grid {
             display: grid;
@@ -381,7 +473,7 @@
             border: none;
             border-radius: 8px;
             padding: 14px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
             letter-spacing: 0.5px;
             cursor: pointer;
@@ -394,42 +486,22 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .btn-gcs svg {
-            width: 16px;
-            height: 16px;
-            fill: currentColor;
-        }
-
+        .btn-gcs svg { width: 16px; height: 16px; fill: currentColor; }
         .btn-gcs:active { transform: scale(0.96); }
 
         .btn-primary-start {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: #022010;
             grid-column: span 2;
-            font-size: 0.95rem;
-            padding: 16px;
+            font-size: 0.92rem;
+            padding: 15px;
             box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-primary-start:hover {
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-        }
-
-        .btn-rtl {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #2b1f00;
-        }
-
-        .btn-hold {
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-            color: #ffffff;
-        }
-
-        .btn-land {
-            background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
-            color: #00272b;
-        }
-
+        .btn-primary-start:hover { box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
+        .btn-rtl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #2b1f00; }
+        .btn-hold { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; }
+        .btn-land { background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%); color: #00272b; }
         .btn-emergency {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
@@ -440,48 +512,14 @@
 
         .btn-emergency:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
 
-        /* Interlock Checklist Panel */
-        .checklist-box {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-        }
-
-        .check-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.74rem;
-            font-weight: 700;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .check-item:last-child { border-bottom: none; }
-
-        .check-tag {
-            font-family: 'JetBrains Mono', monospace;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.68rem;
-        }
-
-        .check-tag.pass {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--accent-green);
-            border: 1px solid var(--accent-green);
-        }
-
         /* Form Inputs */
-        .form-section { padding: 16px; margin-bottom: 12px; }
+        .form-section { padding: 14px; margin-bottom: 12px; }
 
-        .field-group { margin-bottom: 10px; }
+        .field-group { margin-bottom: 8px; }
 
         .field-label {
             display: block;
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
             font-weight: 700;
             margin-bottom: 4px;
@@ -494,10 +532,10 @@
             background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 6px;
-            padding: 9px 12px;
+            padding: 8px 10px;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             transition: all 0.2s ease;
         }
 
@@ -515,7 +553,7 @@
             padding: 10px;
             border-radius: 6px;
             font-weight: 800;
-            font-size: 0.78rem;
+            font-size: 0.76rem;
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
@@ -534,11 +572,11 @@
             background: #03050a;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 8px;
-            height: 180px;
+            height: 160px;
             overflow-y: auto;
-            padding: 12px;
+            padding: 10px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             color: var(--accent-green);
         }
 
@@ -546,7 +584,7 @@
             margin-bottom: 4px;
             line-height: 1.4;
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
 
         .console-time { color: var(--text-dim); flex-shrink: 0; }
@@ -686,10 +724,78 @@
         </div>
     </div>
 
+    <!-- Hardware Sensor Telemetry HUD Row -->
+    <div class="sensor-grid">
+        <!-- TFmini LiDAR Rangefinder Card -->
+        <div class="sensor-card">
+            <div class="sensor-header">
+                <span>TFmini LiDAR Rangefinder</span>
+                <span class="sensor-badge" id="lidar-status">HEALTHY</span>
+            </div>
+            <div class="sensor-body">
+                <div class="sensor-row">
+                    <span class="sensor-label">LiDAR Alt (AGL):</span>
+                    <span style="color: var(--accent-cyan); font-weight: 800;" id="lidar-dist">14.8 m</span>
+                </div>
+                <div class="sensor-row">
+                    <span class="sensor-label">Signal Quality:</span>
+                    <span id="lidar-sig">96%</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="lidar-bar" style="width: 75%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw GPS Feedback Card -->
+        <div class="sensor-card">
+            <div class="sensor-header">
+                <span>GPS Feedback & Navigation</span>
+                <span class="sensor-badge" id="gps-fix">3D RTK (0.02m)</span>
+            </div>
+            <div class="sensor-body">
+                <div class="sensor-row">
+                    <span class="sensor-label">Latitude:</span>
+                    <span id="gps-lat">38.145025° N</span>
+                </div>
+                <div class="sensor-row">
+                    <span class="sensor-label">Longitude:</span>
+                    <span id="gps-lon">-76.426980° W</span>
+                </div>
+                <div class="sensor-row">
+                    <span class="sensor-label">MSL Altitude:</span>
+                    <span id="gps-msl">44.8 m</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RealSense D455 Camera & VIO Card -->
+        <div class="sensor-card">
+            <div class="sensor-header">
+                <span>RealSense D455 VIO Odom</span>
+                <span class="sensor-badge" id="vio-status">6-DOF LOCK</span>
+            </div>
+            <div class="sensor-body">
+                <div class="sensor-row">
+                    <span class="sensor-label">Optical Flow:</span>
+                    <span style="color: var(--accent-green);" id="vio-flow">STABLE (30 FPS)</span>
+                </div>
+                <div class="sensor-row">
+                    <span class="sensor-label">Depth Range:</span>
+                    <span>0.4m - 10.0m</span>
+                </div>
+                <div class="sensor-row">
+                    <span class="sensor-label">VIO Pos (ENU):</span>
+                    <span id="vio-pos">E:0.0 N:0.0 U:14.8</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Commercial Workstation Grid -->
     <div class="workstation-grid">
         
-        <!-- Left Column: Primary Display Windows (Map / Perception Camera) -->
+        <!-- Left Column: Primary Display Windows (Map / Perception Camera & Target Detections) -->
         <div>
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
@@ -707,6 +813,45 @@
                     <canvas id="tactical-canvas"></canvas>
                     <canvas id="vision-canvas" style="display: none;"></canvas>
                     <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
+                </div>
+            </div>
+
+            <!-- Target Detections Table -->
+            <div class="glass-panel cmd-panel">
+                <div class="panel-header">
+                    <div class="panel-header-title">
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
+                        RealSense D455 AI Target Detections
+                    </div>
+                </div>
+                <div class="target-table-box">
+                    <table class="target-table">
+                        <thead>
+                            <tr>
+                                <th>Target ID</th>
+                                <th>Class</th>
+                                <th>Payload Match</th>
+                                <th>Confidence</th>
+                                <th>GPS Location</th>
+                            </tr>
+                        </thead>
+                        <tbody id="target-list-body">
+                            <tr>
+                                <td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td>
+                                <td>MANNEQUIN</td>
+                                <td style="color: var(--accent-green);">WATER_BOTTLE</td>
+                                <td>94.2%</td>
+                                <td>38.145120, -76.426880</td>
+                            </tr>
+                            <tr>
+                                <td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td>
+                                <td>TENT</td>
+                                <td style="color: var(--accent-green);">MEDICAL_KIT</td>
+                                <td>89.5%</td>
+                                <td>38.145250, -76.426510</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -809,47 +954,11 @@
 
         <!-- Right Column: Safety Checklist & Forms -->
         <div>
-            <!-- Pre-Flight Safety Interlock Checklist -->
-            <div class="glass-panel form-section">
-                <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8L10,17Z"/></svg>
-                        Pre-Flight Interlocks
-                    </div>
-                </div>
-                <div class="checklist-box">
-                    <div class="check-item">
-                        <span>1. IMU 400Hz PID Loop</span>
-                        <span class="check-tag pass">PASS</span>
-                    </div>
-                    <div class="check-item">
-                        <span>2. GPS 3D RTK Fix</span>
-                        <span class="check-tag pass">PASS</span>
-                    </div>
-                    <div class="check-item">
-                        <span>3. TFmini LiDAR Range</span>
-                        <span class="check-tag pass">PASS</span>
-                    </div>
-                    <div class="check-item">
-                        <span>4. RealSense D455 VIO</span>
-                        <span class="check-tag pass">LOCK</span>
-                    </div>
-                    <div class="check-item">
-                        <span>5. Payload Servo Latch</span>
-                        <span class="check-tag pass">LOCKED</span>
-                    </div>
-                    <div class="check-item">
-                        <span>6. SUAS Geofence (100m)</span>
-                        <span class="check-tag pass">ENFORCED</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Judge GPS Grid Loader -->
             <div class="glass-panel form-section">
                 <div class="panel-header">
                     <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
+                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
                         Judge GPS Coordinates Input
                     </div>
                 </div>
@@ -937,7 +1046,7 @@
             document.getElementById('vision-canvas').style.display = (mode === 'cam') ? 'block' : 'none';
             document.getElementById('window-tag').innerText = (mode === 'map') 
                 ? 'RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)'
-                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC)';
+                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC CAMERA)';
             
             if (mode === 'cam') renderVisionCanvas();
             else renderMapCanvas();
@@ -1119,7 +1228,7 @@
             ctx.fillText(`DRONE (E:${droneState.east.toFixed(1)}m, N:${droneState.north.toFixed(1)}m)`, dx + 12, dy + 4);
         }
 
-        // Vision Perception Camera Canvas Simulator
+        // Vision Perception Camera Canvas Simulator (RealSense D455)
         const vCanvas = document.getElementById('vision-canvas');
         const vCtx = vCanvas.getContext('2d');
 
@@ -1135,23 +1244,33 @@
             const cx = vCanvas.width / 2;
             const cy = vCanvas.height / 2;
 
-            vCtx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+            vCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
             vCtx.lineWidth = 1;
-            vCtx.beginPath(); vCtx.moveTo(cx - 30, cy); vCtx.lineTo(cx + 30, cy); vCtx.stroke();
-            vCtx.beginPath(); vCtx.moveTo(cx, cy - 30); vCtx.lineTo(cx, cy + 30); vCtx.stroke();
-            vCtx.beginPath(); vCtx.arc(cx, cy, 20, 0, Math.PI * 2); vCtx.stroke();
+            vCtx.beginPath(); vCtx.moveTo(cx - 40, cy); vCtx.lineTo(cx + 40, cy); vCtx.stroke();
+            vCtx.beginPath(); vCtx.moveTo(cx, cy - 40); vCtx.lineTo(cx, cy + 40); vCtx.stroke();
+            vCtx.beginPath(); vCtx.arc(cx, cy, 25, 0, Math.PI * 2); vCtx.stroke();
 
-            // Simulated Target Bounding Box
+            // Target 1 Bounding Box (MANNEQUIN -> WATER_BOTTLE)
             vCtx.strokeStyle = '#10b981';
             vCtx.lineWidth = 2;
-            const bx = cx + 25;
-            const by = cy - 20;
-            vCtx.strokeRect(bx, by, 70, 70);
-
+            const b1x = cx + 30;
+            const b1y = cy - 40;
+            vCtx.strokeRect(b1x, b1y, 75, 75);
             vCtx.fillStyle = '#10b981';
-            vCtx.font = '11px JetBrains Mono';
-            vCtx.fillText("TARGET DETECTED", bx, by - 18);
-            vCtx.fillText("MANNEQUIN (94.2%)", bx, by - 6);
+            vCtx.font = '10px JetBrains Mono';
+            vCtx.fillText("TGT-01: MANNEQUIN (94.2%)", b1x, b1y - 16);
+            vCtx.fillText("MATCH: WATER_BOTTLE", b1x, b1y - 4);
+
+            // Target 2 Bounding Box (TENT -> MEDICAL_KIT)
+            vCtx.strokeStyle = '#00f0ff';
+            vCtx.lineWidth = 2;
+            const b2x = cx - 120;
+            const b2y = cy + 10;
+            vCtx.strokeRect(b2x, b2y, 80, 65);
+            vCtx.fillStyle = '#00f0ff';
+            vCtx.font = '10px JetBrains Mono';
+            vCtx.fillText("TGT-02: TENT (89.5%)", b2x, b2y - 16);
+            vCtx.fillText("MATCH: MEDICAL_KIT", b2x, b2y - 4);
         }
 
         // Update Attitude PFD Instruments
@@ -1211,10 +1330,33 @@
                     droneState.trail.push({e: droneState.east, n: droneState.north});
                     if (droneState.trail.length > 50) droneState.trail.shift();
 
+                    // Update Top Header Strip
                     document.getElementById('st-pwr').innerText = `${droneState.voltage}V | ${droneState.current}A`;
                     document.getElementById('st-cpu').innerText = `CPU ${data.cpu_load || 14}% | GPU ${data.gpu_load || 8}%`;
                     document.getElementById('st-gps').innerText = `${data.gps_fix || '3D RTK'} (${data.satellites || 18} SAT)`;
                     
+                    // Update Sensor HUD Cards
+                    if (data.lidar) {
+                        const lDist = data.lidar.distance_m || 0.0;
+                        document.getElementById('lidar-dist').innerText = `${lDist.toFixed(1)} m`;
+                        document.getElementById('lidar-sig').innerText = `${data.lidar.signal_quality || 96}%`;
+                        const pct = Math.min(100, Math.max(0, (lDist / 12.0) * 100));
+                        document.getElementById('lidar-bar').style.width = `${pct}%`;
+                    }
+
+                    if (data.gps_feedback) {
+                        document.getElementById('gps-lat').innerText = `${data.gps_feedback.latitude.toFixed(6)}° N`;
+                        document.getElementById('gps-lon').innerText = `${data.gps_feedback.longitude.toFixed(6)}° W`;
+                        document.getElementById('gps-msl').innerText = `${data.gps_feedback.altitude_msl.toFixed(1)} m`;
+                        document.getElementById('gps-fix').innerText = data.gps_feedback.fix_type || '3D RTK (0.02m)';
+                    }
+
+                    if (data.realsense_d455) {
+                        document.getElementById('vio-status').innerText = data.realsense_d455.vio_status || '6-DOF LOCK';
+                        document.getElementById('vio-flow').innerText = `${data.realsense_d455.optical_flow || 'STABLE'} (${data.realsense_d455.fps || 30} FPS)`;
+                        document.getElementById('vio-pos').innerText = `E:${droneState.east.toFixed(1)} N:${droneState.north.toFixed(1)} U:${droneState.alt.toFixed(1)}`;
+                    }
+
                     const badge = document.getElementById('badge-armed');
                     const txt = document.getElementById('txt-armed');
                     if (droneState.armed) {
