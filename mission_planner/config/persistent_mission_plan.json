@@ -1,0 +1,18 @@
+{
+  "name": "raw_gps_mission",
+  "home_lat": 38.145,
+  "home_lon": -76.427,
+  "home_alt": 15.0,
+  "current_idx": 0,
+  "waypoints": [
+    {
+      "index": 0,
+      "north_m": 11.131949078905926,
+      "east_m": 0.0,
+      "alt_m": 15.0,
+      "label": "gps_wp_0",
+      "loiter_s": 1.0,
+      "reached": false
+    }
+  ]
+}

@@ -574,6 +574,40 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
 
         super().do_GET()
 
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/load_gps":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_len).decode("utf-8")
+            try:
+                data = json.loads(body)
+                home_lat = float(data.get("home_lat", 38.145))
+                home_lon = float(data.get("home_lon", -76.427))
+                pts_str = data.get("points", "")
+
+                from mission_planner.waypoint_manager import WaypointManager
+                wm = WaypointManager()
+                pts = []
+                if pts_str:
+                    for item in pts_str.split(";"):
+                        if "," in item:
+                            lat, lon = item.split(",")
+                            pts.append({"latitude": float(lat), "longitude": float(lon), "altitude": 15.0})
+
+                plan = wm.load_raw_gps_coordinates(home_lat, home_lon, pts)
+                wm.save_persistent_plan()
+                resp = {"status": "ok", "message": f"Successfully saved persistent mission with {plan.total()} waypoints for offline autonomous execution!"}
+            except Exception as e:
+                resp = {"status": "error", "message": str(e)}
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(resp).encode("utf-8"))
+            return
+
+        super().do_POST()
+
 
 def run_web_gcs_server(port: int = 8080):
     server_address = ("0.0.0.0", port)

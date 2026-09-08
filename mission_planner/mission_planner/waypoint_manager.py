@@ -226,7 +226,80 @@ class WaypointManager:
         self._plan = plan
         self._current_idx = 0
         logger.info(f"Loaded raw GPS plan with {len(plan.waypoints)} waypoints relative to Home ({home_lat:.6f}, {home_lon:.6f})")
+        self.save_persistent_plan()
         return plan
+
+    def save_persistent_plan(self, file_path: Optional[str] = None) -> bool:
+        """Saves current mission plan and waypoints to persistent disk storage on Jetson Nano."""
+        import os, json
+        if not self._plan:
+            return False
+        if file_path is None:
+            config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config")
+            os.makedirs(config_dir, exist_ok=True)
+            file_path = os.path.join(config_dir, "persistent_mission_plan.json")
+        try:
+            data = {
+                "name": self._plan.name,
+                "home_lat": self._plan.home_lat,
+                "home_lon": self._plan.home_lon,
+                "home_alt": self._plan.home_alt,
+                "current_idx": self._current_idx,
+                "waypoints": [
+                    {
+                        "index": w.index,
+                        "north_m": w.north_m,
+                        "east_m": w.east_m,
+                        "alt_m": w.alt_m,
+                        "label": w.label,
+                        "loiter_s": w.loiter_s,
+                        "reached": w.reached,
+                    }
+                    for w in self._plan.waypoints
+                ],
+            }
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            logger.info(f"Saved persistent mission plan with {len(self._plan.waypoints)} waypoints to {file_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save persistent mission plan: {e}")
+            return False
+
+    def load_persistent_plan(self, file_path: Optional[str] = None) -> Optional[MissionPlan]:
+        """Loads pre-saved persistent mission plan from disk for autonomous offline flight execution."""
+        import os, json
+        if file_path is None:
+            config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config")
+            file_path = os.path.join(config_dir, "persistent_mission_plan.json")
+        if not os.path.exists(file_path):
+            return None
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            plan = MissionPlan(
+                name=data.get("name", "persistent_mission"),
+                home_lat=float(data.get("home_lat", 0.0)),
+                home_lon=float(data.get("home_lon", 0.0)),
+                home_alt=float(data.get("home_alt", 15.0)),
+            )
+            for item in data.get("waypoints", []):
+                plan.waypoints.append(Waypoint(
+                    index=int(item["index"]),
+                    north_m=float(item["north_m"]),
+                    east_m=float(item["east_m"]),
+                    alt_m=float(item["alt_m"]),
+                    label=str(item.get("label", "")),
+                    loiter_s=float(item.get("loiter_s", 0.0)),
+                    reached=bool(item.get("reached", False)),
+                ))
+            self._plan = plan
+            self._current_idx = int(data.get("current_idx", 0))
+            logger.info(f"Successfully loaded persistent mission plan from {file_path} with {len(plan.waypoints)} waypoints.")
+            return plan
+        except Exception as e:
+            logger.error(f"Failed to load persistent mission plan: {e}")
+            return None
 
     # ── Navigation & Progress Tracking ─────────────────────────────────────
     def update_position(self, north_m: float, east_m: float, alt_m: float) -> None:

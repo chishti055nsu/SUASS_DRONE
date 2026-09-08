@@ -151,6 +151,25 @@ class TestWaypointManager(unittest.TestCase):
             self.assertLessEqual(abs(wp.north_m), 100.0)
             self.assertLessEqual(abs(wp.east_m), 100.0)
 
+    def test_persistent_mission_plan_save_and_load(self):
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            gps_list = [{"latitude": 38.1451, "longitude": -76.4270, "altitude": 15.0}]
+            self.wm.load_raw_gps_coordinates(38.1450, -76.4270, gps_list)
+            saved = self.wm.save_persistent_plan(tmp_path)
+            self.assertTrue(saved)
+
+            new_wm = WaypointManager()
+            loaded_plan = new_wm.load_persistent_plan(tmp_path)
+            self.assertIsNotNone(loaded_plan)
+            self.assertEqual(loaded_plan.total(), 1)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
 
 class TestPrecisionTargetDetector(unittest.TestCase):
 

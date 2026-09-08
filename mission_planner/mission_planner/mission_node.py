@@ -128,6 +128,9 @@ class MissionPlannerNode(Node):
             waypoint_acceptance_m=self._waypoint_acceptance_m,
             max_speed_ms=self._max_speed_ms,
         )
+        persistent_plan = self._wm.load_persistent_plan()
+        if persistent_plan:
+            self.get_logger().info(f"Auto-loaded pre-saved persistent mission plan with {persistent_plan.total()} waypoints for offline autonomous execution.")
 
         # Generate initial search plan
         self._wm.generate_lawnmower(
