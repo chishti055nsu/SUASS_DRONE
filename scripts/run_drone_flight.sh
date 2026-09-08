@@ -51,10 +51,21 @@ echo "  • TFmini-S LiDAR: Active on $LIDAR_PORT"
 echo "  • Matek H743 + Dual GPS: Active on MAVROS"
 echo "=================================================="
 
+FC_PORT="/dev/ttyTHS1"
+if [ -e "/dev/ttyUSB0" ]; then
+    FC_PORT="/dev/ttyUSB0"
+fi
+
+echo "[INFO] Starting MAVROS interface on FC Port: $FC_PORT..."
+ros2 launch mavros px4.launch fcu_url:="$FC_PORT:57600" &
+MAVROS_PID=$!
+sleep 2
+
 echo "[INFO] Launching master zero-config autonomous software stack..."
 ros2 launch mission_planner full_system.launch.py \
     use_mavros:=true \
     source_type:=rtsp \
     rtsp_url:=rtsp://192.168.144.25:8554/main.264 \
     tfmini_port:="$LIDAR_PORT"
+
 
