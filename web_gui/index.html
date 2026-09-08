@@ -724,7 +724,7 @@
                     <span class="sensor-badge">6-DOF VIO LOCK</span>
                 </div>
                 <div style="width: 100%; height: 260px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 12px; position: relative;">
-                    <img id="d455-live-video" src="/d455_feed" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img id="d455-live-video" src="" style="width: 100%; height: 100%; object-fit: cover;">
                     <div class="window-overlay-tag">REALSENSE D455 DEPTH & VIO OPTICAL FLOW</div>
                 </div>
                 <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.8;">
@@ -857,6 +857,27 @@
                 document.getElementById(`mtab-${t}`).classList.toggle('active', t === tab);
                 document.getElementById(`sec-${t}`).classList.toggle('active', t === tab);
             });
+
+            // Dynamically manage stream URLs to prevent dual-stream socket congestion and browser UI lag
+            const a8Img = document.getElementById('a8-live-video');
+            const d455Img = document.getElementById('d455-live-video');
+
+            if (tab === 'a8' || tab === 'dash') {
+                if (a8Img && (!a8Img.src || !a8Img.src.includes('/video_feed'))) {
+                    a8Img.src = '/video_feed';
+                }
+            } else {
+                if (a8Img) a8Img.src = '';
+            }
+
+            if (tab === 'sensors') {
+                if (d455Img && (!d455Img.src || !d455Img.src.includes('/d455_feed'))) {
+                    d455Img.src = '/d455_feed';
+                }
+            } else {
+                if (d455Img) d455Img.src = '';
+            }
+
             if (tab === 'dash') renderMapCanvas();
         }
 
