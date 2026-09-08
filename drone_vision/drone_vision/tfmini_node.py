@@ -84,7 +84,8 @@ def main(args=None):
         if node.ser and node.ser.is_open:
             node.ser.close()
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
