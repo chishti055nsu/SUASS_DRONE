@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IUB DRONE SUAS 2026 — Commercial Autonomy Ground Control Station</title>
+    <title>IUB DRONE SUAS 2026 — Commercial Autonomy & Remote Control GCS</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-base: #05070d;
-            --bg-panel: rgba(10, 15, 26, 0.92);
+            --bg-panel: rgba(10, 15, 26, 0.94);
             --bg-panel-border: rgba(0, 240, 255, 0.2);
             --accent-cyan: #00f0ff;
             --accent-cyan-glow: rgba(0, 240, 255, 0.3);
@@ -52,7 +52,6 @@
             border: 1px solid var(--bg-panel-border);
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-            transform: translateZ(0);
             transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
 
@@ -77,8 +76,8 @@
         }
 
         .brand-badge {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(16, 185, 129, 0.2));
             border: 1px solid var(--accent-cyan);
             border-radius: 8px;
@@ -89,13 +88,13 @@
         }
 
         .brand-badge svg {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             fill: var(--accent-cyan);
         }
 
         .brand-text h1 {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 800;
             letter-spacing: 1px;
             background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 100%);
@@ -109,6 +108,51 @@
             color: var(--text-secondary);
             font-weight: 600;
             letter-spacing: 0.5px;
+        }
+
+        /* Top Main Menu Navigation Tabs */
+        .main-menu-tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            margin-bottom: 12px;
+        }
+
+        .menu-tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
+            transition: all 0.25s ease;
+        }
+
+        .menu-tab-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .menu-tab-btn:hover {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .menu-tab-btn.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(16, 185, 129, 0.25));
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
         }
 
         .telemetry-strip {
@@ -196,7 +240,6 @@
             font-size: 0.74rem;
             color: var(--text-dim);
             font-weight: 700;
-            position: relative;
         }
 
         .fsm-step.active { color: var(--accent-cyan); }
@@ -228,74 +271,9 @@
             margin: 0 8px;
         }
 
-        /* Sensor HUD Grid Row */
-        .sensor-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .sensor-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 12px 14px;
-        }
-
-        .sensor-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: var(--accent-cyan);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .sensor-badge {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-green);
-            border: 1px solid var(--accent-green);
-        }
-
-        .sensor-body {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.76rem;
-            color: var(--text-primary);
-            line-height: 1.5;
-        }
-
-        .sensor-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-
-        .sensor-label { color: var(--text-secondary); }
-
-        /* Meter Progress Bar for LiDAR */
-        .progress-bar-bg {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 6px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(to right, var(--accent-cyan), var(--accent-green));
-            width: 0%;
-            transition: width 0.3s ease;
-        }
+        /* Tab Content Display Sections */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* Workstation Main Grid */
         .workstation-grid {
@@ -313,7 +291,7 @@
         }
 
         .panel-header {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 800;
             color: var(--accent-cyan);
             text-transform: uppercase;
@@ -331,43 +309,16 @@
         }
 
         .panel-header-title svg {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             fill: var(--accent-cyan);
-        }
-
-        /* View Mode Selector Tabs */
-        .view-mode-tabs {
-            display: flex;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 4px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .view-btn {
-            padding: 4px 10px;
-            background: transparent;
-            border: none;
-            border-radius: 4px;
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .view-btn.active {
-            background: var(--accent-cyan);
-            color: #000;
         }
 
         /* Canvas & Display Windows */
         .canvas-window {
             position: relative;
             width: 100%;
-            height: 330px;
+            height: 380px;
             background: #03050c;
             border: 1px solid rgba(0, 240, 255, 0.15);
             border-radius: 10px;
@@ -375,7 +326,7 @@
             margin-bottom: 12px;
         }
 
-        #tactical-canvas, #vision-canvas {
+        #tactical-canvas {
             width: 100%;
             height: 100%;
             display: block;
@@ -387,10 +338,10 @@
             left: 10px;
             background: rgba(5, 7, 13, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
             color: var(--accent-cyan);
             pointer-events: none;
         }
@@ -402,7 +353,7 @@
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 12px;
-            max-height: 150px;
+            max-height: 220px;
             overflow-y: auto;
         }
 
@@ -410,19 +361,19 @@
             width: 100%;
             border-collapse: collapse;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
+            font-size: 0.76rem;
             text-align: left;
         }
 
         .target-table th {
             color: var(--text-dim);
-            padding: 4px 6px;
+            padding: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             text-transform: uppercase;
         }
 
         .target-table td {
-            padding: 6px;
+            padding: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             color: var(--text-primary);
         }
@@ -502,6 +453,8 @@
         .btn-rtl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #2b1f00; }
         .btn-hold { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; }
         .btn-land { background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%); color: #00272b; }
+        .btn-heavy { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #ffffff; }
+
         .btn-emergency {
             background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
@@ -511,6 +464,85 @@
         }
 
         .btn-emergency:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
+
+        /* Virtual Manual Remote Control Deck Styles */
+        .remote-deck-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .joystick-card {
+            background: rgba(3, 5, 12, 0.9);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+        }
+
+        .joystick-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .joystick-base {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,240,255,0.08) 0%, rgba(5,7,13,0.95) 70%);
+            border: 2px solid var(--accent-cyan);
+            position: relative;
+            touch-action: none;
+            cursor: pointer;
+            box-shadow: inset 0 0 20px rgba(0,240,255,0.2);
+        }
+
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+            border: 2px solid #ffffff;
+            position: absolute;
+            top: 65px;
+            left: 65px;
+            box-shadow: 0 0 15px var(--accent-cyan);
+            pointer-events: none;
+            transition: transform 0.05s ease;
+        }
+
+        .throttle-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-throttle {
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .btn-throttle.active {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
 
         /* Form Inputs */
         .form-section { padding: 14px; margin-bottom: 12px; }
@@ -686,6 +718,26 @@
         </div>
     </header>
 
+    <!-- Top Main Menu Navigation Tabs -->
+    <div class="main-menu-tabs">
+        <button class="menu-tab-btn active" id="mtab-dash" onclick="switchMainTab('dash')">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            1. TACTICAL DASHBOARD & RADAR
+        </button>
+        <button class="menu-tab-btn" id="mtab-a8" onclick="switchMainTab('a8')">
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/></svg>
+            2. SIYI A8 MINI 4K AI VISION FEED
+        </button>
+        <button class="menu-tab-btn" id="mtab-sensors" onclick="switchMainTab('sensors')">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            3. REALSENSE D455 AVOIDANCE & LIDAR HUD
+        </button>
+        <button class="menu-tab-btn" id="mtab-remote" onclick="switchMainTab('remote')">
+            <svg viewBox="0 0 24 24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            4. VIRTUAL MANUAL REMOTE CONTROLLER
+        </button>
+    </div>
+
     <!-- Flight State Machine Step Pipeline Visualizer -->
     <div class="fsm-pipeline">
         <div class="fsm-step active" id="fsm-idle">
@@ -724,286 +776,333 @@
         </div>
     </div>
 
-    <!-- Hardware Sensor Telemetry HUD Row -->
-    <div class="sensor-grid">
-        <!-- TFmini LiDAR Rangefinder Card -->
-        <div class="sensor-card">
-            <div class="sensor-header">
-                <span>TFmini LiDAR Rangefinder</span>
-                <span class="sensor-badge" id="lidar-status">HEALTHY</span>
-            </div>
-            <div class="sensor-body">
-                <div class="sensor-row">
-                    <span class="sensor-label">LiDAR Alt (AGL):</span>
-                    <span style="color: var(--accent-cyan); font-weight: 800;" id="lidar-dist">14.8 m</span>
-                </div>
-                <div class="sensor-row">
-                    <span class="sensor-label">Signal Quality:</span>
-                    <span id="lidar-sig">96%</span>
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="lidar-bar" style="width: 75%;"></div>
-                </div>
-            </div>
-        </div>
+    <!-- ================================================================= -->
+    <!-- TAB 1: MAIN TACTICAL DASHBOARD & RADAR                            -->
+    <!-- ================================================================= -->
+    <div class="tab-content active" id="sec-dash">
+        <div class="workstation-grid">
+            <!-- Left Column: 2D Tactical Radar & Log Stream -->
+            <div>
+                <div class="glass-panel cmd-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            2D Tactical ENU Radar & Spatial Tracking
+                        </div>
+                    </div>
 
-        <!-- Raw GPS Feedback Card -->
-        <div class="sensor-card">
-            <div class="sensor-header">
-                <span>GPS Feedback & Navigation</span>
-                <span class="sensor-badge" id="gps-fix">3D RTK (0.02m)</span>
-            </div>
-            <div class="sensor-body">
-                <div class="sensor-row">
-                    <span class="sensor-label">Latitude:</span>
-                    <span id="gps-lat">38.145025° N</span>
+                    <div class="canvas-window">
+                        <canvas id="tactical-canvas"></canvas>
+                        <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
+                    </div>
                 </div>
-                <div class="sensor-row">
-                    <span class="sensor-label">Longitude:</span>
-                    <span id="gps-lon">-76.426980° W</span>
-                </div>
-                <div class="sensor-row">
-                    <span class="sensor-label">MSL Altitude:</span>
-                    <span id="gps-msl">44.8 m</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- RealSense D455 Camera & VIO Card -->
-        <div class="sensor-card">
-            <div class="sensor-header">
-                <span>RealSense D455 VIO Odom</span>
-                <span class="sensor-badge" id="vio-status">6-DOF LOCK</span>
+                <!-- Activity Event Console Stream -->
+                <div class="glass-panel cmd-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                            MAVLink & Vision Event Log Stream
+                        </div>
+                        <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.72rem; font-weight: 700;" onclick="clearConsole()">CLEAR LOG</button>
+                    </div>
+                    <div class="console-box" id="console-stream">
+                        <div class="console-line">
+                            <span class="console-time">[00:00:00]</span>
+                            <span class="console-tag">[INIT]</span>
+                            <span>Aerospace Commercial Workstation online. All safety interlocks verified.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="sensor-body">
-                <div class="sensor-row">
-                    <span class="sensor-label">Optical Flow:</span>
-                    <span style="color: var(--accent-green);" id="vio-flow">STABLE (30 FPS)</span>
+
+            <!-- Center Column: Primary Flight Instruments & Actions -->
+            <div>
+                <!-- PFD Instruments -->
+                <div class="glass-panel cmd-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
+                            Primary Flight Instruments (PFD)
+                        </div>
+                    </div>
+                    <div class="pfd-container">
+                        <div class="pfd-card">
+                            <div class="pfd-title">Horizon (Roll / Pitch)</div>
+                            <svg id="horizon-svg" viewBox="0 0 200 200">
+                                <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
+                                <g id="horizon-pitch-group">
+                                    <rect x="15" y="15" width="170" height="85" fill="#0284c7" opacity="0.6"/>
+                                    <rect x="15" y="100" width="170" height="85" fill="#78350f" opacity="0.6"/>
+                                    <line x1="20" y1="100" x2="180" y2="100" stroke="#fff" stroke-width="2"/>
+                                </g>
+                                <line x1="60" y1="100" x2="85" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                                <line x1="115" y1="100" x2="140" y2="100" stroke="#f59e0b" stroke-width="4"/>
+                                <circle cx="100" cy="100" r="4" fill="#f59e0b"/>
+                            </svg>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-attitude">R: 0.0° | P: 0.0°</div>
+                        </div>
+
+                        <div class="pfd-card">
+                            <div class="pfd-title">Heading Compass Rose</div>
+                            <svg id="compass-svg" viewBox="0 0 200 200">
+                                <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
+                                <text x="100" y="32" fill="#ef4444" font-weight="900" font-size="13" text-anchor="middle">N</text>
+                                <text x="172" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">E</text>
+                                <text x="100" y="178" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">S</text>
+                                <text x="28" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">W</text>
+                                <g id="compass-needle">
+                                    <polygon points="100,42 94,100 106,100" fill="#ef4444"/>
+                                    <polygon points="100,158 94,100 106,100" fill="#64748b"/>
+                                </g>
+                            </svg>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-heading">HDG: 045°</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="sensor-row">
-                    <span class="sensor-label">Depth Range:</span>
-                    <span>0.4m - 10.0m</span>
+
+                <!-- Command Action Panel -->
+                <div class="glass-panel cmd-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
+                            Tactical Execution Commands
+                        </div>
+                    </div>
+                    <div class="btn-grid">
+                        <button class="btn-gcs btn-primary-start" onclick="dispatchCommand('start')">
+                            <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
+                            START AUTONOMOUS MISSION
+                        </button>
+                        <button class="btn-gcs btn-heavy" onclick="dispatchCommand('heavy')">
+                            🔥 5.5KG HEAVY-LIFT 80%
+                        </button>
+                        <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">
+                            RETURN HOME (RTL)
+                        </button>
+                        <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">
+                            HOVER / HOLD
+                        </button>
+                        <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">
+                            LAND NOW
+                        </button>
+                        <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">
+                            EMERGENCY MOTOR DISARM
+                        </button>
+                    </div>
                 </div>
-                <div class="sensor-row">
-                    <span class="sensor-label">VIO Pos (ENU):</span>
-                    <span id="vio-pos">E:0.0 N:0.0 U:14.8</span>
+            </div>
+
+            <!-- Right Column: Judge GPS Input Form & GOTO -->
+            <div>
+                <div class="glass-panel form-section">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
+                            Judge GPS Coordinates Input
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Home Latitude</label>
+                        <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Home Longitude</label>
+                        <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
+                        <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
+                    </div>
+                    <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
+                </div>
+
+                <div class="glass-panel form-section">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
+                            Target Coordinate Override
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                        <div class="field-group">
+                            <label class="field-label">North (m)</label>
+                            <input type="number" class="input-tactical" id="in-goto-n" value="50.0">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">East (m)</label>
+                            <input type="number" class="input-tactical" id="in-goto-e" value="20.0">
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Alt (m)</label>
+                            <input type="number" class="input-tactical" id="in-goto-alt" value="15.0">
+                        </div>
+                    </div>
+                    <button class="btn-action" onclick="submitGOTOTarget()">DISPATCH GOTO</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Commercial Workstation Grid -->
-    <div class="workstation-grid">
-        
-        <!-- Left Column: Primary Display Windows (Map / Perception Camera & Target Detections) -->
-        <div>
+    <!-- ================================================================= -->
+    <!-- TAB 2: DEDICATED SIYI A8 MINI 4K AI VISION & OBJECT DETECTION     -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="sec-a8">
+        <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 16px;">
+            <!-- Live SIYI A8 Mini 4K Vision Feed Player -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
                     <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                        Flight Display & Spatial Tracking
+                        <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                        SIYI A8 Mini 4K Live Camera Stream (rtsp://192.168.144.25:8554/main.264)
                     </div>
-                    <div class="view-mode-tabs">
-                        <button class="view-btn active" id="vbtn-map" onclick="switchCanvasView('map')">TACTICAL RADAR</button>
-                        <button class="view-btn" id="vbtn-cam" onclick="switchCanvasView('cam')">D455 VISION FEED</button>
-                    </div>
+                    <span class="sensor-badge">YOLOv8 30.0 FPS</span>
                 </div>
-
-                <div class="canvas-window">
-                    <canvas id="tactical-canvas"></canvas>
-                    <canvas id="vision-canvas" style="display: none;"></canvas>
-                    <img id="camera-stream" src="/video_feed" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                    <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
+                <div style="width: 100%; height: 500px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
+                    <img id="a8-live-video" src="/video_feed" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="window-overlay-tag">AI OBJECT RECOGNITION & PAYLOAD TARGET MATCHING ACTIVE</div>
                 </div>
             </div>
 
-            <!-- Target Detections Table -->
-            <div class="glass-panel cmd-panel">
-                <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                        RealSense D455 AI Target Detections
+            <!-- AI Target Detection Table & Gemma Multimodal Scene Reasoning -->
+            <div>
+                <div class="glass-panel cmd-panel" style="margin-bottom: 16px;">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            🎯 Detected Targets & Payload Matches
+                        </div>
+                    </div>
+                    <div class="target-table-box" style="max-height: 240px;">
+                        <table class="target-table">
+                            <thead>
+                                <tr>
+                                    <th>Target</th>
+                                    <th>Detected Class</th>
+                                    <th>Payload Match</th>
+                                    <th>Confidence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="a8-target-body">
+                                <tr>
+                                    <td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td>
+                                    <td>MANNEQUIN</td>
+                                    <td style="color: var(--accent-green);">WATER_BOTTLE</td>
+                                    <td>94.2%</td>
+                                </tr>
+                                <tr>
+                                    <td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td>
+                                    <td>TENT</td>
+                                    <td style="color: var(--accent-green);">MEDICAL_KIT</td>
+                                    <td>89.5%</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="target-table-box">
-                    <table class="target-table">
-                        <thead>
-                            <tr>
-                                <th>Target ID</th>
-                                <th>Class</th>
-                                <th>Payload Match</th>
-                                <th>Confidence</th>
-                                <th>GPS Location</th>
-                            </tr>
-                        </thead>
-                        <tbody id="target-list-body">
-                            <tr>
-                                <td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td>
-                                <td>MANNEQUIN</td>
-                                <td style="color: var(--accent-green);">WATER_BOTTLE</td>
-                                <td>94.2%</td>
-                                <td>38.145120, -76.426880</td>
-                            </tr>
-                            <tr>
-                                <td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td>
-                                <td>TENT</td>
-                                <td style="color: var(--accent-green);">MEDICAL_KIT</td>
-                                <td>89.5%</td>
-                                <td>38.145250, -76.426510</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- Activity Event Console Stream -->
-            <div class="glass-panel cmd-panel">
-                <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-                        MAVLink & Vision Event Log Stream
+                <div class="glass-panel cmd-panel">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            🧠 Gemma Multimodal AI Scene Reasoning
+                        </div>
                     </div>
-                    <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.72rem; font-weight: 700;" onclick="clearConsole()">CLEAR LOG</button>
-                </div>
-                <div class="console-box" id="console-stream">
-                    <div class="console-line">
-                        <span class="console-time">[00:00:00]</span>
-                        <span class="console-tag">[INIT]</span>
-                        <span>Aerospace Commercial Workstation online. All safety interlocks verified.</span>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.6; color: var(--text-primary);">
+                        <p style="margin-bottom: 8px;"><strong style="color: var(--accent-cyan);">Scene:</strong> Search Corridor Clear. Human mannequin identified near target drop zone.</p>
+                        <p style="margin-bottom: 8px;"><strong style="color: var(--accent-green);">Recommended Action:</strong> PROCEED_TO_DROP_ZONE</p>
+                        <p><strong style="color: var(--accent-yellow);">Safety Reasoning:</strong> Wind speed low. Obstacle density < 10%. Optimal payload release trajectory aligned.</p>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Center Column: Primary Flight Instruments & One-Touch Actions -->
-        <div>
-            <!-- PFD Instruments -->
+    <!-- ================================================================= -->
+    <!-- TAB 3: REALSENSE D455 3D AVOIDANCE & TFMINI LIDAR HUD              -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="sec-sensors">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <!-- RealSense D455 3D Pointcloud & VIO Card -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
                     <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
-                        Primary Flight Instruments (PFD)
+                        🛡️ RealSense D455 3D VIO & Obstacle Avoidance
                     </div>
+                    <span class="sensor-badge" id="d455-badge">6-DOF VIO LOCK</span>
                 </div>
-                <div class="pfd-container">
-                    <div class="pfd-card">
-                        <div class="pfd-title">Horizon (Roll / Pitch)</div>
-                        <svg id="horizon-svg" viewBox="0 0 200 200">
-                            <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
-                            <g id="horizon-pitch-group">
-                                <rect x="15" y="15" width="170" height="85" fill="#0284c7" opacity="0.6"/>
-                                <rect x="15" y="100" width="170" height="85" fill="#78350f" opacity="0.6"/>
-                                <line x1="20" y1="100" x2="180" y2="100" stroke="#fff" stroke-width="2"/>
-                            </g>
-                            <line x1="60" y1="100" x2="85" y2="100" stroke="#f59e0b" stroke-width="4"/>
-                            <line x1="115" y1="100" x2="140" y2="100" stroke="#f59e0b" stroke-width="4"/>
-                            <circle cx="100" cy="100" r="4" fill="#f59e0b"/>
-                        </svg>
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-attitude">R: 0.0° | P: 0.0°</div>
-                    </div>
-
-                    <div class="pfd-card">
-                        <div class="pfd-title">Heading Compass Rose</div>
-                        <svg id="compass-svg" viewBox="0 0 200 200">
-                            <circle cx="100" cy="100" r="85" fill="#040711" stroke="#00f0ff" stroke-width="2"/>
-                            <text x="100" y="32" fill="#ef4444" font-weight="900" font-size="13" text-anchor="middle">N</text>
-                            <text x="172" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">E</text>
-                            <text x="100" y="178" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">S</text>
-                            <text x="28" y="105" fill="#94a3b8" font-weight="700" font-size="11" text-anchor="middle">W</text>
-                            <g id="compass-needle">
-                                <polygon points="100,42 94,100 106,100" fill="#ef4444"/>
-                                <polygon points="100,158 94,100 106,100" fill="#64748b"/>
-                            </g>
-                        </svg>
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; margin-top: 6px; color: var(--accent-cyan);" id="txt-heading">HDG: 045°</div>
-                    </div>
+                <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
+                    <div class="sensor-row"><span>Optical Flow Tracking:</span><span style="color: var(--accent-green);" id="d455-flow">STABLE (30 FPS)</span></div>
+                    <div class="sensor-row"><span>Obstacle Threat Density:</span><span style="color: var(--accent-cyan);" id="d455-density">8% (LOW RISK)</span></div>
+                    <div class="sensor-row"><span>Sector Clearance:</span><span style="color: var(--accent-green);">LEFT: CLEAR | CENTER: CLEAR | RIGHT: CLEAR</span></div>
+                    <div class="sensor-row"><span>VIO Pose ENU:</span><span id="d455-pos">E: 0.0m | N: 0.0m | U: 15.0m</span></div>
                 </div>
             </div>
 
-            <!-- Command Action Panel -->
+            <!-- TFmini-S LiDAR Altitude & Distance Card -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
                     <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
-                        Tactical Execution Commands
+                        📡 TFmini-S LiDAR Rangefinder HUD
                     </div>
+                    <span class="sensor-badge">115200 BAUD OK</span>
                 </div>
-                <div class="btn-grid">
-                    <button class="btn-gcs btn-primary-start" onclick="dispatchCommand('start')">
-                        <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
-                        START AUTONOMOUS MISSION
-                    </button>
-                    <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">
-                        <svg viewBox="0 0 24 24"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/></svg>
-                        RETURN HOME (RTL)
-                    </button>
-                    <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">
-                        <svg viewBox="0 0 24 24"><path d="M14,19H18V5H14M6,19H10V5H6V19Z"/></svg>
-                        HOVER / HOLD
-                    </button>
-                    <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">
-                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                        LAND NOW
-                    </button>
-                    <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M13,13H11V7H13V13M13,17H11V15H13V17Z"/></svg>
-                        EMERGENCY MOTOR DISARM
-                    </button>
+                <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
+                    <div class="sensor-row"><span>Altitude Above Ground (AGL):</span><span style="color: var(--accent-cyan); font-weight: 800; font-size: 1.1rem;" id="d-lidar-val">15.00 m</span></div>
+                    <div class="sensor-row"><span>Signal Quality:</span><span style="color: var(--accent-green);" id="d-lidar-sig">96%</span></div>
+                    <div class="sensor-row"><span>Range Boundaries:</span><span>0.10m – 12.00m</span></div>
+                    <div class="progress-bar-bg" style="height: 12px; margin-top: 12px;">
+                        <div class="progress-bar-fill" id="d-lidar-bar" style="width: 85%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Right Column: Safety Checklist & Forms -->
-        <div>
-            <!-- Judge GPS Grid Loader -->
-            <div class="glass-panel form-section">
-                <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
-                        Judge GPS Coordinates Input
-                    </div>
+    <!-- ================================================================= -->
+    <!-- TAB 4: VIRTUAL MANUAL REMOTE CONTROLLER DECK                       -->
+    <!-- ================================================================= -->
+    <div class="tab-content" id="sec-remote">
+        <div class="glass-panel cmd-panel">
+            <div class="panel-header">
+                <div class="panel-header-title">
+                    🎮 Interactive Manual Remote Controller Deck & Dual Joysticks
                 </div>
-                <div class="field-group">
-                    <label class="field-label">Home Latitude</label>
-                    <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
-                </div>
-                <div class="field-group">
-                    <label class="field-label">Home Longitude</label>
-                    <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
-                </div>
-                <div class="field-group">
-                    <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
-                    <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
-                </div>
-                <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
+                <span class="sensor-badge" style="background: rgba(0, 240, 255, 0.2); color: var(--accent-cyan);">WASD + ARROW KEYS ACTIVE</span>
             </div>
 
-            <!-- Target Coordinate Override (GOTO) -->
-            <div class="glass-panel form-section">
-                <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                        Target Coordinate Override
+            <div class="remote-deck-grid">
+                <!-- Left Joystick: Yaw & Throttle PWM -->
+                <div class="joystick-card">
+                    <div class="joystick-title">Left Stick: Yaw & Altitude (Throttle)</div>
+                    <div class="joystick-base" id="joy-left">
+                        <div class="joystick-stick" id="stick-left"></div>
                     </div>
+                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-left-val">Yaw: 0° | Altitude: 15.0m</div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                    <div class="field-group">
-                        <label class="field-label">North (m)</label>
-                        <input type="number" class="input-tactical" id="in-goto-n" value="50.0">
+
+                <!-- Center Panel: Direct Throttle Overrides & Servo Drop -->
+                <div class="joystick-card" style="border-color: var(--accent-purple);">
+                    <div class="joystick-title" style="color: var(--accent-purple);">Direct Throttle Overrides & Servo</div>
+                    <div class="throttle-preset-grid">
+                        <button class="btn-throttle" onclick="sendThrottle(1150)">15% WARMUP</button>
+                        <button class="btn-throttle" onclick="sendThrottle(1500)">50% CRUISE</button>
+                        <button class="btn-throttle active" onclick="sendThrottle(1800)">80% HEAVY (5.5kg)</button>
+                        <button class="btn-throttle" onclick="sendThrottle(1950)">100% FULL</button>
                     </div>
-                    <div class="field-group">
-                        <label class="field-label">East (m)</label>
-                        <input type="number" class="input-tactical" id="in-goto-e" value="20.0">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Alt (m)</label>
-                        <input type="number" class="input-tactical" id="in-goto-alt" value="15.0">
-                    </div>
+                    <button class="btn-action" style="margin-top: 16px; background: rgba(16, 185, 129, 0.2); border-color: var(--accent-green); color: var(--accent-green);" onclick="dispatchCommand('payload')">
+                        📦 TRIGGER PAYLOAD SERVO DROP
+                    </button>
                 </div>
-                <button class="btn-action" onclick="submitGOTOTarget()">DISPATCH GOTO</button>
+
+                <!-- Right Joystick: Pitch & Roll -->
+                <div class="joystick-card">
+                    <div class="joystick-title">Right Stick: Pitch & Roll (XY Travel)</div>
+                    <div class="joystick-base" id="joy-right">
+                        <div class="joystick-stick" id="stick-right"></div>
+                    </div>
+                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-right-val">Pitch: 0.0m/s | Roll: 0.0m/s</div>
+                </div>
             </div>
         </div>
-
     </div>
 
     <!-- Emergency Disarm Confirmation Modal -->
@@ -1037,24 +1136,20 @@
             trail: []
         };
 
-        let currentView = 'map';
+        let activeTab = 'dash';
 
-        function switchCanvasView(mode) {
-            currentView = mode;
-            document.getElementById('vbtn-map').classList.toggle('active', mode === 'map');
-            document.getElementById('vbtn-cam').classList.toggle('active', mode === 'cam');
-            document.getElementById('tactical-canvas').style.display = (mode === 'map') ? 'block' : 'none';
-            document.getElementById('camera-stream').style.display = (mode === 'cam') ? 'block' : 'none';
-            document.getElementById('window-tag').innerText = (mode === 'map') 
-                ? 'RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)'
-                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC CAMERA STREAM)';
-            
-            if (mode === 'cam') renderVisionCanvas();
-            else renderMapCanvas();
+        function switchMainTab(tab) {
+            activeTab = tab;
+            ['dash', 'a8', 'sensors', 'remote'].forEach(t => {
+                document.getElementById(`mtab-${t}`).classList.toggle('active', t === tab);
+                document.getElementById(`sec-${t}`).classList.toggle('active', t === tab);
+            });
+            if (tab === 'dash') renderMapCanvas();
         }
 
         function appendConsole(tag, text) {
             const stream = document.getElementById('console-stream');
+            if (!stream) return;
             const now = new Date().toLocaleTimeString();
             const line = document.createElement('div');
             line.className = 'console-line';
@@ -1064,7 +1159,8 @@
         }
 
         function clearConsole() {
-            document.getElementById('console-stream').innerHTML = '';
+            const stream = document.getElementById('console-stream');
+            if (stream) stream.innerHTML = '';
         }
 
         function dispatchCommand(cmd) {
@@ -1073,6 +1169,14 @@
                 .then(res => res.json())
                 .then(data => appendConsole('[ACK]', data.message))
                 .catch(err => appendConsole('[ERR]', `Failed: ${err}`));
+        }
+
+        function sendThrottle(pwm) {
+            appendConsole('[THROTTLE]', `Setting manual throttle override to PWM ${pwm}...`);
+            fetch(`/api/command?cmd=throttle_${pwm}`)
+                .then(res => res.json())
+                .then(data => appendConsole('[ACK]', data.message))
+                .catch(() => {});
         }
 
         function confirmEmergencyKill() {
@@ -1118,10 +1222,10 @@
 
         // 2D Tactical Radar Canvas Renderer
         const canvas = document.getElementById('tactical-canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas ? canvas.getContext('2d') : null;
 
         function resizeCanvas() {
-            if (canvas.parentElement) {
+            if (canvas && canvas.parentElement) {
                 canvas.width = canvas.parentElement.clientWidth;
                 canvas.height = canvas.parentElement.clientHeight;
             }
@@ -1129,37 +1233,40 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (currentView !== 'map') return;
-            const rect = canvas.getBoundingClientRect();
-            const cx = e.clientX - rect.left;
-            const cy = e.clientY - rect.top;
-            const scale = 3.0;
-            const originX = canvas.width / 2;
-            const originY = canvas.height / 2;
-            const eastM = ((cx - originX) / scale).toFixed(1);
-            const northM = (-(cy - originY) / scale).toFixed(1);
-            document.getElementById('window-tag').innerText = `RADAR ENU: N=${northM}m | E=${eastM}m (CLICK MAP TO DISPATCH GOTO)`;
-        });
+        if (canvas) {
+            canvas.addEventListener('mousemove', (e) => {
+                if (activeTab !== 'dash') return;
+                const rect = canvas.getBoundingClientRect();
+                const cx = e.clientX - rect.left;
+                const cy = e.clientY - rect.top;
+                const scale = 3.0;
+                const originX = canvas.width / 2;
+                const originY = canvas.height / 2;
+                const eastM = ((cx - originX) / scale).toFixed(1);
+                const northM = (-(cy - originY) / scale).toFixed(1);
+                const tag = document.getElementById('window-tag');
+                if (tag) tag.innerText = `RADAR ENU: N=${northM}m | E=${eastM}m (CLICK MAP TO DISPATCH GOTO)`;
+            });
 
-        canvas.addEventListener('click', (e) => {
-            if (currentView !== 'map') return;
-            const rect = canvas.getBoundingClientRect();
-            const cx = e.clientX - rect.left;
-            const cy = e.clientY - rect.top;
-            const scale = 3.0;
-            const originX = canvas.width / 2;
-            const originY = canvas.height / 2;
-            const eastM = ((cx - originX) / scale).toFixed(1);
-            const northM = (-(cy - originY) / scale).toFixed(1);
-            
-            document.getElementById('in-goto-e').value = eastM;
-            document.getElementById('in-goto-n').value = northM;
-            submitGOTOTarget();
-        });
+            canvas.addEventListener('click', (e) => {
+                if (activeTab !== 'dash') return;
+                const rect = canvas.getBoundingClientRect();
+                const cx = e.clientX - rect.left;
+                const cy = e.clientY - rect.top;
+                const scale = 3.0;
+                const originX = canvas.width / 2;
+                const originY = canvas.height / 2;
+                const eastM = ((cx - originX) / scale).toFixed(1);
+                const northM = (-(cy - originY) / scale).toFixed(1);
+                
+                document.getElementById('in-goto-e').value = eastM;
+                document.getElementById('in-goto-n').value = northM;
+                submitGOTOTarget();
+            });
+        }
 
         function renderMapCanvas() {
-            if (currentView !== 'map') return;
+            if (activeTab !== 'dash' || !canvas || !ctx) return;
             resizeCanvas();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -1229,55 +1336,12 @@
             ctx.fillText(`DRONE (E:${droneState.east.toFixed(1)}m, N:${droneState.north.toFixed(1)}m)`, dx + 12, dy + 4);
         }
 
-        // Vision Perception Camera Canvas Simulator (RealSense D455)
-        const vCanvas = document.getElementById('vision-canvas');
-        const vCtx = vCanvas.getContext('2d');
-
-        function renderVisionCanvas() {
-            if (currentView !== 'cam') return;
-            vCanvas.width = vCanvas.parentElement.clientWidth;
-            vCanvas.height = vCanvas.parentElement.clientHeight;
-
-            vCtx.fillStyle = '#050a14';
-            vCtx.fillRect(0, 0, vCanvas.width, vCanvas.height);
-
-            // Crosshair Precision Reticle
-            const cx = vCanvas.width / 2;
-            const cy = vCanvas.height / 2;
-
-            vCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
-            vCtx.lineWidth = 1;
-            vCtx.beginPath(); vCtx.moveTo(cx - 40, cy); vCtx.lineTo(cx + 40, cy); vCtx.stroke();
-            vCtx.beginPath(); vCtx.moveTo(cx, cy - 40); vCtx.lineTo(cx, cy + 40); vCtx.stroke();
-            vCtx.beginPath(); vCtx.arc(cx, cy, 25, 0, Math.PI * 2); vCtx.stroke();
-
-            // Target 1 Bounding Box (MANNEQUIN -> WATER_BOTTLE)
-            vCtx.strokeStyle = '#10b981';
-            vCtx.lineWidth = 2;
-            const b1x = cx + 30;
-            const b1y = cy - 40;
-            vCtx.strokeRect(b1x, b1y, 75, 75);
-            vCtx.fillStyle = '#10b981';
-            vCtx.font = '10px JetBrains Mono';
-            vCtx.fillText("TGT-01: MANNEQUIN (94.2%)", b1x, b1y - 16);
-            vCtx.fillText("MATCH: WATER_BOTTLE", b1x, b1y - 4);
-
-            // Target 2 Bounding Box (TENT -> MEDICAL_KIT)
-            vCtx.strokeStyle = '#00f0ff';
-            vCtx.lineWidth = 2;
-            const b2x = cx - 120;
-            const b2y = cy + 10;
-            vCtx.strokeRect(b2x, b2y, 80, 65);
-            vCtx.fillStyle = '#00f0ff';
-            vCtx.font = '10px JetBrains Mono';
-            vCtx.fillText("TGT-02: TENT (89.5%)", b2x, b2y - 16);
-            vCtx.fillText("MATCH: MEDICAL_KIT", b2x, b2y - 4);
-        }
-
         // Update Attitude PFD Instruments
         function updateInstruments(roll, pitch, heading) {
-            document.getElementById('txt-attitude').innerText = `R: ${roll.toFixed(1)}° | P: ${pitch.toFixed(1)}°`;
-            document.getElementById('txt-heading').innerText = `HDG: ${Math.round(heading).toString().padStart(3, '0')}°`;
+            const att = document.getElementById('txt-attitude');
+            const hdg = document.getElementById('txt-heading');
+            if (att) att.innerText = `R: ${roll.toFixed(1)}° | P: ${pitch.toFixed(1)}°`;
+            if (hdg) hdg.innerText = `HDG: ${Math.round(heading).toString().padStart(3, '0')}°`;
 
             const pitchGroup = document.getElementById('horizon-pitch-group');
             if (pitchGroup) {
@@ -1311,25 +1375,24 @@
 
         // Live Keyboard Flight Control (WASD, Arrows, Spacebar, ESC)
         window.addEventListener('keydown', (e) => {
-            // Ignore keypresses if user is typing in form input fields
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
             const k = e.key.toLowerCase();
             let vn = 0.0, ve = 0.0, vu = 0.0, vyaw = 0.0;
             let handled = false;
 
-            if (k === 'w') { vn = 1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key W -> Pitch Forward (+N)'); }
-            else if (k === 's') { vn = -1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key S -> Pitch Backward (-N)'); }
-            else if (k === 'a') { ve = -1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key A -> Roll Left (-E)'); }
-            else if (k === 'd') { ve = 1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key D -> Roll Right (+E)'); }
-            else if (e.key === 'ArrowUp' || k === 'i') { vu = 1.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ↑ / I -> Altitude Climb (+1m)'); }
-            else if (e.key === 'ArrowDown' || k === 'k') { vu = -1.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ↓ / K -> Altitude Descend (-1m)'); }
-            else if (e.key === 'ArrowLeft' || k === 'j') { vyaw = -15.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ← / J -> Yaw Left'); }
-            else if (e.key === 'ArrowRight' || k === 'l') { vyaw = 15.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key → / L -> Yaw Right'); }
+            if (k === 'w') { vn = 1.5; handled = true; appendConsole('[TELEOP]', 'Key W -> Pitch Forward (+N)'); }
+            else if (k === 's') { vn = -1.5; handled = true; appendConsole('[TELEOP]', 'Key S -> Pitch Backward (-N)'); }
+            else if (k === 'a') { ve = -1.5; handled = true; appendConsole('[TELEOP]', 'Key A -> Roll Left (-E)'); }
+            else if (k === 'd') { ve = 1.5; handled = true; appendConsole('[TELEOP]', 'Key D -> Roll Right (+E)'); }
+            else if (e.key === 'ArrowUp' || k === 'i') { vu = 1.0; handled = true; appendConsole('[TELEOP]', 'Key ↑ / I -> Altitude Climb (+1m)'); }
+            else if (e.key === 'ArrowDown' || k === 'k') { vu = -1.0; handled = true; appendConsole('[TELEOP]', 'Key ↓ / K -> Altitude Descend (-1m)'); }
+            else if (e.key === 'ArrowLeft' || k === 'j') { vyaw = -15.0; handled = true; appendConsole('[TELEOP]', 'Key ← / J -> Yaw Left'); }
+            else if (e.key === 'ArrowRight' || k === 'l') { vyaw = 15.0; handled = true; appendConsole('[TELEOP]', 'Key → / L -> Yaw Right'); }
             else if (e.key === ' ') {
                 e.preventDefault();
                 dispatchCommand('hold');
-                appendConsole('[KEYBOARD TELEOP]', 'Key SPACEBAR -> Emergency Hover / Position Hold');
+                appendConsole('[TELEOP]', 'Key SPACEBAR -> Emergency Hover / Position Hold');
                 return;
             } else if (e.key === 'Escape') {
                 confirmEmergencyKill();
@@ -1363,35 +1426,25 @@
                     droneState.heading = data.heading || 45.0;
                     droneState.armed = data.armed || false;
 
-                    // Update trail
                     droneState.trail.push({e: droneState.east, n: droneState.north});
                     if (droneState.trail.length > 50) droneState.trail.shift();
 
-                    // Update Top Header Strip
                     document.getElementById('st-pwr').innerText = `${droneState.voltage}V | ${droneState.current}A`;
                     document.getElementById('st-cpu').innerText = `CPU ${data.cpu_load || 14}% | GPU ${data.gpu_load || 8}%`;
                     document.getElementById('st-gps').innerText = `${data.gps_fix || '3D RTK'} (${data.satellites || 18} SAT)`;
                     
-                    // Update Sensor HUD Cards
                     if (data.lidar) {
                         const lDist = data.lidar.distance_m || 0.0;
-                        document.getElementById('lidar-dist').innerText = `${lDist.toFixed(1)} m`;
-                        document.getElementById('lidar-sig').innerText = `${data.lidar.signal_quality || 96}%`;
+                        const elL = document.getElementById('d-lidar-val');
+                        if (elL) elL.innerText = `${lDist.toFixed(2)} m`;
                         const pct = Math.min(100, Math.max(0, (lDist / 12.0) * 100));
-                        document.getElementById('lidar-bar').style.width = `${pct}%`;
-                    }
-
-                    if (data.gps_feedback) {
-                        document.getElementById('gps-lat').innerText = `${data.gps_feedback.latitude.toFixed(6)}° N`;
-                        document.getElementById('gps-lon').innerText = `${data.gps_feedback.longitude.toFixed(6)}° W`;
-                        document.getElementById('gps-msl').innerText = `${data.gps_feedback.altitude_msl.toFixed(1)} m`;
-                        document.getElementById('gps-fix').innerText = data.gps_feedback.fix_type || '3D RTK (0.02m)';
+                        const elBar = document.getElementById('d-lidar-bar');
+                        if (elBar) elBar.style.width = `${pct}%`;
                     }
 
                     if (data.realsense_d455) {
-                        document.getElementById('vio-status').innerText = data.realsense_d455.vio_status || '6-DOF LOCK';
-                        document.getElementById('vio-flow').innerText = `${data.realsense_d455.optical_flow || 'STABLE'} (${data.realsense_d455.fps || 30} FPS)`;
-                        document.getElementById('vio-pos').innerText = `E:${droneState.east.toFixed(1)} N:${droneState.north.toFixed(1)} U:${droneState.alt.toFixed(1)}`;
+                        const elPos = document.getElementById('d455-pos');
+                        if (elPos) elPos.innerText = `E: ${droneState.east.toFixed(1)}m | N: ${droneState.north.toFixed(1)}m | U: ${droneState.alt.toFixed(1)}m`;
                     }
 
                     const badge = document.getElementById('badge-armed');
@@ -1407,8 +1460,7 @@
                     updateFSMState(droneState.mode);
                     updateInstruments(droneState.roll, droneState.pitch, droneState.heading);
                     
-                    if (currentView === 'map') renderMapCanvas();
-                    else renderVisionCanvas();
+                    if (activeTab === 'dash') renderMapCanvas();
                 })
                 .catch(() => {});
         }, 500);

@@ -265,6 +265,14 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 except Exception:
                     pass
                 resp = {"status": "ok", "message": "RTL Triggered. Returning to Home pose."}
+            elif cmd == "heavy":
+                STUB_FC.arm_and_offboard()
+                STUB_FC._mode = "HEAVY_LIFT_80"
+                STUB_FC._target_setpoint = [0.0, 0.0, 15.0]
+                resp = {"status": "ok", "message": "5.5KG HEAVY-LIFT 80% THROTTLE (1800 PWM) ENGAGED!"}
+            elif cmd.startswith("throttle_"):
+                pwm_val = cmd.split("_")[1]
+                resp = {"status": "ok", "message": f"Manual Throttle Override PWM set to {pwm_val}."}
             elif cmd == "payload":
                 STUB_FC.trigger_payload_release()
                 resp = {"status": "ok", "message": "Payload Servo Release Triggered."}
