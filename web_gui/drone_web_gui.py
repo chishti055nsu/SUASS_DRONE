@@ -50,6 +50,9 @@ class AsyncFrameGrabber:
         self.thread = threading.Thread(target=self._grab_loop, daemon=True)
         self.thread.start()
 
+    def stop(self):
+        self.is_running = False
+
     def _grab_loop(self):
         import cv2
         import numpy as np
@@ -67,83 +70,87 @@ class AsyncFrameGrabber:
             "rtsp://192.168.144.10:8554/main.264"
         ]
 
-        while self.is_running:
-            now = time.time()
-            frame = None
+        try:
+            while self.is_running:
+                now = time.time()
+                frame = None
 
-            if cap is not None and cap.isOpened():
-                ret, frame = cap.read()
-                if not ret or frame is None:
-                    cap.release()
-                    cap = None
-                    self.is_hardware_connected = False
-                    self.active_source = "SYNTHETIC_HUD"
+                if cap is not None and cap.isOpened():
+                    ret, frame = cap.read()
+                    if not ret or frame is None:
+                        cap.release()
+                        cap = None
+                        self.is_hardware_connected = False
+                        self.active_source = "SYNTHETIC_HUD"
 
-            if cap is None and (now - last_check > 3.0):
-                last_check = now
-                for src in siyi_rtsp_sources:
-                    try:
-                        c = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
-                        c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                        if c.isOpened():
-                            r, f = c.read()
-                            if r and f is not None and f.size > 0:
-                                cap = c
-                                frame = f
-                                self.is_hardware_connected = True
-                                self.active_source = str(src)
-                                logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {src}")
-                                break
-                            c.release()
-                    except Exception:
-                        if c:
-                            c.release()
+                if cap is None and (now - last_check > 3.0):
+                    last_check = now
+                    for src in siyi_rtsp_sources:
+                        try:
+                            c = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+                            c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                            if c.isOpened():
+                                r, f = c.read()
+                                if r and f is not None and f.size > 0:
+                                    cap = c
+                                    frame = f
+                                    self.is_hardware_connected = True
+                                    self.active_source = str(src)
+                                    logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {src}")
+                                    break
+                                c.release()
+                        except Exception:
+                            if c:
+                                c.release()
 
-            if frame is None:
-                # Generate high-performance 30 FPS HUD Camera Frame in RAM
-                frame = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.rectangle(frame, (10, 10), (630, 470), (0, 240, 255), 2)
-                
-                # Reticle Crosshair
-                cv2.circle(frame, (320, 240), 30, (0, 240, 255), 1)
-                cv2.line(frame, (280, 240), (360, 240), (0, 240, 255), 1)
-                cv2.line(frame, (320, 200), (320, 280), (0, 240, 255), 1)
+                if frame is None:
+                    # Generate high-performance 30 FPS HUD Camera Frame in RAM
+                    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                    cv2.rectangle(frame, (10, 10), (630, 470), (0, 240, 255), 2)
+                    
+                    # Reticle Crosshair
+                    cv2.circle(frame, (320, 240), 30, (0, 240, 255), 1)
+                    cv2.line(frame, (280, 240), (360, 240), (0, 240, 255), 1)
+                    cv2.line(frame, (320, 200), (320, 280), (0, 240, 255), 1)
 
-                # Simulated Target Bounding Box
-                bx = int(320 + math.sin(now * 0.8) * 80)
-                by = int(240 + math.cos(now * 0.8) * 40)
-                cv2.rectangle(frame, (bx - 40, by - 40), (bx + 40, by + 40), (0, 255, 136), 2)
-                cv2.putText(frame, "SIYI TARGET: MANNEQUIN (94.2%)", (bx - 50, by - 48),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 136), 1)
-                cv2.putText(frame, "MATCH: WATER_BOTTLE", (bx - 50, by - 34),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 240, 255), 1)
+                    # Simulated Target Bounding Box
+                    bx = int(320 + math.sin(now * 0.8) * 80)
+                    by = int(240 + math.cos(now * 0.8) * 40)
+                    cv2.rectangle(frame, (bx - 40, by - 40), (bx + 40, by + 40), (0, 255, 136), 2)
+                    cv2.putText(frame, "SIYI TARGET: MANNEQUIN (94.2%)", (bx - 50, by - 48),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 136), 1)
+                    cv2.putText(frame, "MATCH: WATER_BOTTLE", (bx - 50, by - 34),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 240, 255), 1)
 
-                # Telemetry Overlay
-                cv2.putText(frame, "CAM: SIYI A8 MINI 4K (RTSP 192.168.144.25)", (20, 35),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
-                cv2.putText(frame, "SEARCHING RTSP FEED OVER HM30...", (20, 55),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 180, 0), 1)
-                cv2.putText(frame, f"TIME: {time.strftime('%H:%M:%S')}", (20, 455),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
-            else:
-                # Live HW SIYI A8 Mini Video Feed: Draw AI Object Detection HUD Overlay onto live video
-                h, w = frame.shape[:2]
-                bx = int(w/2 + math.sin(now * 0.8) * (w*0.15))
-                by = int(h/2 + math.cos(now * 0.8) * (h*0.1))
-                cv2.rectangle(frame, (bx - 50, by - 50), (bx + 50, by + 50), (0, 255, 136), 2)
-                cv2.putText(frame, "SIYI AI TARGET: PERSON (96.8%)", (bx - 60, by - 58),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 2)
-                cv2.putText(frame, f"FEED: SIYI A8 MINI ({self.active_source})", (20, 35),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 240, 255), 1)
+                    # Telemetry Overlay
+                    cv2.putText(frame, "CAM: SIYI A8 MINI 4K (RTSP 192.168.144.25)", (20, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
+                    cv2.putText(frame, "SEARCHING RTSP FEED OVER HM30...", (20, 55),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 180, 0), 1)
+                    cv2.putText(frame, f"TIME: {time.strftime('%H:%M:%S')}", (20, 455),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+                else:
+                    # Live HW SIYI A8 Mini Video Feed: Draw AI Object Detection HUD Overlay onto live video
+                    h, w = frame.shape[:2]
+                    bx = int(w/2 + math.sin(now * 0.8) * (w*0.15))
+                    by = int(h/2 + math.cos(now * 0.8) * (h*0.1))
+                    cv2.rectangle(frame, (bx - 50, by - 50), (bx + 50, by + 50), (0, 255, 136), 2)
+                    cv2.putText(frame, "SIYI AI TARGET: PERSON (96.8%)", (bx - 60, by - 58),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 2)
+                    cv2.putText(frame, f"FEED: SIYI A8 MINI ({self.active_source})", (20, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 240, 255), 1)
 
-            try:
-                _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                with self.lock:
-                    self.latest_jpeg = jpeg_bytes.tobytes()
-            except Exception:
-                pass
+                try:
+                    _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    with self.lock:
+                        self.latest_jpeg = jpeg_bytes.tobytes()
+                except Exception:
+                    pass
 
-            time.sleep(0.033)  # ~30 FPS
+                time.sleep(0.033)  # ~30 FPS
+        finally:
+            if cap is not None:
+                cap.release()
 
     def get_frame(self):
         with self.lock:
@@ -171,6 +178,9 @@ class RealSenseD455Grabber:
         self.thread = threading.Thread(target=self._grab_loop, daemon=True)
         self.thread.start()
 
+    def stop(self):
+        self.is_running = False
+
     def _grab_loop(self):
         import cv2
         import numpy as np
@@ -178,63 +188,70 @@ class RealSenseD455Grabber:
         cap = None
         last_check = 0
 
-        while self.is_running:
-            now = time.time()
-            frame = None
+        try:
+            while self.is_running:
+                now = time.time()
+                frame = None
 
-            if cap is not None and cap.isOpened():
-                ret, frame = cap.read()
-                if not ret or frame is None:
-                    cap.release()
-                    cap = None
-                    self.is_hardware_connected = False
-                    self.active_source = "SYNTHETIC_D455"
+                if cap is not None and cap.isOpened():
+                    ret, frame = cap.read()
+                    if not ret or frame is None:
+                        cap.release()
+                        cap = None
+                        self.is_hardware_connected = False
+                        self.active_source = "SYNTHETIC_D455"
 
-            if cap is None and (now - last_check > 5.0):
-                last_check = now
-                for idx in [0, 2, 4]:
-                    try:
-                        c = cv2.VideoCapture(idx, cv2.CAP_V4L2)
-                        c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                        if c.isOpened():
-                            r, f = c.read()
-                            if r and f is not None and f.size > 0:
-                                cap = c
-                                frame = f
-                                self.is_hardware_connected = True
-                                self.active_source = f"/dev/video{idx}"
-                                logger.info(f"Connected to RealSense D455 USB feed: /dev/video{idx}")
-                                break
-                            c.release()
-                    except Exception:
-                        if c:
-                            c.release()
+                if cap is None and (now - last_check > 5.0):
+                    last_check = now
+                    for idx in [0, 2, 4]:
+                        dev_path = f"/dev/video{idx}"
+                        if not os.path.exists(dev_path):
+                            continue
+                        try:
+                            c = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+                            c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                            if c.isOpened():
+                                r, f = c.read()
+                                if r and f is not None and f.size > 0:
+                                    cap = c
+                                    frame = f
+                                    self.is_hardware_connected = True
+                                    self.active_source = dev_path
+                                    logger.info(f"Connected to RealSense D455 USB feed: {dev_path}")
+                                    break
+                                c.release()
+                        except Exception:
+                            if c:
+                                c.release()
 
-            if frame is None:
-                # Synthetic D455 Depth Perception HUD
-                frame = np.zeros((480, 640, 3), dtype=np.uint8)
-                cv2.rectangle(frame, (10, 10), (630, 470), (0, 255, 136), 2)
-                cv2.putText(frame, "REALSENSE D455 3D VIO / DEPTH STREAM", (20, 35),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 1)
-                cv2.putText(frame, "OPTICAL FLOW TRACKING: 30.0 FPS LOCK", (20, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
-                cv2.putText(frame, "OBSTACLE DENSITY: 8% (CLEAR)", (20, 85),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 136), 1)
-                cv2.putText(frame, f"TIME: {time.strftime('%H:%M:%S')}", (20, 455),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
-            else:
-                h, w = frame.shape[:2]
-                cv2.putText(frame, f"REALSENSE D455 FEED ({self.active_source})", (20, 35),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 1)
+                if frame is None:
+                    # Synthetic D455 Depth Perception HUD
+                    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                    cv2.rectangle(frame, (10, 10), (630, 470), (0, 255, 136), 2)
+                    cv2.putText(frame, "REALSENSE D455 3D VIO / DEPTH STREAM", (20, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 1)
+                    cv2.putText(frame, "OPTICAL FLOW TRACKING: 30.0 FPS LOCK", (20, 60),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
+                    cv2.putText(frame, "OBSTACLE DENSITY: 8% (CLEAR)", (20, 85),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 136), 1)
+                    cv2.putText(frame, f"TIME: {time.strftime('%H:%M:%S')}", (20, 455),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1)
+                else:
+                    h, w = frame.shape[:2]
+                    cv2.putText(frame, f"REALSENSE D455 FEED ({self.active_source})", (20, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 1)
 
-            try:
-                _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-                with self.lock:
-                    self.latest_jpeg = jpeg_bytes.tobytes()
-            except Exception:
-                pass
+                try:
+                    _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    with self.lock:
+                        self.latest_jpeg = jpeg_bytes.tobytes()
+                except Exception:
+                    pass
 
-            time.sleep(0.033)
+                time.sleep(0.033)
+        finally:
+            if cap is not None:
+                cap.release()
 
     def get_frame(self):
         with self.lock:
@@ -242,6 +259,17 @@ class RealSenseD455Grabber:
 
 
 D455_GRABBER = RealSenseD455Grabber()
+
+
+import atexit
+
+def _cleanup_grabbers():
+    if 'FRAME_GRABBER' in globals() and FRAME_GRABBER:
+        FRAME_GRABBER.stop()
+    if 'D455_GRABBER' in globals() and D455_GRABBER:
+        D455_GRABBER.stop()
+
+atexit.register(_cleanup_grabbers)
 
 
 class WebGCSHandler(SimpleHTTPRequestHandler):
