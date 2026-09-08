@@ -9,6 +9,9 @@
 
 set -e
 
+# Capture repository root directory BEFORE changing directories
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 echo "=========================================================================="
 echo "       🛸 IUB DRONE SUAS 2026 — MASTER AUTONOMOUS FLIGHT SUITE 🛸        "
 echo "=========================================================================="
@@ -66,7 +69,7 @@ if [ -d ~/ros2_ws ]; then
     source install/setup.bash 2>/dev/null || true
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Return to repository root directory
 cd "$ROOT_DIR"
 
 # 7. Start Web GCS Server on Port 8080 in background
@@ -98,4 +101,3 @@ ros2 launch mission_planner full_system.launch.py \
     source_type:=rtsp \
     rtsp_url:=rtsp://192.168.144.25:8554/main.264 \
     tfmini_port:="$LIDAR_PORT"
-
