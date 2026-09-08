@@ -332,7 +332,7 @@ class MissionPlannerNode(Node):
             self._sm.on_armed()
 
         # Check for safety pilot manual override (Rule 5.3.1)
-        if msg.mode not in ("OFFBOARD", "AUTO.MISSION", "") and self._sm.state not in (
+        if msg.mode not in ("OFFBOARD", "GUIDED", "AUTO", "AUTO.MISSION", "RTL", "LAND", "LOITER", "") and self._sm.state not in (
             MissionState.IDLE, MissionState.MANUAL_OVERRIDE, MissionState.TERMINATED
         ):
             self.get_logger().warn(f"Safety pilot manual override detected! Mode={msg.mode}")
@@ -502,6 +502,8 @@ class MissionPlannerNode(Node):
 
     def _send_land(self):
         self._set_target_enu(self._pos_enu[0], self._pos_enu[1], 0.0)
+        if hasattr(self, "_fc") and self._fc is not None and hasattr(self._fc, "trigger_land"):
+            self._fc.trigger_land()
 
     def _send_rtl(self):
         self._set_target_enu(self._home_pose_map[0], self._home_pose_map[1], self._search_alt)

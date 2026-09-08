@@ -319,18 +319,22 @@ class MavrosFlightController(FlightController):
             pass
 
     def arm_and_offboard(self) -> bool:
-        """Dispatches SetMode (OFFBOARD) and CommandBool (ARM) service calls asynchronously."""
+        """Dispatches SetMode (GUIDED / OFFBOARD) and CommandBool (ARM) service calls asynchronously."""
         if self._node is None or not hasattr(self._node, "create_client"):
             return False
 
-        self._node.get_logger().info("[HAL Mavros] Requesting ARM + OFFBOARD mode via MAVROS services...")
+        self._node.get_logger().info("[HAL Mavros] Requesting ARM + GUIDED/OFFBOARD mode via MAVROS services...")
         try:
             from mavros_msgs.srv import CommandBool, SetMode
             mode_cli = self._node.create_client(SetMode, "/mavros/set_mode")
             if mode_cli.wait_for_service(timeout_sec=1.5):
-                req = SetMode.Request()
-                req.custom_mode = "OFFBOARD"
-                mode_cli.call_async(req)
+                req_guided = SetMode.Request()
+                req_guided.custom_mode = "GUIDED"
+                mode_cli.call_async(req_guided)
+
+                req_offboard = SetMode.Request()
+                req_offboard.custom_mode = "OFFBOARD"
+                mode_cli.call_async(req_offboard)
 
             arm_cli = self._node.create_client(CommandBool, "/mavros/cmd/arming")
             if arm_cli.wait_for_service(timeout_sec=1.5):
@@ -340,7 +344,7 @@ class MavrosFlightController(FlightController):
                 self._node.get_logger().info("[HAL Mavros] Arming command sent to MAVROS.")
             return True
         except Exception as e:
-            if hasattr(self._node, "get_logger"):
+            if hasattr(self, "_node") and hasattr(self._node, "get_logger"):
                 self._node.get_logger().error(f"[HAL Mavros] Arm/OFFBOARD error: {e}")
             return False
 
@@ -408,7 +412,7 @@ class MavrosFlightController(FlightController):
             return False
 
     def trigger_rtl(self) -> bool:
-        """Dispatches SetMode (AUTO.RTL / RTL) via MAVROS service call asynchronously."""
+        """Dispatches SetMode (RTL / AUTO.RTL) via MAVROS service call asynchronously."""
         if self._node is None or not hasattr(self._node, "create_client"):
             return False
 
@@ -417,14 +421,44 @@ class MavrosFlightController(FlightController):
             from mavros_msgs.srv import SetMode
             cli = self._node.create_client(SetMode, "/mavros/set_mode")
             if cli.wait_for_service(timeout_sec=1.5):
-                req = SetMode.Request()
-                req.custom_mode = "AUTO.RTL"
-                cli.call_async(req)
-                self._node.get_logger().warn("[HAL Mavros] RTL (AUTO.RTL) command sent to MAVROS.")
+                req_rtl = SetMode.Request()
+                req_rtl.custom_mode = "RTL"
+                cli.call_async(req_rtl)
+
+                req_auto_rtl = SetMode.Request()
+                req_auto_rtl.custom_mode = "AUTO.RTL"
+                cli.call_async(req_auto_rtl)
+
+                self._node.get_logger().warn("[HAL Mavros] RTL command sent to MAVROS.")
             return True
         except Exception as e:
-            if hasattr(self._node, "get_logger"):
+            if hasattr(self, "_node") and hasattr(self._node, "get_logger"):
                 self._node.get_logger().error(f"[HAL Mavros] RTL error: {e}")
+            return False
+
+    def trigger_land(self) -> bool:
+        """Dispatches SetMode (LAND / AUTO.LAND) via MAVROS service call asynchronously."""
+        if self._node is None or not hasattr(self._node, "create_client"):
+            return False
+
+        self._node.get_logger().info("[HAL Mavros] Requesting LAND / AUTO.LAND mode via MAVROS service...")
+        try:
+            from mavros_msgs.srv import SetMode
+            cli = self._node.create_client(SetMode, "/mavros/set_mode")
+            if cli.wait_for_service(timeout_sec=1.5):
+                req_land = SetMode.Request()
+                req_land.custom_mode = "LAND"
+                cli.call_async(req_land)
+
+                req_auto_land = SetMode.Request()
+                req_auto_land.custom_mode = "AUTO.LAND"
+                cli.call_async(req_auto_land)
+
+                self._node.get_logger().warn("[HAL Mavros] LAND command sent to MAVROS.")
+            return True
+        except Exception as e:
+            if hasattr(self, "_node") and hasattr(self._node, "get_logger"):
+                self._node.get_logger().error(f"[HAL Mavros] LAND error: {e}")
             return False
 
     def publish_vision_pose(self, east_m: float, north_m: float, up_m: float, yaw_deg: float = 0.0) -> bool:
