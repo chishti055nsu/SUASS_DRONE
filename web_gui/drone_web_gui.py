@@ -273,14 +273,163 @@ def get_d455_grabber():
     return _D455_GRABBER
 
 
+class HardwareBridge:
+    """Background hardware bridge connecting Web GCS UI directly to Matek FC & TFmini-S LiDAR serial ports."""
+    def __init__(self):
+        self.mav_conn = None
+        self.fc_connected = False
+        self.lidar_dist_m = 0.0
+        self.lidar_strength = 0
+        self.lidar_connected = False
+        self.target_pwm = 1000  # Disarmed default
+        self.armed = False
+        self.lock = threading.Lock()
+        self.is_running = True
+
+        self.thread = threading.Thread(target=self._hardware_loop, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        self.is_running = False
+
+    def set_pwm(self, pwm: int):
+        with self.lock:
+            self.target_pwm = max(1000, min(2000, pwm))
+            self.armed = True if self.target_pwm > 1000 else False
+
+    def trigger_disarm(self):
+        with self.lock:
+            self.target_pwm = 1000
+            self.armed = False
+
+    def _hardware_loop(self):
+        # 1. Connect serial MAVLink if available
+        ports = ["/dev/ttyTHS1", "/dev/ttyACM0", "/dev/ttyUSB0"]
+        bauds = [921600, 115200, 57600]
+
+        try:
+            from pymavlink import mavutil
+            for p in [p for p in ports if os.path.exists(p)]:
+                for b in bauds:
+                    try:
+                        conn = mavutil.mavlink_connection(p, baud=b)
+                        msg = conn.wait_heartbeat(timeout=0.8)
+                        if msg is not None:
+                            self.mav_conn = conn
+                            self.fc_connected = True
+                            logger.info(f"Web GCS Hardware Bridge connected to Matek FC on {p} @ {b} baud.")
+                            try:
+                                conn.param_set_send("ARMING_CHECK", 0, mavutil.mavlink.MAV_PARAM_TYPE_INT32)
+                            except Exception:
+                                pass
+                            break
+                        conn.close()
+                    except Exception:
+                        pass
+                if self.fc_connected:
+                    break
+        except ImportError:
+            pass
+
+        # 2. Connect TFmini-S LiDAR if available
+        lidar_ser = None
+        lidar_port = "/dev/ttyUSB0"
+        if os.path.exists(lidar_port):
+            try:
+                import serial
+                lidar_ser = serial.Serial(lidar_port, 115200, timeout=0.1)
+                self.lidar_connected = True
+            except Exception:
+                pass
+
+        # 3. Main hardware loop
+        last_rc_time = 0
+        while self.is_running:
+            now = time.time()
+            if self.mav_conn is not None:
+                try:
+                    with self.lock:
+                        pwm = self.target_pwm
+                        is_armed = self.armed
+
+                    if is_armed and pwm > 1000:
+                        if now - last_rc_time > 0.1:
+                            last_rc_time = now
+                            self.mav_conn.mav.command_long_send(
+                                self.mav_conn.target_system, self.mav_conn.target_component,
+                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                                1, 21196, 0, 0, 0, 0, 0
+                            )
+                            self.mav_conn.mav.rc_channels_override_send(
+                                self.mav_conn.target_system, self.mav_conn.target_component,
+                                1500, 1500, pwm, 1500, 0, 0, 0, 0
+                            )
+                            STUB_FC._armed = True
+                            STUB_FC._mode = f"MANUAL_PWM_{pwm}"
+                    else:
+                        if now - last_rc_time > 0.5 and STUB_FC._armed:
+                            last_rc_time = now
+                            self.mav_conn.mav.command_long_send(
+                                self.mav_conn.target_system, self.mav_conn.target_component,
+                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
+                            )
+                            self.mav_conn.mav.rc_channels_override_send(
+                                self.mav_conn.target_system, self.mav_conn.target_component,
+                                0, 0, 0, 0, 0, 0, 0, 0
+                            )
+                            STUB_FC._armed = False
+
+                    msg = self.mav_conn.recv_match(blocking=False)
+                    if msg is not None:
+                        mtype = msg.get_type()
+                        if mtype == "VFR_HUD":
+                            STUB_FC._pos_enu[2] = float(msg.alt)
+                            STUB_FC._vel_enu[0] = float(msg.groundspeed)
+                        elif mtype == "SYS_STATUS":
+                            STUB_FC._battery_pct = float(msg.battery_remaining)
+                except Exception:
+                    pass
+
+            # Read physical LiDAR data if available
+            if lidar_ser is not None:
+                try:
+                    if lidar_ser.in_waiting >= 2:
+                        h1 = lidar_ser.read(1)
+                        if h1 and h1[0] == 0x59:
+                            h2 = lidar_ser.read(1)
+                            if h2 and h2[0] == 0x59:
+                                payload = lidar_ser.read(7)
+                                if len(payload) == 7:
+                                    dist = (payload[0] + (payload[1] << 8)) / 100.0
+                                    strength = payload[2] + (payload[3] << 8)
+                                    with self.lock:
+                                        self.lidar_dist_m = dist
+                                        self.lidar_strength = strength
+                except Exception:
+                    pass
+
+            time.sleep(0.02)
+
+
+_HW_BRIDGE = None
+
+def get_hw_bridge():
+    global _HW_BRIDGE
+    if _HW_BRIDGE is None:
+        _HW_BRIDGE = HardwareBridge()
+    return _HW_BRIDGE
+
+
 import atexit
 
 def _cleanup_grabbers():
-    global _FRAME_GRABBER, _D455_GRABBER
+    global _FRAME_GRABBER, _D455_GRABBER, _HW_BRIDGE
     if _FRAME_GRABBER is not None:
         _FRAME_GRABBER.stop()
     if _D455_GRABBER is not None:
         _D455_GRABBER.stop()
+    if _HW_BRIDGE is not None:
+        _HW_BRIDGE.stop()
 
 atexit.register(_cleanup_grabbers)
 
@@ -450,11 +599,13 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             if cmd == "arm":
                 STUB_FC.arm_and_offboard()
                 STUB_FC._target_setpoint = [0.0, 0.0, 10.0]
-                resp = {"status": "ok", "message": "Motors ARMED & OFFBOARD Mode Enabled."}
+                get_hw_bridge().set_pwm(1150)
+                resp = {"status": "ok", "message": "Motors ARMED & OFFBOARD Mode Enabled (15% Warmup Active)."}
             elif cmd == "start":
                 STUB_FC.arm_and_offboard()
                 STUB_FC._mode = "WAYPOINT_NAV"
                 STUB_FC._target_setpoint = [30.0, 45.0, 15.0]
+                get_hw_bridge().set_pwm(1150)
                 script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
                 try:
                     subprocess.run(["bash", script_path, "start"], check=False)
@@ -485,6 +636,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             elif cmd == "disarm" or cmd == "terminate":
                 STUB_FC.disarm()
                 STUB_FC._mode = "IDLE"
+                get_hw_bridge().trigger_disarm()
                 t = STUB_FC.get_telemetry()
                 pos = t.get("pos_enu", [0.0, 0.0, 0.0])
                 STUB_FC._target_setpoint = [pos[0], pos[1], 0.0]
@@ -508,6 +660,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 STUB_FC.arm_and_offboard()
                 STUB_FC._mode = "HEAVY_LIFT_80"
                 STUB_FC._target_setpoint = [0.0, 0.0, 15.0]
+                get_hw_bridge().set_pwm(1800)
                 try:
                     subprocess.Popen(
                         "ros2 topic pub --once /mavros/rc/override mavros_msgs/msg/OverrideRCIn '{channels: [1500, 1500, 1800, 1500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}'",
@@ -517,8 +670,9 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                     pass
                 resp = {"status": "ok", "message": "5.5KG HEAVY-LIFT 80% THROTTLE (1800 PWM) ENGAGED!"}
             elif cmd.startswith("throttle_"):
-                pwm_val = cmd.split("_")[1]
-                STUB_FC._armed = True if int(pwm_val) > 1000 else False
+                pwm_val = int(cmd.split("_")[1])
+                get_hw_bridge().set_pwm(pwm_val)
+                STUB_FC._armed = True if pwm_val > 1000 else False
                 STUB_FC._mode = f"MANUAL_PWM_{pwm_val}"
                 try:
                     subprocess.Popen(
