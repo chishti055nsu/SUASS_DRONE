@@ -65,7 +65,8 @@ rm -rf ~/ros2_ws/src/drone_vision ~/ros2_ws/src/drone_vision_msgs ~/ros2_ws/src/
 
 if [ -d ~/ros2_ws ]; then
     cd ~/ros2_ws
-    colcon build --symlink-install --packages-select drone_vision_msgs drone_vision mission_planner precision_landing 2>/dev/null || true
+    # Build with 1 parallel worker to prevent Jetson memory spikes & system freezes
+    colcon build --symlink-install --parallel-workers 1 --packages-select drone_vision_msgs drone_vision mission_planner precision_landing 2>/dev/null || true
     source install/setup.bash 2>/dev/null || true
 fi
 
