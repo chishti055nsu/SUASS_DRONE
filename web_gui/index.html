@@ -787,6 +787,45 @@
                         <div class="joystick-stick" id="stick-right"></div>
                     </div>
                     <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-right-val">Pitch (N): 0.0m/s | Roll (E): 0.0m/s</div>
+            <!-- DYNAMIC HOVER POWER & ALTITUDE LOCK CALIBRATOR -->
+            <div style="margin-top: 20px; padding: 18px; border-radius: 12px; background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(0, 240, 255, 0.35); box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                        🎯 DYNAMIC HOVER THROTTLE & ALTITUDE LOCK CALIBRATOR
+                    </div>
+                    <span id="lbl-hover-status" style="font-size: 0.78rem; color: var(--accent-green); font-weight: 600;">CONFIG LOADED (45.0% / 1450 PWM)</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; color: var(--text-dim);">
+                            <span>HOVER POWER BASELINE:</span>
+                            <strong style="color: var(--accent-cyan); font-size: 0.95rem;" id="txt-hover-val">45.0% (1450 PWM)</strong>
+                        </div>
+                        <input type="range" id="slider-hover-pwm" min="1100" max="1900" step="5" value="1450" style="width: 100%; accent-color: var(--accent-cyan);" oninput="onHoverSliderChange(this.value)">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
+                            <span>10% (1100 PWM)</span>
+                            <span>45% (1450 PWM)</span>
+                            <span>90% (1900 PWM)</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <button class="btn-action" style="background: rgba(0, 240, 255, 0.2); border-color: var(--accent-cyan); color: var(--accent-cyan);" onclick="applyHoverPower()">
+                                🎯 APPLY & HOVER NOW
+                            </button>
+                            <button class="btn-action" style="background: rgba(16, 185, 129, 0.2); border-color: var(--accent-green); color: var(--accent-green);" onclick="saveHoverConfig()">
+                                💾 SAVE AS DEFAULT
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn-throttle" style="font-size: 0.68rem; padding: 4px 8px;" onclick="setHoverPreset(1350)">35% LIGHT (1350 PWM)</button>
+                            <button class="btn-throttle" style="font-size: 0.68rem; padding: 4px 8px;" onclick="setHoverPreset(1450)">45% QUAD (1450 PWM)</button>
+                            <button class="btn-throttle" style="font-size: 0.68rem; padding: 4px 8px;" onclick="setHoverPreset(1650)">65% PAYLOAD (1650 PWM)</button>
+                            <button class="btn-throttle" style="font-size: 0.68rem; padding: 4px 8px;" onclick="setHoverPreset(1800)">80% HEAVY (1800 PWM)</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1108,6 +1147,62 @@
                 })
                 .catch(() => {});
         }, 200);
+
+        // Hover Throttle Calibration & Control JS Logic
+        function onHoverSliderChange(pwm) {
+            const pct = (((pwm - 1000) / 1000.0) * 100.0).toFixed(1);
+            const valEl = document.getElementById('txt-hover-val');
+            if (valEl) valEl.innerText = `${pct}% (${pwm} PWM)`;
+        }
+
+        function applyHoverPower() {
+            const pwm = document.getElementById('slider-hover-pwm').value;
+            const pct = (((pwm - 1000) / 1000.0) * 100.0).toFixed(1);
+            fetch(`/api/set_hover?pwm=${pwm}`)
+                .then(res => res.json())
+                .then(data => {
+                    const statusEl = document.getElementById('lbl-hover-status');
+                    if (statusEl) statusEl.innerText = `HOVER POWER ACTIVE (${pct}% / ${pwm} PWM)`;
+                })
+                .catch(() => {});
+        }
+
+        function saveHoverConfig() {
+            const pwm = document.getElementById('slider-hover-pwm').value;
+            const pct = (((pwm - 1000) / 1000.0) * 100.0).toFixed(1);
+            fetch(`/api/set_hover?pwm=${pwm}`)
+                .then(res => res.json())
+                .then(data => {
+                    alert(`✅ Hover Config Saved to Disk!\nBaseline: ${pct}% Power (${pwm} PWM)`);
+                    const statusEl = document.getElementById('lbl-hover-status');
+                    if (statusEl) statusEl.innerText = `CONFIG SAVED (${pct}% / ${pwm} PWM)`;
+                })
+                .catch(() => {});
+        }
+
+        function setHoverPreset(pwm) {
+            const slider = document.getElementById('slider-hover-pwm');
+            if (slider) slider.value = pwm;
+            onHoverSliderChange(pwm);
+            applyHoverPower();
+        }
+
+        function loadHoverConfig() {
+            fetch('/api/get_hover')
+                .then(res => res.json())
+                .then(cfg => {
+                    if (cfg && cfg.hover_pwm) {
+                        const slider = document.getElementById('slider-hover-pwm');
+                        if (slider) {
+                            slider.value = cfg.hover_pwm;
+                            onHoverSliderChange(cfg.hover_pwm);
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+
+        loadHoverConfig();
     </script>
 </body>
 </html>

@@ -699,6 +699,61 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(resp).encode("utf-8"))
             return
 
+        elif path == "/api/set_hover":
+            pwm_val = int(query.get("pwm", ["1450"])[0])
+            pct_val = round(((pwm_val - 1000) / 1000.0) * 100.0, 1)
+
+            # 1. Update HardwareBridge & STUB_FC
+            get_hw_bridge().set_pwm(pwm_val)
+            STUB_FC._mode = f"HOVER_CALIBRATED_{pwm_val}"
+
+            # 2. Persist configuration to hover_config.json
+            cfg_path = os.path.join(ROOT_DIR, "mission_planner", "config", "hover_config.json")
+            try:
+                hover_cfg = {
+                    "hover_pct": pct_val,
+                    "hover_pwm": pwm_val,
+                    "payload_kg": 2.5,
+                    "notes": "Calibrated hover throttle baseline for IUB Drone SUAS 2026",
+                    "last_updated": time.strftime("%Y-%m-%dT%H:%M:%SZ")
+                }
+                with open(cfg_path, "w") as f:
+                    json.dump(hover_cfg, f, indent=2)
+            except Exception:
+                pass
+
+            # 3. Publish MAVROS RC Override for Hover
+            try:
+                subprocess.Popen(
+                    f"ros2 topic pub --once /mavros/rc/override mavros_msgs/msg/OverrideRCIn '{{channels: [1500, 1500, {pwm_val}, 1500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}'",
+                    shell=True
+                )
+            except Exception:
+                pass
+
+            resp = {"status": "ok", "message": f"Hover Throttle updated to {pwm_val} PWM ({pct_val}% Power). Persistent config saved."}
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(resp).encode("utf-8"))
+            return
+
+        elif path == "/api/get_hover":
+            cfg_path = os.path.join(ROOT_DIR, "mission_planner", "config", "hover_config.json")
+            hover_cfg = {"hover_pct": 45.0, "hover_pwm": 1450}
+            if os.path.exists(cfg_path):
+                try:
+                    with open(cfg_path, "r") as f:
+                        hover_cfg = json.load(f)
+                except Exception:
+                    pass
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(hover_cfg).encode("utf-8"))
+            return
+
         elif path == "/api/goto":
             n = float(query.get("n", ["0.0"])[0])
             e = float(query.get("e", ["0.0"])[0])
