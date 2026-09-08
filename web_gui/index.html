@@ -184,6 +184,18 @@
             color: var(--accent-green);
         }
 
+        .armed-status-badge.prearm-fail {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: #f59e0b;
+            color: #f59e0b;
+            animation: pulse-warn 1s infinite alternate;
+        }
+
+        @keyframes pulse-warn {
+            from { opacity: 1.0; }
+            to { opacity: 0.6; }
+        }
+
         .pulse-dot {
             width: 8px;
             height: 8px;
@@ -1077,9 +1089,15 @@
                     const txt = document.getElementById('txt-armed');
                     if (droneState.armed) {
                         badge.classList.add('armed');
+                        badge.classList.remove('prearm-fail');
                         txt.innerText = 'ARMED - MOTORS ACTIVE';
+                    } else if (droneState.mode === 'ARMING') {
+                        badge.classList.remove('armed');
+                        badge.classList.add('prearm-fail');
+                        txt.innerText = '⚠️ ARMING REJECTED BY FC (PREARM CHECK)';
                     } else {
                         badge.classList.remove('armed');
+                        badge.classList.remove('prearm-fail');
                         txt.innerText = 'DISARMED - READY';
                     }
 
