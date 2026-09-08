@@ -146,13 +146,14 @@ class AsyncFrameGrabber:
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 240, 255), 1)
 
                 try:
-                    _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    small_frame = cv2.resize(frame, (480, 360), interpolation=cv2.INTER_NEAREST)
+                    _, jpeg_bytes = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
                     with self.lock:
                         self.latest_jpeg = jpeg_bytes.tobytes()
                 except Exception:
                     pass
 
-                time.sleep(0.033)  # ~30 FPS
+                time.sleep(0.05)  # ~20 FPS (Zero CPU Lag)
         finally:
             if cap is not None:
                 cap.release()
@@ -250,13 +251,14 @@ class RealSenseD455Grabber:
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 136), 1)
 
                 try:
-                    _, jpeg_bytes = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    small_frame = cv2.resize(frame, (480, 360), interpolation=cv2.INTER_NEAREST)
+                    _, jpeg_bytes = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
                     with self.lock:
                         self.latest_jpeg = jpeg_bytes.tobytes()
                 except Exception:
                     pass
 
-                time.sleep(0.033)
+                time.sleep(0.05)  # ~20 FPS (Zero CPU Lag)
         finally:
             if cap is not None:
                 cap.release()
@@ -479,7 +481,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                         self.wfile.flush()
                     except (BrokenPipeError, ConnectionResetError, OSError):
                         break
-                time.sleep(0.033)
+                time.sleep(0.05)
             return
 
         elif path == "/d455_feed":
@@ -500,7 +502,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                         self.wfile.flush()
                     except (BrokenPipeError, ConnectionResetError, OSError):
                         break
-                time.sleep(0.033)
+                time.sleep(0.05)
             return
 
         elif path == "/api/camera_status":
