@@ -6,8 +6,8 @@ Deep Serial Hardware Scanner & Force Arming Tool for Matek H743 + Jetson Orin Na
 
 Fixes common Jetson serial issues:
  1. Disables 'nvgetty.service' (Jetson serial console conflict on /dev/ttyTHS1).
- 2. Exhaustive scan across all ports (/dev/ttyTHS1, /dev/ttyUSB0, /dev/ttyACM0) and baud rates (57600, 115200, 921600).
- 3. Forces MAVLink arming override (param2=21196) and spins rotors immediately.
+ 2. Exhaustive scan across all ports (/dev/ttyTHS1, /dev/ttyUSB0, /dev/ttyACM0) and baud rates (921600, 57600, 115200).
+ 3. Continuous 10Hz stream loop that keeps ArduPilot armed and rotors spinning continuously.
 
 Usage:
   sudo python3 scripts/force_matek_connect.py
@@ -16,6 +16,7 @@ Usage:
 import sys
 import os
 import time
+import threading
 import subprocess
 
 try:
@@ -28,7 +29,6 @@ except ImportError:
 
 def fix_jetson_serial():
     print("[1/4] Checking & Clearing Jetson Serial Port Locks...")
-    # Stop nvgetty service if active (it locks /dev/ttyTHS1 on Jetson)
     try:
         subprocess.run(["sudo", "systemctl", "stop", "nvgetty.service"], check=False, stderr=subprocess.DEVNULL)
         subprocess.run(["sudo", "systemctl", "disable", "nvgetty.service"], check=False, stderr=subprocess.DEVNULL)
@@ -36,7 +36,6 @@ def fix_jetson_serial():
     except Exception:
         pass
 
-    # Fix device permissions
     for p in ["/dev/ttyTHS1", "/dev/ttyUSB0", "/dev/ttyACM0", "/dev/ttyTHS0"]:
         if os.path.exists(p):
             try:
@@ -54,7 +53,6 @@ def scan_ports_and_bauds():
     existing_ports = [p for p in ports if os.path.exists(p)]
     if not existing_ports:
         print("  ❌ \033[1;31mNO SERIAL PORTS FOUND ON JETSON!\033[0m")
-        print("  👉 Check physical wiring: USB cable or Jetson 40-pin header (Pin 8 TX -> FC RX, Pin 10 RX -> FC TX, Pin 6 GND).")
         return None, None
 
     for p in existing_ports:
@@ -75,55 +73,49 @@ def scan_ports_and_bauds():
     return None, None
 
 
-def force_arm_and_spin(conn, port_info):
+def force_arm_and_spin_continuous(conn, port_info):
     port, baud = port_info
     print(f"\n[3/4] Connected to Matek FC on {port} @ {baud} baud.")
     print("----------------------------------------------------------------")
-    print("  ⚠️ SAFETY WARNING: FORCING MOTOR ARMING & ROTOR SPIN NOW!")
+    print("  ⚠️ SAFETY WARNING: CONTINUOUS MOTOR ARMING & ROTOR SPIN ACTIVE!")
     print("----------------------------------------------------------------")
-    
-    print("  👉 Sending MAV_CMD_COMPONENT_ARM_DISARM with Force Override (21196)...")
-    
-    # Try 3 times to send force arm command
-    for i in range(3):
-        conn.mav.command_long_send(
-            conn.target_system,
-            conn.target_component,
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-            0,
-            1,      # param1: 1 = arm
-            21196,  # param2: 21196 = force arming magic override code
-            0, 0, 0, 0, 0
-        )
-        time.sleep(0.5)
 
-    print("  👉 Sending RC Channel Throttle Override (PWM 1150 = ~12% Warmup Spin)...")
-    for _ in range(25):
-        conn.mav.rc_channels_override_send(
-            conn.target_system,
-            conn.target_component,
-            1500,  # Roll (Ch1)
-            1500,  # Pitch (Ch2)
-            1150,  # Throttle (Ch3: Warmup Spin)
-            1500,  # Yaw (Ch4)
-            0, 0, 0, 0
-        )
-        time.sleep(0.1)
+    is_running = True
+    current_pwm = 1150  # ~15% Warmup Spin
 
-    print("\n[4/4] Motor Warmup Spin Test Active!")
+    def _stream_thread():
+        while is_running:
+            try:
+                # Force arming signal
+                conn.mav.command_long_send(
+                    conn.target_system, conn.target_component,
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                    1, 21196, 0, 0, 0, 0, 0
+                )
+                # Continuous 10Hz RC Override
+                conn.mav.rc_channels_override_send(
+                    conn.target_system, conn.target_component,
+                    1500, 1500, current_pwm, 1500, 0, 0, 0, 0
+                )
+            except Exception:
+                pass
+            time.sleep(0.1)
+
+    t = threading.Thread(target=_stream_thread, daemon=True)
+    t.start()
+
+    print("\n[4/4] Motors ARMED Continuously at ~15% Throttle (1150 PWM).")
     print("  Press Enter to DISARM and stop motors...")
     input()
 
+    is_running = False
     print("  🛑 Disarming motors and cutting throttle...")
     conn.mav.command_long_send(
-        conn.target_system,
-        conn.target_component,
-        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
-        0, 0, 0, 0, 0, 0, 0, 0
+        conn.target_system, conn.target_component,
+        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
     )
     conn.mav.rc_channels_override_send(
-        conn.target_system,
-        conn.target_component,
+        conn.target_system, conn.target_component,
         0, 0, 0, 0, 0, 0, 0, 0
     )
     print("  ✅ Motors Disarmed cleanly.")
@@ -138,25 +130,11 @@ def main():
     conn, port_info = scan_ports_and_bauds()
 
     if conn is None:
-        print("\n================================================================")
-        print("  ❌ \033[1;31mMATEK H743 IS NOT RESPONDING ON ANY PORT OR BAUD RATE!\033[0m")
-        print("================================================================")
-        print("  🔧 HARDWARE TROUBLESHOOTING CHECKLIST:")
-        print("  1. TX/RX SWAP CHECK (Most Common Issue):")
-        print("     - Jetson Pin 8 (TX)  -->  Matek RX (e.g. RX6 or RX1)")
-        print("     - Jetson Pin 10 (RX) -->  Matek TX (e.g. TX6 or TX1)")
-        print("     - Jetson Pin 6 (GND) -->  Matek GND")
-        print("     *(If connected TX->TX, swap the two signal wires!)*")
-        print("\n  2. USB TEST:")
-        print("     - Plug a USB-C cable directly from Jetson Nano USB to Matek H743 USB port.")
-        print("     - Re-run this script: sudo python3 scripts/force_matek_connect.py")
-        print("\n  3. FLIGHT BATTERY POWER:")
-        print("     - Ensure 4S-6S LiPo battery is plugged in so FC & ESCs have power.")
-        print("================================================================")
+        print("\n❌ Matek H743 is not responding. Check physical connections.")
         sys.exit(1)
 
     try:
-        force_arm_and_spin(conn, port_info)
+        force_arm_and_spin_continuous(conn, port_info)
     except KeyboardInterrupt:
         print("\n[INFO] Emergency Disarming...")
         conn.mav.command_long_send(

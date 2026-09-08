@@ -4,16 +4,16 @@ matek_motor_warmup.py
 ======================
 Standalone Motor Warmup & Manual Rotor Test Tool for Matek H743-Wing V3.
 
-Allows direct hardware arming, ESC/motor warmup, and manual throttle testing 
-without running the main ROS 2 / Autonomy software stack.
+Fixes premature disarming by streaming RC override & Arm commands continuously in a 10Hz background thread.
 
 Usage:
-  python3 scripts/matek_motor_warmup.py [--port /dev/ttyTHS1] [--baud 57600]
+  python3 scripts/matek_motor_warmup.py [--port /dev/ttyTHS1] [--baud 921600]
 """
 
 import sys
 import os
 import time
+import threading
 import argparse
 
 try:
@@ -39,6 +39,54 @@ def detect_port():
     return "/dev/ttyTHS1"
 
 
+class MotorWarmupController:
+    def __init__(self, master):
+        self.master = master
+        self.is_armed = False
+        self.current_pwm = 1000
+        self.is_running = True
+        self.thread = threading.Thread(target=self._stream_loop, daemon=True)
+        self.thread.start()
+
+    def _stream_loop(self):
+        while self.is_running:
+            if self.is_armed and self.master:
+                try:
+                    # Keep force arming signal active every cycle
+                    self.master.mav.command_long_send(
+                        self.master.target_system, self.master.target_component,
+                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 21196, 0, 0, 0, 0, 0
+                    )
+                    # Send RC Override continuously (10Hz)
+                    self.master.mav.rc_channels_override_send(
+                        self.master.target_system, self.master.target_component,
+                        1500, 1500, int(self.current_pwm), 1500, 0, 0, 0, 0
+                    )
+                except Exception:
+                    pass
+            time.sleep(0.1)  # 10Hz continuous stream
+
+    def arm(self, initial_pwm=1150):
+        self.is_armed = True
+        self.current_pwm = initial_pwm
+
+    def disarm(self):
+        self.is_armed = False
+        self.current_pwm = 1000
+        if self.master:
+            try:
+                self.master.mav.command_long_send(
+                    self.master.target_system, self.master.target_component,
+                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
+                )
+                self.master.mav.rc_channels_override_send(
+                    self.master.target_system, self.master.target_component,
+                    0, 0, 0, 0, 0, 0, 0, 0
+                )
+            except Exception:
+                pass
+
+
 def main():
     args = parse_args()
     port = args.port or detect_port()
@@ -61,13 +109,17 @@ def main():
         print("  👉 Check if cable is connected and user has dialout permission (sudo usermod -a -G dialout $USER).")
         sys.exit(1)
 
+    controller = MotorWarmupController(master)
+
     print("\n----------------------------------------------------------------")
-    print("  ⚠️ SAFETY WARNING: PROPELLERS WILL SPIN! KEEP CLEAR OF ROTORS!")
+    print("  ⚠️ SAFETY WARNING: PROPELLERS MUST BE DISCONNECTED FOR BENCH TEST!")
     print("----------------------------------------------------------------")
     print("  Controls:")
-    print("    [1] ARM MOTORS & WARMUP IDLE SPIN (~10% Throttle / 1100 PWM)")
-    print("    [2] LOW ROTOR THRUST (~25% Throttle / 1250 PWM)")
-    print("    [3] MEDIUM ROTOR THRUST (~40% Throttle / 1400 PWM)")
+    print("    [1] ARM MOTORS & WARMUP IDLE SPIN (~15% Throttle / 1150 PWM)")
+    print("    [2] LOW ROTOR THRUST (~30% Throttle / 1300 PWM)")
+    print("    [3] MEDIUM ROTOR THRUST (~50% Throttle / 1500 PWM)")
+    print("    [4] HIGH ROTOR THRUST (~75% Throttle / 1750 PWM)")
+    print("    [5] FULL THROTTLE THRUST (100% Throttle / 1950 PWM)")
     print("    [0] IDLE PWM (1000 PWM)")
     print("    [D] DISARM MOTORS IMMEDIATELY")
     print("    [Q] QUIT TOOL & CUT MOTOR POWER")
@@ -75,73 +127,52 @@ def main():
 
     try:
         while True:
-            cmd = input("Select Action (1=Warmup, 2=Low, 3=Med, 0=Idle, D=Disarm, Q=Quit) > ").strip().lower()
+            cmd = input("Select Action (1=Warmup, 2=Low, 3=Med, 4=High, 5=Full, 0=Idle, D=Disarm, Q=Quit) > ").strip().lower()
 
             if cmd in ['q', 'exit']:
                 print("[INFO] Disarming motors and exiting...")
-                master.arducopter_disarm() if hasattr(master, 'arducopter_disarm') else master.mav.command_long_send(
-                    master.target_system, master.target_component,
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
-                )
+                controller.disarm()
+                controller.is_running = False
                 break
 
             elif cmd == '1':
-                print("[WARMUP] Arming Flight Controller & initiating rotor idle spin...")
-                # Force arm command (param1=1 arm, param2=21196 force arm override)
-                master.mav.command_long_send(
-                    master.target_system, master.target_component,
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 1, 21196, 0, 0, 0, 0, 0
-                )
-                time.sleep(0.5)
-                # Send RC PWM throttle override for 4 motors (1100 PWM = ~10% Idle Warmup)
-                master.mav.rc_channels_override_send(
-                    master.target_system, master.target_component,
-                    1500, 1500, 1100, 1500, 0, 0, 0, 0
-                )
-                print("  ✅ Motors ARMED and spinning at Warmup Idle (~10% Throttle).")
+                print("[WARMUP] Arming & spinning rotors at Warmup Idle (1150 PWM)...")
+                controller.arm(1150)
+                print("  ✅ Motors ARMED continuously at Warmup Idle (~15%).")
 
             elif cmd == '2':
-                print("[THRUST] Increasing rotor speed to Low Thrust (~25%)...")
-                master.mav.rc_channels_override_send(
-                    master.target_system, master.target_component,
-                    1500, 1500, 1250, 1500, 0, 0, 0, 0
-                )
-                print("  ✅ Rotor speed set to ~25% Throttle (1250 PWM).")
+                print("[THRUST] Low Thrust (1300 PWM / ~30%)...")
+                controller.arm(1300)
+                print("  ✅ Motors spinning continuously at 1300 PWM.")
 
             elif cmd == '3':
-                print("[THRUST] Increasing rotor speed to Medium Thrust (~40%)...")
-                master.mav.rc_channels_override_send(
-                    master.target_system, master.target_component,
-                    1500, 1500, 1400, 1500, 0, 0, 0, 0
-                )
-                print("  ✅ Rotor speed set to ~40% Throttle (1400 PWM).")
+                print("[THRUST] Medium Thrust (1500 PWM / ~50%)...")
+                controller.arm(1500)
+                print("  ✅ Motors spinning continuously at 1500 PWM.")
+
+            elif cmd == '4':
+                print("[THRUST] High Thrust (1750 PWM / ~75%)...")
+                controller.arm(1750)
+                print("  ✅ Motors spinning continuously at 1750 PWM.")
+
+            elif cmd == '5':
+                print("[THRUST] FULL THROTTLE THRUST (1950 PWM / 100%)...")
+                controller.arm(1950)
+                print("  🔥 FULL THROTTLE CONTINUOUS THRUST ACTIVE!")
 
             elif cmd == '0':
                 print("[IDLE] Setting throttle to minimum idle (1000 PWM)...")
-                master.mav.rc_channels_override_send(
-                    master.target_system, master.target_component,
-                    1500, 1500, 1000, 1500, 0, 0, 0, 0
-                )
+                controller.current_pwm = 1000
 
             elif cmd == 'd':
-                print("[DISARM] Emergency motor disarm requested...")
-                master.mav.command_long_send(
-                    master.target_system, master.target_component,
-                    mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
-                )
-                # Release RC override
-                master.mav.rc_channels_override_send(
-                    master.target_system, master.target_component,
-                    0, 0, 0, 0, 0, 0, 0, 0
-                )
+                print("[DISARM] Disarming motors...")
+                controller.disarm()
                 print("  🛑 MOTORS DISARMED & POWER CUT.")
 
     except KeyboardInterrupt:
         print("\n[INFO] Interrupted. Emergency disarming motors...")
-        master.mav.command_long_send(
-            master.target_system, master.target_component,
-            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
-        )
+        controller.disarm()
+        controller.is_running = False
         sys.exit(0)
 
 if __name__ == "__main__":
