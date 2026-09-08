@@ -8,8 +8,9 @@
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# Kill any previous frozen/stopped web server processes holding port 8080
-pkill -f drone_web_gui.py 2>/dev/null || true
+# Force kill any process holding port 8080 or previous instances of drone_web_gui.py
+fuser -k 8080/tcp 2>/dev/null || true
+pkill -9 -f drone_web_gui.py 2>/dev/null || true
 sleep 0.5
 
 python3 web_gui/drone_web_gui.py --port 8080

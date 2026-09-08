@@ -37,6 +37,7 @@ STUB_FC = SimStubFlightController()
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     """Multi-threaded HTTP server preventing request queuing & CPU lockups."""
     daemon_threads = True
+    allow_reuse_address = True
 
 
 class AsyncFrameGrabber:
@@ -837,17 +838,22 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
 
 
 def run_web_gcs_server(port: int = 8080):
-    server_address = ("0.0.0.0", port)
-    httpd = ThreadedHTTPServer(server_address, WebGCSHandler)
-    print("==========================================================================")
-    print("       🛸 IUB DRONE SUAS 2026 — HIGH PERFORMANCE WEB GCS 🛸              ")
-    print(f"  Web Dashboard UI Server running at: http://localhost:{port}")
-    print(f"  Access from any laptop/tablet/phone on network: http://<JETSON_IP>:{port}")
-    print("==========================================================================")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nWeb GCS Server stopped.")
+    for target_port in [port, 8081, 8082, 8083]:
+        try:
+            server_address = ("0.0.0.0", target_port)
+            httpd = ThreadedHTTPServer(server_address, WebGCSHandler)
+            print("==========================================================================")
+            print("       🛸 IUB DRONE SUAS 2026 — HIGH PERFORMANCE WEB GCS 🛸              ")
+            print(f"  🎉 Web Dashboard UI Server running at: http://localhost:{target_port}")
+            print(f"  📱 Access from any laptop/tablet/phone on network: http://<JETSON_IP>:{target_port}")
+            print("==========================================================================")
+            httpd.serve_forever()
+            break
+        except OSError as e:
+            if target_port == 8083:
+                print(f"❌ Failed to bind Web GCS server after multiple port retries: {e}")
+                sys.exit(1)
+            print(f"  ⚠️ Port {target_port} is currently busy, trying port {target_port + 1}...")
 
 
 if __name__ == "__main__":
