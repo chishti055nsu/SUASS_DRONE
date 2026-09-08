@@ -1308,6 +1308,42 @@
             });
         }
 
+        // Live Keyboard Flight Control (WASD, Arrows, Spacebar, ESC)
+        window.addEventListener('keydown', (e) => {
+            // Ignore keypresses if user is typing in form input fields
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+            const k = e.key.toLowerCase();
+            let vn = 0.0, ve = 0.0, vu = 0.0, vyaw = 0.0;
+            let handled = false;
+
+            if (k === 'w') { vn = 1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key W -> Pitch Forward (+N)'); }
+            else if (k === 's') { vn = -1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key S -> Pitch Backward (-N)'); }
+            else if (k === 'a') { ve = -1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key A -> Roll Left (-E)'); }
+            else if (k === 'd') { ve = 1.5; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key D -> Roll Right (+E)'); }
+            else if (e.key === 'ArrowUp' || k === 'i') { vu = 1.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ↑ / I -> Altitude Climb (+1m)'); }
+            else if (e.key === 'ArrowDown' || k === 'k') { vu = -1.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ↓ / K -> Altitude Descend (-1m)'); }
+            else if (e.key === 'ArrowLeft' || k === 'j') { vyaw = -15.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key ← / J -> Yaw Left'); }
+            else if (e.key === 'ArrowRight' || k === 'l') { vyaw = 15.0; handled = true; appendConsole('[KEYBOARD TELEOP]', 'Key → / L -> Yaw Right'); }
+            else if (e.key === ' ') {
+                e.preventDefault();
+                dispatchCommand('hold');
+                appendConsole('[KEYBOARD TELEOP]', 'Key SPACEBAR -> Emergency Hover / Position Hold');
+                return;
+            } else if (e.key === 'Escape') {
+                confirmEmergencyKill();
+                return;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                fetch(`/api/teleop?vn=${vn}&ve=${ve}&vu=${vu}&vyaw=${vyaw}`)
+                    .then(res => res.json())
+                    .then(data => appendConsole('[ACK]', data.message))
+                    .catch(() => {});
+            }
+        });
+
         // Fast Polling Telemetry Loop (Zero Lag)
         setInterval(() => {
             fetch('/api/telemetry')

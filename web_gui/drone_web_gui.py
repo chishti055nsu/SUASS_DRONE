@@ -232,6 +232,39 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.wfile.write(json.dumps(resp).encode("utf-8"))
             return
 
+        elif path == "/api/teleop":
+            vn = float(query.get("vn", ["0.0"])[0])
+            ve = float(query.get("ve", ["0.0"])[0])
+            vu = float(query.get("vu", ["0.0"])[0])
+            vyaw = float(query.get("vyaw", ["0.0"])[0])
+
+            if not STUB_FC.is_armed():
+                STUB_FC.arm_and_offboard()
+
+            STUB_FC._mode = "KEYBOARD_TELEOP"
+            t = STUB_FC.get_telemetry()
+            pos = list(t.get("pos_enu", [0.0, 0.0, 10.0]))
+            
+            dt = 0.3
+            new_e = round(pos[0] + (ve * dt * 4.0), 2)
+            new_n = round(pos[1] + (vn * dt * 4.0), 2)
+            new_u = round(max(0.5, pos[2] + (vu * dt * 2.0)), 2)
+
+            STUB_FC.set_setpoint_enu(new_e, new_n, new_u)
+
+            script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
+            try:
+                subprocess.run(["bash", script_path, "goto", str(new_n), str(new_e), str(-abs(new_u))], check=False)
+            except Exception:
+                pass
+
+            resp = {"status": "ok", "message": f"KEYBOARD TELEOP: VN={vn}, VE={ve}, VU={vu} -> New Target (E:{new_e}m, N:{new_n}m, Alt:{new_u}m)"}
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(resp).encode("utf-8"))
+            return
+
         elif path == "/api/jog":
             axis = query.get("axis", ["n"])[0]
             val = float(query.get("val", ["1.0"])[0])
