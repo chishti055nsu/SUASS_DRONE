@@ -28,6 +28,20 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT_DIR, "mission_planner"))
 sys.path.insert(0, os.path.join(ROOT_DIR, "drone_vision"))
 
+# System-wide NVIDIA GPU & Multi-Thread CPU Hardware Performance Optimization
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+os.environ["OPENCV_VIDEOIO_PRIORITY_GSTREAMER"] = "100"
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["MKL_NUM_THREADS"] = "4"
+
+try:
+    import cv2
+    cv2.setNumThreads(4)
+except Exception:
+    pass
+
 from mission_planner.flight_controller import SimStubFlightController
 
 # Persistent Stub Controller for Telemetry Simulation when MAVROS is absent
