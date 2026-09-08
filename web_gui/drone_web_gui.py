@@ -164,9 +164,6 @@ class AsyncFrameGrabber:
         }
 
 
-FRAME_GRABBER = AsyncFrameGrabber()
-
-
 class RealSenseD455Grabber:
     """Non-blocking background video frame grabber dedicated strictly to RealSense D455 USB camera."""
     def __init__(self):
@@ -258,16 +255,32 @@ class RealSenseD455Grabber:
             return self.latest_jpeg
 
 
-D455_GRABBER = RealSenseD455Grabber()
+_FRAME_GRABBER = None
+_D455_GRABBER = None
+
+
+def get_frame_grabber():
+    global _FRAME_GRABBER
+    if _FRAME_GRABBER is None:
+        _FRAME_GRABBER = AsyncFrameGrabber()
+    return _FRAME_GRABBER
+
+
+def get_d455_grabber():
+    global _D455_GRABBER
+    if _D455_GRABBER is None:
+        _D455_GRABBER = RealSenseD455Grabber()
+    return _D455_GRABBER
 
 
 import atexit
 
 def _cleanup_grabbers():
-    if 'FRAME_GRABBER' in globals() and FRAME_GRABBER:
-        FRAME_GRABBER.stop()
-    if 'D455_GRABBER' in globals() and D455_GRABBER:
-        D455_GRABBER.stop()
+    global _FRAME_GRABBER, _D455_GRABBER
+    if _FRAME_GRABBER is not None:
+        _FRAME_GRABBER.stop()
+    if _D455_GRABBER is not None:
+        _D455_GRABBER.stop()
 
 atexit.register(_cleanup_grabbers)
 
@@ -294,7 +307,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
             for _ in range(60):
-                jpg = FRAME_GRABBER.get_frame()
+                jpg = get_frame_grabber().get_frame()
                 if jpg is not None:
                     try:
                         self.wfile.write(b"--frame\r\n")
@@ -314,7 +327,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
             for _ in range(60):
-                jpg = D455_GRABBER.get_frame()
+                jpg = get_d455_grabber().get_frame()
                 if jpg is not None:
                     try:
                         self.wfile.write(b"--frame\r\n")
@@ -332,7 +345,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps(FRAME_GRABBER.get_status()).encode("utf-8"))
+            self.wfile.write(json.dumps(get_frame_grabber().get_status()).encode("utf-8"))
             return
 
         elif path == "/api/telemetry":
