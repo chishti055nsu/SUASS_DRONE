@@ -71,8 +71,8 @@ class MasterHardwareSuite:
         subprocess.run(["sudo", "systemctl", "stop", "nvgetty.service"], check=False, stderr=subprocess.DEVNULL)
         subprocess.run(["sudo", "systemctl", "disable", "nvgetty.service"], check=False, stderr=subprocess.DEVNULL)
 
-        # Set serial permissions
-        for p in ["/dev/ttyTHS1", "/dev/ttyUSB0", "/dev/ttyACM0", "/dev/ttyTHS0", "/dev/video0", "/dev/video2"]:
+        # Set serial & video permissions
+        for p in ["/dev/ttyTHS1", "/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyACM0", "/dev/ttyACM1", "/dev/video0", "/dev/video2", "/dev/video4", "/dev/video6"]:
             if os.path.exists(p):
                 try:
                     os.chmod(p, 0o666)
@@ -182,16 +182,20 @@ class MasterHardwareSuite:
                 print(f"  ✅ Connected to TFmini-S LiDAR on {lidar_port} @ 115200 baud.")
                 self.lidar_connected = True
                 while self.is_running:
-                    if ser.in_waiting >= 9:
-                        b = ser.read(9)
-                        if b[0] == 0x59 and b[1] == 0x59:
-                            dist = (b[2] + (b[3] << 8)) / 100.0  # meters
-                            strength = b[4] + (b[5] << 8)
-                            with self.lock:
-                                self.lidar_dist_m = dist
-                                self.lidar_strength = strength
+                    if ser.in_waiting >= 2:
+                        h1 = ser.read(1)
+                        if h1 and h1[0] == 0x59:
+                            h2 = ser.read(1)
+                            if h2 and h2[0] == 0x59:
+                                payload = ser.read(7)
+                                if len(payload) == 7:
+                                    dist = (payload[0] + (payload[1] << 8)) / 100.0  # meters
+                                    strength = payload[2] + (payload[3] << 8)
+                                    with self.lock:
+                                        self.lidar_dist_m = dist
+                                        self.lidar_strength = strength
                     else:
-                        time.sleep(0.01)
+                        time.sleep(0.005)
             except Exception as e:
                 self.lidar_connected = False
 
@@ -200,7 +204,7 @@ class MasterHardwareSuite:
 
     def start_siyi_camera_stream(self):
         print("\n[4/5] Testing SIYI A8 Mini 4K RTSP Video Feed...")
-        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|max_delay;500000"
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;2000000|max_delay;500000"
 
         def _siyi_loop():
             url = "rtsp://192.168.144.25:8554/main.264"
