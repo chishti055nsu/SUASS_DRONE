@@ -84,13 +84,14 @@ class AsyncFrameGrabber:
         cap = None
         last_check = 0
         siyi_rtsp_sources = [
-            "rtspsrc location=rtsp://192.168.144.25:8554/main.264 latency=50 ! rtph264depay ! h264parse ! nvv4l2decoder ! nvvideoconvert ! video/x-raw, format=BGRx ! videoconvert ! video/x-raw, format=BGR ! appsink drop=1",
-            "rtsp://192.168.144.25:8554/main.264",
-            "rtsp://192.168.144.25:8554/stream1",
-            "rtsp://192.168.144.25:8554/live/0",
-            "rtsp://192.168.144.11:8554/main.264"
+            ("192.168.144.25", 8554, "rtspsrc location=rtsp://192.168.144.25:8554/main.264 latency=50 ! rtph264depay ! h264parse ! nvv4l2decoder ! nvvideoconvert ! video/x-raw, format=BGRx ! videoconvert ! video/x-raw, format=BGR ! appsink drop=1"),
+            ("192.168.144.25", 8554, "rtsp://192.168.144.25:8554/main.264"),
+            ("192.168.144.25", 8554, "rtsp://192.168.144.25:8554/stream1"),
+            ("192.168.144.11", 8554, "rtsp://192.168.144.11:8554/main.264")
         ]
+        usb_video_devs = [0, 2, 1, 3, 6]
 
+        import socket
         try:
             while self.is_running:
                 now = time.time()
@@ -104,26 +105,57 @@ class AsyncFrameGrabber:
                         self.is_hardware_connected = False
                         self.active_source = "SYNTHETIC_HUD"
 
-                if cap is None and (now - last_check > 3.0):
+                if cap is None and (now - last_check > 2.0):
                     last_check = now
-                    for src in siyi_rtsp_sources:
+                    # 1. Try RTSP sources with fast 150ms socket probe first
+                    for ip, port, src in siyi_rtsp_sources:
+                        rtsp_open = False
                         try:
-                            backend = cv2.CAP_GSTREAMER if src.startswith("rtspsrc") else cv2.CAP_FFMPEG
-                            c = cv2.VideoCapture(src, backend)
-                            c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                            if c.isOpened():
-                                r, f = c.read()
-                                if r and f is not None and f.size > 0:
-                                    cap = c
-                                    frame = f
-                                    self.is_hardware_connected = True
-                                    self.active_source = "NVIDIA NVDEC GPU (GStreamer)" if src.startswith("rtspsrc") else str(src)
-                                    logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {self.active_source}")
-                                    break
-                                c.release()
+                            s = socket.create_connection((ip, port), timeout=0.15)
+                            s.close()
+                            rtsp_open = True
                         except Exception:
-                            if c:
-                                c.release()
+                            rtsp_open = False
+
+                        if rtsp_open:
+                            try:
+                                backend = cv2.CAP_GSTREAMER if src.startswith("rtspsrc") else cv2.CAP_FFMPEG
+                                c = cv2.VideoCapture(src, backend)
+                                c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                                if c.isOpened():
+                                    r, f = c.read()
+                                    if r and f is not None and f.size > 0:
+                                        cap = c
+                                        frame = f
+                                        self.is_hardware_connected = True
+                                        self.active_source = "NVIDIA NVDEC GPU (GStreamer)" if src.startswith("rtspsrc") else str(src)
+                                        logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {self.active_source}")
+                                        break
+                                    c.release()
+                            except Exception:
+                                pass
+
+                    # 2. Try USB video ports for SIYI A8 Mini HDMI/USB output if RTSP is offline
+                    if cap is None:
+                        for idx in usb_video_devs:
+                            dev_path = f"/dev/video{idx}"
+                            if not os.path.exists(dev_path):
+                                continue
+                            try:
+                                c = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+                                c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                                if c.isOpened():
+                                    r, f = c.read()
+                                    if r and f is not None and f.size > 0:
+                                        cap = c
+                                        frame = f
+                                        self.is_hardware_connected = True
+                                        self.active_source = f"SIYI A8 MINI USB ({dev_path})"
+                                        logger.info(f"Connected to SIYI A8 Mini USB feed: {dev_path}")
+                                        break
+                                    c.release()
+                            except Exception:
+                                pass
 
                 if frame is None:
                     # Generate high-performance 30 FPS HUD Camera Frame in RAM

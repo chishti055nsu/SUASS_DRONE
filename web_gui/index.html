@@ -531,7 +531,7 @@
             <div class="strip-item"><span class="strip-label">Jetson Load</span><span class="strip-val" id="st-cpu">CPU 12% | GPU 6%</span></div>
         </div>
 
-        <div class="armed-status-badge" id="badge-armed">
+        <div class="armed-status-badge" id="badge-armed" onclick="toggleArmDisarm()" style="cursor: pointer;" title="Click to ARM / DISARM vehicle">
             <div class="pulse-dot"></div>
             <span id="txt-armed">DISARMED - READY</span>
         </div>
@@ -647,7 +647,8 @@
                         <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">RETURN HOME (RTL)</button>
                         <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">HOVER / HOLD</button>
                         <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">LAND NOW</button>
-                        <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">EMERGENCY MOTOR DISARM</button>
+                        <button class="btn-gcs btn-emergency" style="background: rgba(225, 29, 72, 0.85);" onclick="dispatchCommand('disarm')">🛑 DISARM MOTORS NOW</button>
+                        <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">⚡ EMERGENCY KILL</button>
                     </div>
                 </div>
             </div>
@@ -894,6 +895,13 @@
         function confirmEmergencyKill() { document.getElementById('disarm-modal').style.display = 'flex'; }
         function closeDisarmModal() { document.getElementById('disarm-modal').style.display = 'none'; }
         function executeEmergencyKill() { closeDisarmModal(); dispatchCommand('terminate'); }
+        function toggleArmDisarm() {
+            if (droneState.armed) {
+                dispatchCommand('disarm');
+            } else {
+                dispatchCommand('arm');
+            }
+        }
 
         function submitRawGPSGrid() {
             const hLat = document.getElementById('in-home-lat').value;
