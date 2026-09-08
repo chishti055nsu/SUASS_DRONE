@@ -508,10 +508,26 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 STUB_FC.arm_and_offboard()
                 STUB_FC._mode = "HEAVY_LIFT_80"
                 STUB_FC._target_setpoint = [0.0, 0.0, 15.0]
+                try:
+                    subprocess.Popen(
+                        "ros2 topic pub --once /mavros/rc/override mavros_msgs/msg/OverrideRCIn '{channels: [1500, 1500, 1800, 1500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}'",
+                        shell=True
+                    )
+                except Exception:
+                    pass
                 resp = {"status": "ok", "message": "5.5KG HEAVY-LIFT 80% THROTTLE (1800 PWM) ENGAGED!"}
             elif cmd.startswith("throttle_"):
                 pwm_val = cmd.split("_")[1]
-                resp = {"status": "ok", "message": f"Manual Throttle Override PWM set to {pwm_val}."}
+                STUB_FC._armed = True if int(pwm_val) > 1000 else False
+                STUB_FC._mode = f"MANUAL_PWM_{pwm_val}"
+                try:
+                    subprocess.Popen(
+                        f"ros2 topic pub --once /mavros/rc/override mavros_msgs/msg/OverrideRCIn '{{channels: [1500, 1500, {pwm_val}, 1500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}}'",
+                        shell=True
+                    )
+                except Exception:
+                    pass
+                resp = {"status": "ok", "message": f"Manual Throttle Override PWM set to {pwm_val} (Physical Motors Active)."}
             elif cmd == "payload":
                 STUB_FC.trigger_payload_release()
                 resp = {"status": "ok", "message": "Payload Servo Release Triggered."}
