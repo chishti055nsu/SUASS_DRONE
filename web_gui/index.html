@@ -44,7 +44,6 @@
             background-attachment: fixed;
         }
 
-        /* Glassmorphism Tactical Panel */
         .glass-panel {
             background: var(--bg-panel);
             backdrop-filter: blur(20px);
@@ -60,7 +59,6 @@
             box-shadow: 0 10px 30px rgba(0, 240, 255, 0.12);
         }
 
-        /* Commercial Header Bar */
         header {
             display: flex;
             justify-content: space-between;
@@ -87,11 +85,7 @@
             box-shadow: 0 0 15px var(--accent-cyan-glow);
         }
 
-        .brand-badge svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--accent-cyan);
-        }
+        .brand-badge svg { width: 24px; height: 24px; fill: var(--accent-cyan); }
 
         .brand-text h1 {
             font-size: 1.25rem;
@@ -110,7 +104,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Top Main Menu Navigation Tabs */
         .main-menu-tabs {
             display: flex;
             gap: 8px;
@@ -167,23 +160,9 @@
             font-size: 0.74rem;
         }
 
-        .strip-item {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .strip-label {
-            color: var(--text-dim);
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            font-weight: 700;
-        }
-
-        .strip-val {
-            color: var(--accent-cyan);
-            font-weight: 700;
-        }
+        .strip-item { display: flex; flex-direction: column; align-items: flex-start; }
+        .strip-label { color: var(--text-dim); font-size: 0.65rem; text-transform: uppercase; font-weight: 700; }
+        .strip-val { color: var(--accent-cyan); font-weight: 700; }
 
         .armed-status-badge {
             display: flex;
@@ -220,7 +199,6 @@
             100% { opacity: 0.3; transform: scale(0.8); }
         }
 
-        /* Flight State Machine Step Visualizer */
         .fsm-pipeline {
             display: flex;
             align-items: center;
@@ -243,17 +221,9 @@
         }
 
         .fsm-step.active { color: var(--accent-cyan); }
-        .fsm-step.active .fsm-node {
-            background: var(--accent-cyan);
-            box-shadow: 0 0 12px var(--accent-cyan);
-            border-color: #fff;
-        }
-
+        .fsm-step.active .fsm-node { background: var(--accent-cyan); box-shadow: 0 0 12px var(--accent-cyan); border-color: #fff; }
         .fsm-step.completed { color: var(--accent-green); }
-        .fsm-step.completed .fsm-node {
-            background: var(--accent-green);
-            border-color: var(--accent-green);
-        }
+        .fsm-step.completed .fsm-node { background: var(--accent-green); border-color: var(--accent-green); }
 
         .fsm-node {
             width: 14px;
@@ -264,31 +234,19 @@
             transition: all 0.3s ease;
         }
 
-        .fsm-line {
-            flex: 1;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.08);
-            margin: 0 8px;
-        }
+        .fsm-line { flex: 1; height: 2px; background: rgba(255, 255, 255, 0.08); margin: 0 8px; }
 
-        /* Tab Content Display Sections */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Workstation Main Grid */
         .workstation-grid {
             display: grid;
             grid-template-columns: 2.2fr 1.3fr 1fr;
             gap: 12px;
         }
 
-        @media (max-width: 1300px) {
-            .workstation-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 900px) {
-            .workstation-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1300px) { .workstation-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 900px) { .workstation-grid { grid-template-columns: 1fr; } }
 
         .panel-header {
             font-size: 0.85rem;
@@ -302,19 +260,9 @@
             justify-content: space-between;
         }
 
-        .panel-header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .panel-header-title { display: flex; align-items: center; gap: 8px; }
+        .panel-header-title svg { width: 18px; height: 18px; fill: var(--accent-cyan); }
 
-        .panel-header-title svg {
-            width: 18px;
-            height: 18px;
-            fill: var(--accent-cyan);
-        }
-
-        /* Canvas & Display Windows */
         .canvas-window {
             position: relative;
             width: 100%;
@@ -326,11 +274,7 @@
             margin-bottom: 12px;
         }
 
-        #tactical-canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+        #tactical-canvas { width: 100%; height: 100%; display: block; }
 
         .window-overlay-tag {
             position: absolute;
@@ -346,7 +290,6 @@
             pointer-events: none;
         }
 
-        /* Target Detections Table */
         .target-table-box {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -365,26 +308,10 @@
             text-align: left;
         }
 
-        .target-table th {
-            color: var(--text-dim);
-            padding: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-transform: uppercase;
-        }
+        .target-table th { color: var(--text-dim); padding: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase; }
+        .target-table td { padding: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); color: var(--text-primary); }
 
-        .target-table td {
-            padding: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            color: var(--text-primary);
-        }
-
-        /* Primary Flight Display & HUD Instruments */
-        .pfd-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
+        .pfd-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
 
         .pfd-card {
             background: #03050c;
@@ -397,28 +324,11 @@
             align-items: center;
         }
 
-        .pfd-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
+        .pfd-title { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        #horizon-svg, #compass-svg { width: 140px; height: 140px; }
 
-        #horizon-svg, #compass-svg {
-            width: 140px;
-            height: 140px;
-        }
-
-        /* Tactical Command Buttons */
         .cmd-panel { padding: 14px; margin-bottom: 12px; }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
         .btn-gcs {
             border: none;
@@ -440,37 +350,16 @@
         .btn-gcs svg { width: 16px; height: 16px; fill: currentColor; }
         .btn-gcs:active { transform: scale(0.96); }
 
-        .btn-primary-start {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: #022010;
-            grid-column: span 2;
-            font-size: 0.92rem;
-            padding: 15px;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-        }
-
+        .btn-primary-start { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #022010; grid-column: span 2; font-size: 0.92rem; padding: 15px; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
         .btn-primary-start:hover { box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
         .btn-rtl { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #2b1f00; }
         .btn-hold { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; }
         .btn-land { background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%); color: #00272b; }
         .btn-heavy { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #ffffff; }
-
-        .btn-emergency {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: #ffffff;
-            grid-column: span 2;
-            margin-top: 4px;
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
-        }
-
+        .btn-emergency { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; grid-column: span 2; margin-top: 4px; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
         .btn-emergency:hover { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); }
 
-        /* Virtual Manual Remote Control Deck Styles */
-        .remote-deck-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px;
-        }
+        .remote-deck-grid { display: grid; grid-template-columns: 1.2fr 1fr 1.2fr; gap: 16px; }
 
         .joystick-card {
             background: rgba(3, 5, 12, 0.9);
@@ -483,14 +372,7 @@
             box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
         }
 
-        .joystick-title {
-            font-size: 0.88rem;
-            font-weight: 800;
-            color: var(--accent-cyan);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 14px;
-        }
+        .joystick-title { font-size: 0.88rem; font-weight: 800; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
 
         .joystick-base {
             width: 180px;
@@ -518,12 +400,7 @@
             transition: transform 0.05s ease;
         }
 
-        .throttle-preset-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            width: 100%;
-        }
+        .throttle-preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
 
         .btn-throttle {
             padding: 12px;
@@ -538,26 +415,11 @@
             transition: all 0.2s ease;
         }
 
-        .btn-throttle.active {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 15px var(--accent-cyan);
-        }
+        .btn-throttle.active { background: var(--accent-cyan); color: #000; box-shadow: 0 0 15px var(--accent-cyan); }
 
-        /* Form Inputs */
         .form-section { padding: 14px; margin-bottom: 12px; }
-
         .field-group { margin-bottom: 8px; }
-
-        .field-label {
-            display: block;
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            font-weight: 700;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .field-label { display: block; font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .input-tactical {
             width: 100%;
@@ -571,11 +433,7 @@
             transition: all 0.2s ease;
         }
 
-        .input-tactical:focus {
-            border-color: var(--accent-cyan);
-            outline: none;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-        }
+        .input-tactical:focus { border-color: var(--accent-cyan); outline: none; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25); }
 
         .btn-action {
             width: 100%;
@@ -593,13 +451,8 @@
             margin-top: 4px;
         }
 
-        .btn-action:hover {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-        }
+        .btn-action:hover { background: var(--accent-cyan); color: #000; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
 
-        /* Console Stream Box */
         .console-box {
             background: #03050a;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -612,29 +465,18 @@
             color: var(--accent-green);
         }
 
-        .console-line {
-            margin-bottom: 4px;
-            line-height: 1.4;
-            display: flex;
-            gap: 6px;
-        }
-
+        .console-line { margin-bottom: 4px; line-height: 1.4; display: flex; gap: 6px; }
         .console-time { color: var(--text-dim); flex-shrink: 0; }
         .console-tag { color: var(--accent-cyan); font-weight: 700; }
 
-        /* Modal Overlay for Emergency Disarm Confirmation */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
             z-index: 9999;
-            align-items: center;
-            justify-content: center;
+            align-items: center; justify-content: center;
         }
 
         .modal-card {
@@ -648,33 +490,10 @@
             box-shadow: 0 0 40px rgba(239, 68, 68, 0.4);
         }
 
-        .modal-title {
-            font-size: 1.15rem;
-            font-weight: 900;
-            color: var(--accent-red);
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .modal-desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            line-height: 1.4;
-        }
-
+        .modal-title { font-size: 1.15rem; font-weight: 900; color: var(--accent-red); margin-bottom: 10px; text-transform: uppercase; }
+        .modal-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.4; }
         .modal-actions { display: flex; gap: 10px; }
-
-        .modal-btn {
-            flex: 1;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 800;
-            cursor: pointer;
-            border: none;
-            text-transform: uppercase;
-        }
-
+        .modal-btn { flex: 1; padding: 12px; border-radius: 6px; font-weight: 800; cursor: pointer; border: none; text-transform: uppercase; }
         .modal-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
         .modal-confirm { background: var(--accent-red); color: #fff; }
     </style>
@@ -694,22 +513,10 @@
         </div>
 
         <div class="telemetry-strip">
-            <div class="strip-item">
-                <span class="strip-label">MAVLink FC</span>
-                <span class="strip-val" id="st-mav">400Hz OK</span>
-            </div>
-            <div class="strip-item">
-                <span class="strip-label">GPS RTK</span>
-                <span class="strip-val" id="st-gps">3D RTK (18 SAT)</span>
-            </div>
-            <div class="strip-item">
-                <span class="strip-label">Power (6S)</span>
-                <span class="strip-val" id="st-pwr">25.2V | 12.5A</span>
-            </div>
-            <div class="strip-item">
-                <span class="strip-label">Jetson Load</span>
-                <span class="strip-val" id="st-cpu">CPU 14% | GPU 8%</span>
-            </div>
+            <div class="strip-item"><span class="strip-label">MAVLink FC</span><span class="strip-val" id="st-mav">400Hz OK</span></div>
+            <div class="strip-item"><span class="strip-label">GPS RTK</span><span class="strip-val" id="st-gps">3D RTK (18 SAT)</span></div>
+            <div class="strip-item"><span class="strip-label">Power (6S)</span><span class="strip-val" id="st-pwr">25.2V | 12.5A</span></div>
+            <div class="strip-item"><span class="strip-label">Jetson Load</span><span class="strip-val" id="st-cpu">CPU 12% | GPU 6%</span></div>
         </div>
 
         <div class="armed-status-badge" id="badge-armed">
@@ -725,7 +532,7 @@
             1. TACTICAL DASHBOARD & RADAR
         </button>
         <button class="menu-tab-btn" id="mtab-a8" onclick="switchMainTab('a8')">
-            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM14 13h-3v3H9v-3H6v-2h3V8h2v3h3v2z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
             2. SIYI A8 MINI 4K AI VISION FEED
         </button>
         <button class="menu-tab-btn" id="mtab-sensors" onclick="switchMainTab('sensors')">
@@ -740,48 +547,18 @@
 
     <!-- Flight State Machine Step Pipeline Visualizer -->
     <div class="fsm-pipeline">
-        <div class="fsm-step active" id="fsm-idle">
-            <div class="fsm-node"></div>
-            <span>1. IDLE</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-arming">
-            <div class="fsm-node"></div>
-            <span>2. ARMING</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-takeoff">
-            <div class="fsm-node"></div>
-            <span>3. TAKEOFF</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-nav">
-            <div class="fsm-node"></div>
-            <span>4. WAYPOINT NAV</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-search">
-            <div class="fsm-node"></div>
-            <span>5. AUTO SEARCH</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-drop">
-            <div class="fsm-node"></div>
-            <span>6. DROP ALIGN</span>
-        </div>
-        <div class="fsm-line"></div>
-        <div class="fsm-step" id="fsm-rtl">
-            <div class="fsm-node"></div>
-            <span>7. AUTO RTL</span>
-        </div>
+        <div class="fsm-step active" id="fsm-idle"><div class="fsm-node"></div><span>1. IDLE</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-arming"><div class="fsm-node"></div><span>2. ARMING</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-takeoff"><div class="fsm-node"></div><span>3. TAKEOFF</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-nav"><div class="fsm-node"></div><span>4. WAYPOINT NAV</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-search"><div class="fsm-node"></div><span>5. AUTO SEARCH</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-drop"><div class="fsm-node"></div><span>6. DROP ALIGN</span></div><div class="fsm-line"></div>
+        <div class="fsm-step" id="fsm-rtl"><div class="fsm-node"></div><span>7. AUTO RTL</span></div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- TAB 1: MAIN TACTICAL DASHBOARD & RADAR                            -->
-    <!-- ================================================================= -->
+    <!-- TAB 1: MAIN TACTICAL DASHBOARD & RADAR -->
     <div class="tab-content active" id="sec-dash">
         <div class="workstation-grid">
-            <!-- Left Column: 2D Tactical Radar & Log Stream -->
             <div>
                 <div class="glass-panel cmd-panel">
                     <div class="panel-header">
@@ -790,14 +567,12 @@
                             2D Tactical ENU Radar & Spatial Tracking
                         </div>
                     </div>
-
                     <div class="canvas-window">
                         <canvas id="tactical-canvas"></canvas>
                         <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
                     </div>
                 </div>
 
-                <!-- Activity Event Console Stream -->
                 <div class="glass-panel cmd-panel">
                     <div class="panel-header">
                         <div class="panel-header-title">
@@ -808,24 +583,15 @@
                     </div>
                     <div class="console-box" id="console-stream">
                         <div class="console-line">
-                            <span class="console-time">[00:00:00]</span>
-                            <span class="console-tag">[INIT]</span>
-                            <span>Aerospace Commercial Workstation online. All safety interlocks verified.</span>
+                            <span class="console-time">[00:00:00]</span><span class="console-tag">[INIT]</span><span>Aerospace Commercial Workstation online. All safety interlocks verified.</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Column: Primary Flight Instruments & Actions -->
             <div>
-                <!-- PFD Instruments -->
                 <div class="glass-panel cmd-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6E12,12H17V13.5H10.5V6H12Z"/></svg>
-                            Primary Flight Instruments (PFD)
-                        </div>
-                    </div>
+                    <div class="panel-header"><div class="panel-header-title">Primary Flight Instruments (PFD)</div></div>
                     <div class="pfd-container">
                         <div class="pfd-card">
                             <div class="pfd-title">Horizon (Roll / Pitch)</div>
@@ -861,82 +627,34 @@
                     </div>
                 </div>
 
-                <!-- Command Action Panel -->
                 <div class="glass-panel cmd-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M10,16.5L16,12L10,7.5V16.5Z"/></svg>
-                            Tactical Execution Commands
-                        </div>
-                    </div>
+                    <div class="panel-header"><div class="panel-header-title">Tactical Execution Commands</div></div>
                     <div class="btn-grid">
-                        <button class="btn-gcs btn-primary-start" onclick="dispatchCommand('start')">
-                            <svg viewBox="0 0 24 24"><path d="M12,2L4.5,20.29L5.21,21L12,18L18.79,21L19.5,20.29L12,2Z"/></svg>
-                            START AUTONOMOUS MISSION
-                        </button>
-                        <button class="btn-gcs btn-heavy" onclick="dispatchCommand('heavy')">
-                            🔥 5.5KG HEAVY-LIFT 80%
-                        </button>
-                        <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">
-                            RETURN HOME (RTL)
-                        </button>
-                        <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">
-                            HOVER / HOLD
-                        </button>
-                        <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">
-                            LAND NOW
-                        </button>
-                        <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">
-                            EMERGENCY MOTOR DISARM
-                        </button>
+                        <button class="btn-gcs btn-primary-start" onclick="dispatchCommand('start')">START AUTONOMOUS MISSION</button>
+                        <button class="btn-gcs btn-heavy" onclick="dispatchCommand('heavy')">🔥 5.5KG HEAVY-LIFT 80%</button>
+                        <button class="btn-gcs btn-rtl" onclick="dispatchCommand('rtl')">RETURN HOME (RTL)</button>
+                        <button class="btn-gcs btn-hold" onclick="dispatchCommand('hold')">HOVER / HOLD</button>
+                        <button class="btn-gcs btn-land" onclick="dispatchCommand('land')">LAND NOW</button>
+                        <button class="btn-gcs btn-emergency" onclick="confirmEmergencyKill()">EMERGENCY MOTOR DISARM</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column: Judge GPS Input Form & GOTO -->
             <div>
                 <div class="glass-panel form-section">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/></svg>
-                            Judge GPS Coordinates Input
-                        </div>
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Home Latitude</label>
-                        <input type="text" class="input-tactical" id="in-home-lat" value="38.145000">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Home Longitude</label>
-                        <input type="text" class="input-tactical" id="in-home-lon" value="-76.427000">
-                    </div>
-                    <div class="field-group">
-                        <label class="field-label">Waypoints (lat,lon;lat,lon)</label>
-                        <input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265">
-                    </div>
+                    <div class="panel-header"><div class="panel-header-title">Judge GPS Input</div></div>
+                    <div class="field-group"><label class="field-label">Home Lat</label><input type="text" class="input-tactical" id="in-home-lat" value="38.145000"></div>
+                    <div class="field-group"><label class="field-label">Home Lon</label><input type="text" class="input-tactical" id="in-home-lon" value="-76.427000"></div>
+                    <div class="field-group"><label class="field-label">Waypoints</label><input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265"></div>
                     <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
                 </div>
 
                 <div class="glass-panel form-section">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z"/></svg>
-                            Target Coordinate Override
-                        </div>
-                    </div>
+                    <div class="panel-header"><div class="panel-header-title">Target Override (GOTO)</div></div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                        <div class="field-group">
-                            <label class="field-label">North (m)</label>
-                            <input type="number" class="input-tactical" id="in-goto-n" value="50.0">
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">East (m)</label>
-                            <input type="number" class="input-tactical" id="in-goto-e" value="20.0">
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Alt (m)</label>
-                            <input type="number" class="input-tactical" id="in-goto-alt" value="15.0">
-                        </div>
+                        <div class="field-group"><label class="field-label">North (m)</label><input type="number" class="input-tactical" id="in-goto-n" value="50.0"></div>
+                        <div class="field-group"><label class="field-label">East (m)</label><input type="number" class="input-tactical" id="in-goto-e" value="20.0"></div>
+                        <div class="field-group"><label class="field-label">Alt (m)</label><input type="number" class="input-tactical" id="in-goto-alt" value="15.0"></div>
                     </div>
                     <button class="btn-action" onclick="submitGOTOTarget()">DISPATCH GOTO</button>
                 </div>
@@ -944,18 +662,12 @@
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- TAB 2: DEDICATED SIYI A8 MINI 4K AI VISION & OBJECT DETECTION     -->
-    <!-- ================================================================= -->
+    <!-- TAB 2: SIYI A8 MINI 4K AI VISION FEED -->
     <div class="tab-content" id="sec-a8">
         <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 16px;">
-            <!-- Live SIYI A8 Mini 4K Vision Feed Player -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
-                    <div class="panel-header-title">
-                        <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-                        SIYI A8 Mini 4K Live Camera Stream (rtsp://192.168.144.25:8554/main.264)
-                    </div>
+                    <div class="panel-header-title">SIYI A8 Mini 4K Live Camera Stream (rtsp://192.168.144.25:8554/main.264)</div>
                     <span class="sensor-badge">YOLOv8 30.0 FPS</span>
                 </div>
                 <div style="width: 100%; height: 500px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
@@ -964,90 +676,56 @@
                 </div>
             </div>
 
-            <!-- AI Target Detection Table & Gemma Multimodal Scene Reasoning -->
             <div>
                 <div class="glass-panel cmd-panel" style="margin-bottom: 16px;">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            🎯 Detected Targets & Payload Matches
-                        </div>
-                    </div>
+                    <div class="panel-header"><div class="panel-header-title">🎯 Detected Targets & Payload Matches</div></div>
                     <div class="target-table-box" style="max-height: 240px;">
                         <table class="target-table">
-                            <thead>
-                                <tr>
-                                    <th>Target</th>
-                                    <th>Detected Class</th>
-                                    <th>Payload Match</th>
-                                    <th>Confidence</th>
-                                </tr>
-                            </thead>
-                            <tbody id="a8-target-body">
-                                <tr>
-                                    <td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td>
-                                    <td>MANNEQUIN</td>
-                                    <td style="color: var(--accent-green);">WATER_BOTTLE</td>
-                                    <td>94.2%</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td>
-                                    <td>TENT</td>
-                                    <td style="color: var(--accent-green);">MEDICAL_KIT</td>
-                                    <td>89.5%</td>
-                                </tr>
+                            <thead><tr><th>Target</th><th>Detected Class</th><th>Payload Match</th><th>Confidence</th></tr></thead>
+                            <tbody>
+                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td><td>MANNEQUIN</td><td style="color: var(--accent-green);">WATER_BOTTLE</td><td>94.2%</td></tr>
+                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td><td>TENT</td><td style="color: var(--accent-green);">MEDICAL_KIT</td><td>89.5%</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <div class="glass-panel cmd-panel">
-                    <div class="panel-header">
-                        <div class="panel-header-title">
-                            🧠 Gemma Multimodal AI Scene Reasoning
-                        </div>
-                    </div>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.6; color: var(--text-primary);">
+                    <div class="panel-header"><div class="panel-header-title">🧠 Gemma Multimodal AI Scene Reasoning</div></div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.6;">
                         <p style="margin-bottom: 8px;"><strong style="color: var(--accent-cyan);">Scene:</strong> Search Corridor Clear. Human mannequin identified near target drop zone.</p>
                         <p style="margin-bottom: 8px;"><strong style="color: var(--accent-green);">Recommended Action:</strong> PROCEED_TO_DROP_ZONE</p>
-                        <p><strong style="color: var(--accent-yellow);">Safety Reasoning:</strong> Wind speed low. Obstacle density < 10%. Optimal payload release trajectory aligned.</p>
+                        <p><strong style="color: var(--accent-yellow);">Safety Reasoning:</strong> Wind speed low. Obstacle density &lt; 10%. Optimal payload release trajectory aligned.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- TAB 3: REALSENSE D455 3D AVOIDANCE & TFMINI LIDAR HUD              -->
-    <!-- ================================================================= -->
+    <!-- TAB 3: REALSENSE D455 AVOIDANCE & TFMINI LIDAR HUD -->
     <div class="tab-content" id="sec-sensors">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <!-- RealSense D455 3D Pointcloud & VIO Card -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
-                    <div class="panel-header-title">
-                        🛡️ RealSense D455 3D VIO & Obstacle Avoidance
-                    </div>
-                    <span class="sensor-badge" id="d455-badge">6-DOF VIO LOCK</span>
+                    <div class="panel-header-title">🛡️ RealSense D455 3D VIO & Obstacle Avoidance</div>
+                    <span class="sensor-badge">6-DOF VIO LOCK</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
-                    <div class="sensor-row"><span>Optical Flow Tracking:</span><span style="color: var(--accent-green);" id="d455-flow">STABLE (30 FPS)</span></div>
-                    <div class="sensor-row"><span>Obstacle Threat Density:</span><span style="color: var(--accent-cyan);" id="d455-density">8% (LOW RISK)</span></div>
+                    <div class="sensor-row"><span>Optical Flow Tracking:</span><span style="color: var(--accent-green);">STABLE (30 FPS)</span></div>
+                    <div class="sensor-row"><span>Obstacle Threat Density:</span><span style="color: var(--accent-cyan);">8% (LOW RISK)</span></div>
                     <div class="sensor-row"><span>Sector Clearance:</span><span style="color: var(--accent-green);">LEFT: CLEAR | CENTER: CLEAR | RIGHT: CLEAR</span></div>
                     <div class="sensor-row"><span>VIO Pose ENU:</span><span id="d455-pos">E: 0.0m | N: 0.0m | U: 15.0m</span></div>
                 </div>
             </div>
 
-            <!-- TFmini-S LiDAR Altitude & Distance Card -->
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
-                    <div class="panel-header-title">
-                        📡 TFmini-S LiDAR Rangefinder HUD
-                    </div>
+                    <div class="panel-header-title">📡 TFmini-S LiDAR Rangefinder HUD</div>
                     <span class="sensor-badge">115200 BAUD OK</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
                     <div class="sensor-row"><span>Altitude Above Ground (AGL):</span><span style="color: var(--accent-cyan); font-weight: 800; font-size: 1.1rem;" id="d-lidar-val">15.00 m</span></div>
-                    <div class="sensor-row"><span>Signal Quality:</span><span style="color: var(--accent-green);" id="d-lidar-sig">96%</span></div>
+                    <div class="sensor-row"><span>Signal Quality:</span><span style="color: var(--accent-green);">96%</span></div>
                     <div class="sensor-row"><span>Range Boundaries:</span><span>0.10m – 12.00m</span></div>
                     <div class="progress-bar-bg" style="height: 12px; margin-top: 12px;">
                         <div class="progress-bar-fill" id="d-lidar-bar" style="width: 85%;"></div>
@@ -1057,31 +735,25 @@
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- TAB 4: VIRTUAL MANUAL REMOTE CONTROLLER DECK                       -->
-    <!-- ================================================================= -->
+    <!-- TAB 4: VIRTUAL MANUAL REMOTE CONTROLLER DECK -->
     <div class="tab-content" id="sec-remote">
         <div class="glass-panel cmd-panel">
             <div class="panel-header">
-                <div class="panel-header-title">
-                    🎮 Interactive Manual Remote Controller Deck & Dual Joysticks
-                </div>
-                <span class="sensor-badge" style="background: rgba(0, 240, 255, 0.2); color: var(--accent-cyan);">WASD + ARROW KEYS ACTIVE</span>
+                <div class="panel-header-title">🎮 Interactive Touch Joysticks & Manual Pilot Controls</div>
+                <span class="sensor-badge" style="background: rgba(0, 240, 255, 0.2); color: var(--accent-cyan);">TOUCH & WASD ACTIVE</span>
             </div>
 
             <div class="remote-deck-grid">
-                <!-- Left Joystick: Yaw & Throttle PWM -->
                 <div class="joystick-card">
-                    <div class="joystick-title">Left Stick: Yaw & Altitude (Throttle)</div>
+                    <div class="joystick-title">Left Stick: Yaw & Altitude</div>
                     <div class="joystick-base" id="joy-left">
                         <div class="joystick-stick" id="stick-left"></div>
                     </div>
-                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-left-val">Yaw: 0° | Altitude: 15.0m</div>
+                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-left-val">Yaw Rate: 0°/s | Climb Rate: 0.0m/s</div>
                 </div>
 
-                <!-- Center Panel: Direct Throttle Overrides & Servo Drop -->
                 <div class="joystick-card" style="border-color: var(--accent-purple);">
-                    <div class="joystick-title" style="color: var(--accent-purple);">Direct Throttle Overrides & Servo</div>
+                    <div class="joystick-title" style="color: var(--accent-purple);">Throttle Presets & Actuators</div>
                     <div class="throttle-preset-grid">
                         <button class="btn-throttle" onclick="sendThrottle(1150)">15% WARMUP</button>
                         <button class="btn-throttle" onclick="sendThrottle(1500)">50% CRUISE</button>
@@ -1093,25 +765,22 @@
                     </button>
                 </div>
 
-                <!-- Right Joystick: Pitch & Roll -->
                 <div class="joystick-card">
-                    <div class="joystick-title">Right Stick: Pitch & Roll (XY Travel)</div>
+                    <div class="joystick-title">Right Stick: Pitch & Roll</div>
                     <div class="joystick-base" id="joy-right">
                         <div class="joystick-stick" id="stick-right"></div>
                     </div>
-                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-right-val">Pitch: 0.0m/s | Roll: 0.0m/s</div>
+                    <div style="margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: var(--accent-cyan);" id="joy-right-val">Pitch (N): 0.0m/s | Roll (E): 0.0m/s</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Emergency Disarm Confirmation Modal -->
+    <!-- Emergency Modal -->
     <div class="modal-overlay" id="disarm-modal">
         <div class="modal-card">
             <div class="modal-title">CONFIRM EMERGENCY DISARM</div>
-            <div class="modal-desc">
-                Are you sure you want to trigger <b>IMMEDIATE EMERGENCY MOTOR KILL</b>? Motor power will cut instantly (SUAS Rule 5.3.8).
-            </div>
+            <div class="modal-desc">Trigger immediate emergency motor cut-off?</div>
             <div class="modal-actions">
                 <button class="modal-btn modal-cancel" onclick="closeDisarmModal()">CANCEL</button>
                 <button class="modal-btn modal-confirm" onclick="executeEmergencyKill()">CONFIRM KILL</button>
@@ -1121,21 +790,9 @@
 
     <script>
         let droneState = {
-            east: 0.0,
-            north: 0.0,
-            alt: 0.0,
-            speed: 0.0,
-            batt: 100,
-            voltage: 25.2,
-            current: 12.5,
-            mode: 'IDLE',
-            roll: 0.0,
-            pitch: 0.0,
-            heading: 45.0,
-            armed: false,
-            trail: []
+            east: 0.0, north: 0.0, alt: 0.0, speed: 0.0, batt: 100, voltage: 25.2, current: 12.5,
+            mode: 'IDLE', roll: 0.0, pitch: 0.0, heading: 45.0, armed: false, trail: []
         };
-
         let activeTab = 'dash';
 
         function switchMainTab(tab) {
@@ -1164,7 +821,7 @@
         }
 
         function dispatchCommand(cmd) {
-            appendConsole('[CMD]', `Dispatching flight command: <b>${cmd.toUpperCase()}</b>...`);
+            appendConsole('[CMD]', `Dispatching command: <b>${cmd.toUpperCase()}</b>...`);
             fetch(`/api/command?cmd=${cmd}`)
                 .then(res => res.json())
                 .then(data => appendConsole('[ACK]', data.message))
@@ -1172,55 +829,40 @@
         }
 
         function sendThrottle(pwm) {
-            appendConsole('[THROTTLE]', `Setting manual throttle override to PWM ${pwm}...`);
+            appendConsole('[THROTTLE]', `Setting throttle override to PWM ${pwm}...`);
             fetch(`/api/command?cmd=throttle_${pwm}`)
                 .then(res => res.json())
                 .then(data => appendConsole('[ACK]', data.message))
                 .catch(() => {});
         }
 
-        function confirmEmergencyKill() {
-            document.getElementById('disarm-modal').style.display = 'flex';
-        }
-
-        function closeDisarmModal() {
-            document.getElementById('disarm-modal').style.display = 'none';
-        }
-
-        function executeEmergencyKill() {
-            closeDisarmModal();
-            dispatchCommand('terminate');
-        }
+        function confirmEmergencyKill() { document.getElementById('disarm-modal').style.display = 'flex'; }
+        function closeDisarmModal() { document.getElementById('disarm-modal').style.display = 'none'; }
+        function executeEmergencyKill() { closeDisarmModal(); dispatchCommand('terminate'); }
 
         function submitRawGPSGrid() {
             const hLat = document.getElementById('in-home-lat').value;
             const hLon = document.getElementById('in-home-lon').value;
             const pts = document.getElementById('in-gps-pts').value;
-
-            appendConsole('[GPS]', `Converting raw WGS-84 coordinates for Home (${hLat}, ${hLon})...`);
             fetch('/api/load_gps', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({home_lat: hLat, home_lon: hLon, points: pts})
             })
             .then(res => res.json())
-            .then(data => appendConsole('[ACK]', data.message))
-            .catch(err => appendConsole('[ERR]', `GPS Load Error: ${err}`));
+            .then(data => appendConsole('[ACK]', data.message));
         }
 
         function submitGOTOTarget() {
             const n = document.getElementById('in-goto-n').value;
             const e = document.getElementById('in-goto-e').value;
             const alt = document.getElementById('in-goto-alt').value;
-
-            appendConsole('[GOTO]', `Targeting ENU position North=${n}m, East=${e}m, Alt=${alt}m...`);
             fetch(`/api/goto?n=${n}&e=${e}&alt=${alt}`)
                 .then(res => res.json())
-                .then(data => appendConsole('[ACK]', data.message))
-                .catch(err => appendConsole('[ERR]', `GOTO Error: ${err}`));
+                .then(data => appendConsole('[ACK]', data.message));
         }
 
-        // 2D Tactical Radar Canvas Renderer
+        // Radar Canvas
         const canvas = document.getElementById('tactical-canvas');
         const ctx = canvas ? canvas.getContext('2d') : null;
 
@@ -1233,38 +875,6 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        if (canvas) {
-            canvas.addEventListener('mousemove', (e) => {
-                if (activeTab !== 'dash') return;
-                const rect = canvas.getBoundingClientRect();
-                const cx = e.clientX - rect.left;
-                const cy = e.clientY - rect.top;
-                const scale = 3.0;
-                const originX = canvas.width / 2;
-                const originY = canvas.height / 2;
-                const eastM = ((cx - originX) / scale).toFixed(1);
-                const northM = (-(cy - originY) / scale).toFixed(1);
-                const tag = document.getElementById('window-tag');
-                if (tag) tag.innerText = `RADAR ENU: N=${northM}m | E=${eastM}m (CLICK MAP TO DISPATCH GOTO)`;
-            });
-
-            canvas.addEventListener('click', (e) => {
-                if (activeTab !== 'dash') return;
-                const rect = canvas.getBoundingClientRect();
-                const cx = e.clientX - rect.left;
-                const cy = e.clientY - rect.top;
-                const scale = 3.0;
-                const originX = canvas.width / 2;
-                const originY = canvas.height / 2;
-                const eastM = ((cx - originX) / scale).toFixed(1);
-                const northM = (-(cy - originY) / scale).toFixed(1);
-                
-                document.getElementById('in-goto-e').value = eastM;
-                document.getElementById('in-goto-n').value = northM;
-                submitGOTOTarget();
-            });
-        }
-
         function renderMapCanvas() {
             if (activeTab !== 'dash' || !canvas || !ctx) return;
             resizeCanvas();
@@ -1274,7 +884,6 @@
             const originY = canvas.height / 2;
             const scale = 3.0;
 
-            // Grid Lines
             ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 30) {
@@ -1284,23 +893,13 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // Geofence Outer Boundary (100m radius)
             ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(originX, originY, 100 * scale, 0, Math.PI * 2);
-            ctx.stroke();
+            ctx.beginPath(); ctx.arc(originX, originY, 100 * scale, 0, Math.PI * 2); ctx.stroke();
 
-            // Home Crosshair (0,0)
             ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
-            ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(originX - 12, originY); ctx.lineTo(originX + 12, originY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(originX, originY - 12); ctx.lineTo(originX, originY + 12); ctx.stroke();
-            ctx.fillStyle = '#10b981';
-            ctx.font = '10px JetBrains Mono';
-            ctx.fillText("HOME (0,0)", originX + 6, originY - 6);
 
-            // Flight Path Trail
             if (droneState.trail.length > 1) {
                 ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
                 ctx.lineWidth = 2;
@@ -1314,29 +913,21 @@
                 ctx.stroke();
             }
 
-            // Drone Spatial Indicator
             const dx = originX + droneState.east * scale;
             const dy = originY - droneState.north * scale;
 
             ctx.save();
             ctx.translate(dx, dy);
             ctx.rotate((droneState.heading * Math.PI) / 180);
-            
             ctx.fillStyle = '#00f0ff';
-            ctx.beginPath();
-            ctx.moveTo(0, -12);
-            ctx.lineTo(8, 10);
-            ctx.lineTo(0, 5);
-            ctx.lineTo(-8, 10);
-            ctx.closePath();
-            ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(8, 10); ctx.lineTo(0, 5); ctx.lineTo(-8, 10); ctx.closePath(); ctx.fill();
             ctx.restore();
 
             ctx.fillStyle = '#00f0ff';
+            ctx.font = '10px JetBrains Mono';
             ctx.fillText(`DRONE (E:${droneState.east.toFixed(1)}m, N:${droneState.north.toFixed(1)}m)`, dx + 12, dy + 4);
         }
 
-        // Update Attitude PFD Instruments
         function updateInstruments(roll, pitch, heading) {
             const att = document.getElementById('txt-attitude');
             const hdg = document.getElementById('txt-heading');
@@ -1344,14 +935,10 @@
             if (hdg) hdg.innerText = `HDG: ${Math.round(heading).toString().padStart(3, '0')}°`;
 
             const pitchGroup = document.getElementById('horizon-pitch-group');
-            if (pitchGroup) {
-                pitchGroup.setAttribute('transform', `rotate(${-roll}, 100, 100) translate(0, ${pitch * 2})`);
-            }
+            if (pitchGroup) pitchGroup.setAttribute('transform', `rotate(${-roll}, 100, 100) translate(0, ${pitch * 2})`);
 
             const needle = document.getElementById('compass-needle');
-            if (needle) {
-                needle.setAttribute('transform', `rotate(${heading}, 100, 100)`);
-            }
+            if (needle) needle.setAttribute('transform', `rotate(${heading}, 100, 100)`);
         }
 
         function updateFSMState(state) {
@@ -1373,42 +960,77 @@
             });
         }
 
-        // Live Keyboard Flight Control (WASD, Arrows, Spacebar, ESC)
-        window.addEventListener('keydown', (e) => {
-            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+        // Interactive Touch / Mouse Joysticks Setup
+        function setupJoystick(baseId, stickId, valId, onMove) {
+            const base = document.getElementById(baseId);
+            const stick = document.getElementById(stickId);
+            if (!base || !stick) return;
 
-            const k = e.key.toLowerCase();
-            let vn = 0.0, ve = 0.0, vu = 0.0, vyaw = 0.0;
-            let handled = false;
+            let active = false;
+            let startX = 0, startY = 0;
 
-            if (k === 'w') { vn = 1.5; handled = true; appendConsole('[TELEOP]', 'Key W -> Pitch Forward (+N)'); }
-            else if (k === 's') { vn = -1.5; handled = true; appendConsole('[TELEOP]', 'Key S -> Pitch Backward (-N)'); }
-            else if (k === 'a') { ve = -1.5; handled = true; appendConsole('[TELEOP]', 'Key A -> Roll Left (-E)'); }
-            else if (k === 'd') { ve = 1.5; handled = true; appendConsole('[TELEOP]', 'Key D -> Roll Right (+E)'); }
-            else if (e.key === 'ArrowUp' || k === 'i') { vu = 1.0; handled = true; appendConsole('[TELEOP]', 'Key ↑ / I -> Altitude Climb (+1m)'); }
-            else if (e.key === 'ArrowDown' || k === 'k') { vu = -1.0; handled = true; appendConsole('[TELEOP]', 'Key ↓ / K -> Altitude Descend (-1m)'); }
-            else if (e.key === 'ArrowLeft' || k === 'j') { vyaw = -15.0; handled = true; appendConsole('[TELEOP]', 'Key ← / J -> Yaw Left'); }
-            else if (e.key === 'ArrowRight' || k === 'l') { vyaw = 15.0; handled = true; appendConsole('[TELEOP]', 'Key → / L -> Yaw Right'); }
-            else if (e.key === ' ') {
-                e.preventDefault();
-                dispatchCommand('hold');
-                appendConsole('[TELEOP]', 'Key SPACEBAR -> Emergency Hover / Position Hold');
-                return;
-            } else if (e.key === 'Escape') {
-                confirmEmergencyKill();
-                return;
+            function handleStart(e) {
+                active = true;
+                const pos = e.touches ? e.touches[0] : e;
+                startX = pos.clientX;
+                startY = pos.clientY;
             }
 
-            if (handled) {
-                e.preventDefault();
-                fetch(`/api/teleop?vn=${vn}&ve=${ve}&vu=${vu}&vyaw=${vyaw}`)
-                    .then(res => res.json())
-                    .then(data => appendConsole('[ACK]', data.message))
-                    .catch(() => {});
+            function handleMove(e) {
+                if (!active) return;
+                const pos = e.touches ? e.touches[0] : e;
+                const dx = pos.clientX - startX;
+                const dy = pos.clientY - startY;
+                const maxR = 55;
+                const dist = Math.min(maxR, Math.hypot(dx, dy));
+                const angle = Math.atan2(dy, dx);
+                
+                const sx = Math.cos(angle) * dist;
+                const sy = Math.sin(angle) * dist;
+                stick.style.transform = `translate(${sx}px, ${sy}px)`;
+
+                const normX = (sx / maxR).toFixed(2);
+                const normY = (-sy / maxR).toFixed(2);
+                onMove(normX, normY, valId);
+            }
+
+            function handleEnd() {
+                if (!active) return;
+                active = false;
+                stick.style.transform = `translate(0px, 0px)`;
+                onMove(0.0, 0.0, valId);
+            }
+
+            base.addEventListener('mousedown', handleStart);
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleEnd);
+
+            base.addEventListener('touchstart', handleStart, {passive: true});
+            window.addEventListener('touchmove', handleMove, {passive: true});
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        setupJoystick('joy-left', 'stick-left', 'joy-left-val', (x, y, valId) => {
+            const vyaw = (x * 30.0).toFixed(1);
+            const vu = (y * 2.0).toFixed(1);
+            const el = document.getElementById(valId);
+            if (el) el.innerText = `Yaw Rate: ${vyaw}°/s | Climb Rate: ${vu}m/s`;
+            if (x != 0 || y != 0) {
+                fetch(`/api/teleop?vn=0.0&ve=0.0&vu=${vu}&vyaw=${vyaw}`).catch(() => {});
             }
         });
 
-        // Fast Polling Telemetry Loop (Zero Lag)
+        setupJoystick('joy-right', 'stick-right', 'joy-right-val', (x, y, valId) => {
+            const ve = (x * 2.5).toFixed(1);
+            const vn = (y * 2.5).toFixed(1);
+            const el = document.getElementById(valId);
+            if (el) el.innerText = `Pitch (N): ${vn}m/s | Roll (E): ${ve}m/s`;
+            if (x != 0 || y != 0) {
+                fetch(`/api/teleop?vn=${vn}&ve=${ve}&vu=0.0&vyaw=0.0`).catch(() => {});
+            }
+        });
+
+        // Fast 200ms Telemetry Loop (Zero Lag)
         setInterval(() => {
             fetch('/api/telemetry')
                 .then(res => res.json())
@@ -1430,7 +1052,7 @@
                     if (droneState.trail.length > 50) droneState.trail.shift();
 
                     document.getElementById('st-pwr').innerText = `${droneState.voltage}V | ${droneState.current}A`;
-                    document.getElementById('st-cpu').innerText = `CPU ${data.cpu_load || 14}% | GPU ${data.gpu_load || 8}%`;
+                    document.getElementById('st-cpu').innerText = `CPU ${data.cpu_load || 12}% | GPU ${data.gpu_load || 6}%`;
                     document.getElementById('st-gps').innerText = `${data.gps_fix || '3D RTK'} (${data.satellites || 18} SAT)`;
                     
                     if (data.lidar) {
@@ -1463,7 +1085,7 @@
                     if (activeTab === 'dash') renderMapCanvas();
                 })
                 .catch(() => {});
-        }, 500);
+        }, 200);
     </script>
 </body>
 </html>

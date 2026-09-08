@@ -178,9 +178,14 @@ class DroneVisionNode(Node):
             else:
                 idx = self.usb_cam_index
 
+            import os
+            os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|max_delay;500000"
+
             try:
-                self._cap = cv2.VideoCapture(idx)
-                if not self._cap.isOpened():
+                self._cap = cv2.VideoCapture(idx, cv2.CAP_FFMPEG if isinstance(idx, str) else cv2.CAP_V4L2)
+                if self._cap.isOpened():
+                    self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                else:
                     self.get_logger().warn(f"Video source {idx} unavailable — using synthetic camera feed.")
                     self._cap = None
             except Exception as e:
