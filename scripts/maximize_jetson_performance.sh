@@ -11,14 +11,14 @@ echo "==========================================================================
 
 # 1. Set Jetson Power Mode to MAX Performance (MAXN Mode)
 if command -v nvpmodel >/dev/null 2>&1; then
-    echo "  ✅ Setting NVIDIA Jetson Power Mode to MAXN (Max Performance)..."
-    sudo nvpmodel -m 0 2>/dev/null || true
+    echo "  ✅ Setting NVIDIA Jetson Power Mode to MAX Performance..."
+    sudo nvpmodel -m 0 >/dev/null 2>&1 || sudo nvpmodel -m 1 >/dev/null 2>&1 || true
 fi
 
 # 2. Lock CPU & GPU Clocks at Maximum Clock Speed
 if command -v jetson_clocks >/dev/null 2>&1; then
     echo "  ✅ Locking CPU Cores & GPU Frequencies at MAX Speed (jetson_clocks)..."
-    sudo jetson_clocks 2>/dev/null || true
+    sudo jetson_clocks >/dev/null 2>&1 || true
 fi
 
 # 3. Export Global CUDA & CPU Thread Optimizations
