@@ -5,6 +5,7 @@ matek_motor_warmup.py
 Standalone Motor Warmup & Manual Rotor Test Tool for Matek H743-Wing V3.
 
 Fixes premature disarming by streaming RC override & Arm commands continuously in a 10Hz background thread.
+Includes dedicated 5.5 kg heavy-lift 80% throttle mode (1800 PWM).
 
 Usage:
   python3 scripts/matek_motor_warmup.py [--port /dev/ttyTHS1] [--baud 921600]
@@ -66,7 +67,7 @@ class MotorWarmupController:
                     pass
             time.sleep(0.1)  # 10Hz continuous stream
 
-    def arm(self, initial_pwm=1150):
+    def arm(self, initial_pwm=1800):
         self.is_armed = True
         self.current_pwm = initial_pwm
 
@@ -115,7 +116,8 @@ def main():
     print("  ⚠️ SAFETY WARNING: PROPELLERS MUST BE DISCONNECTED FOR BENCH TEST!")
     print("----------------------------------------------------------------")
     print("  Controls:")
-    print("    [1] ARM MOTORS & WARMUP IDLE SPIN (~15% Throttle / 1150 PWM)")
+    print("    [8] 5.5 KG HEAVY-LIFT 80% THROTTLE (1800 PWM) — RECOMMENDED")
+    print("    [1] WARMUP IDLE SPIN (~15% Throttle / 1150 PWM)")
     print("    [2] LOW ROTOR THRUST (~30% Throttle / 1300 PWM)")
     print("    [3] MEDIUM ROTOR THRUST (~50% Throttle / 1500 PWM)")
     print("    [4] HIGH ROTOR THRUST (~75% Throttle / 1750 PWM)")
@@ -127,7 +129,7 @@ def main():
 
     try:
         while True:
-            cmd = input("Select Action (1=Warmup, 2=Low, 3=Med, 4=High, 5=Full, 0=Idle, D=Disarm, Q=Quit) > ").strip().lower()
+            cmd = input("Select Action (8=5.5kg 80%, 1=Idle, 2=Low, 3=Med, 4=High, 5=Full, D=Disarm, Q=Quit) > ").strip().lower()
 
             if cmd in ['q', 'exit']:
                 print("[INFO] Disarming motors and exiting...")
@@ -135,8 +137,13 @@ def main():
                 controller.is_running = False
                 break
 
+            elif cmd == '8':
+                print("[HEAVY-LIFT] Arming & spinning rotors at 80% Throttle (1800 PWM) for 5.5 kg payload...")
+                controller.arm(1800)
+                print("  🔥 Motors ARMED continuously at 80% HEAVY-LIFT THROTTLE (1800 PWM)!")
+
             elif cmd == '1':
-                print("[WARMUP] Arming & spinning rotors at Warmup Idle (1150 PWM)...")
+                print("[WARMUP] Warmup Idle (1150 PWM)...")
                 controller.arm(1150)
                 print("  ✅ Motors ARMED continuously at Warmup Idle (~15%).")
 

@@ -2,15 +2,15 @@
 """
 run_1000m_mission_warmup.py
 ============================
-Continuous Rotor Warmup & Full 1000m Flight Mission Simulator for Matek H743 + Jetson Orin Nano.
+Continuous Rotor Warmup & Full 1000m Flight Mission Simulator for 5.5 kg Heavy-Lift Drone.
 
-Fixes premature disarming by running a continuous 10Hz MAVLink stream thread that keeps 
-ArduPilot armed and continuously drives throttle PWM across all 7 stages of a 1000m mission.
+Starts at 80% Throttle (1800 PWM) right from the beginning to simulate 5.5 kg heavy-lift payload flight.
+Runs a continuous 10Hz MAVLink stream thread that keeps ArduPilot armed continuously.
 
 Designed for bench testing with propellers removed.
 
 Usage:
-  sudo python3 scripts/run_1000m_mission_warmup.py [--port /dev/ttyTHS1] [--baud 921600]
+  sudo python3 scripts/run_1000m_mission_warmup.py [--port /dev/ttyTHS1] [--baud 921600] [--throttle 80]
 """
 
 import sys
@@ -28,18 +28,20 @@ except ImportError:
     from pymavlink import mavutil
 
 
-class FlightMissionSimulator:
-    def __init__(self, port="/dev/ttyTHS1", baud=921600):
+class HeavyLiftFlightSimulator:
+    def __init__(self, port="/dev/ttyTHS1", baud=921600, base_throttle_pct=80):
         self.port = port
         self.baud = baud
+        self.base_throttle_pct = base_throttle_pct
+        # 80% Throttle -> 1000 + (1000 * 0.80) = 1800 PWM
+        self.base_pwm = int(1000 + (1000 * (base_throttle_pct / 100.0)))
         self.master = None
         self.is_running = False
-        self.current_pwm = 1000  # Idle PWM
+        self.current_pwm = 1000  # Idle PWM initially
         self.roll_pwm = 1500
         self.pitch_pwm = 1500
         self.yaw_pwm = 1500
         self.is_armed = False
-        self.target_mode = "GUIDED"
         self.stream_thread = None
         self.distance_covered_m = 0.0
 
@@ -84,7 +86,7 @@ class FlightMissionSimulator:
         while self.is_running:
             try:
                 if self.is_armed and self.master:
-                    # 1. Send force arm command every second to keep ArduPilot armed
+                    # 1. Send force arm command every cycle to guarantee ArduPilot remains armed
                     self.master.mav.command_long_send(
                         self.master.target_system,
                         self.master.target_component,
@@ -110,14 +112,14 @@ class FlightMissionSimulator:
             time.sleep(0.1)  # 10 Hz rate
 
     def force_arm(self):
-        print("\n[3/5] Requesting Force Arming Override on Matek H743...")
+        print("\n[3/5] Requesting Force Arming Override on Matek H743 for 5.5 kg Heavy-Lift...")
         self.is_armed = True
-        self.current_pwm = 1150  # ~12% Warmup Idle Spin
-        time.sleep(1.0)
-        print("  ✅ Flight Controller ARMED! Motors spinning at Warmup Idle (1150 PWM).")
+        self.current_pwm = self.base_pwm  # 80% Throttle (1800 PWM) immediately!
+        time.sleep(0.5)
+        print(f"  🔥 Flight Controller ARMED! Motors spinning at 80% Heavy-Lift Throttle ({self.base_pwm} PWM)!")
 
     def disarm(self):
-        print("\n[DISARM] Cutting rotor power & disarming FC...")
+        print("\n[DISARM] Cutting 5.5 kg heavy-lift rotor power & disarming FC...")
         self.is_armed = False
         self.current_pwm = 1000
         if self.master:
@@ -139,31 +141,34 @@ class FlightMissionSimulator:
 
     def run_1000m_mission(self):
         print("\n==========================================================================")
-        print("  🛸 STARTING FULL 1000m AUTONOMOUS MISSION ROTOR WARMUP SIMULATION 🛸")
+        print("  🛸 5.5 KG HEAVY-LIFT DRONE — 80% THROTTLE 1000m MISSION SIMULATOR 🛸")
         print("==========================================================================")
-        print("  ⚠️ SAFETY REMINDER: PROPELLERS MUST BE DISCONNECTED FOR BENCH TEST!")
+        print(f"  Target Drone Weight : 5.5 KG Heavy-Lift Platform")
+        print(f"  Initial Throttle    : {self.base_throttle_pct}% THROTTLE ({self.base_pwm} PWM) FROM THE START!")
+        print("  ⚠️ SAFETY REMINDER : PROPELLERS MUST BE DISCONNECTED FOR BENCH TEST!")
         print("==========================================================================\n")
 
         self.force_arm()
 
+        # 5.5 kg Heavy-Lift Mission Stages (Starts at 80% Throttle immediately)
         stages = [
-            ("Stage 1: Pre-Flight ESC Warmup & Sensor Stabilization", 15, 1150, 0.0, 0.0),
-            ("Stage 2: Vertical Takeoff & Climb to Cruise Altitude (15m)", 15, 1450, 0.0, 50.0),
-            ("Stage 3: Outbound 500m Search Sweep (High Throttle Cruise)", 30, 1650, 50.0, 500.0),
-            ("Stage 4: Target Identified — Payload Drop Servo Actuation", 10, 1400, 500.0, 500.0),
-            ("Stage 5: Inbound 500m Return to Base (RTL Cruise Flight)", 30, 1680, 500.0, 1000.0),
-            ("Stage 6: Controlled Precision Descent & Touchdown Alignment", 15, 1250, 1000.0, 1000.0),
-            ("Stage 7: Final Touchdown & Motor Cooling Ramp Down", 10, 1080, 1000.0, 1000.0)
+            ("Stage 1: Pre-Flight ESC Heavy Warmup & 80% Throttle Ramp Up", 10, self.base_pwm, 0.0, 0.0),
+            ("Stage 2: 5.5kg Heavy Vertical Takeoff & Ascent to 15m (82% Throttle)", 15, 1820, 0.0, 50.0),
+            ("Stage 3: Outbound 500m Heavy-Lift Search Sweep (85% Throttle Cruise)", 30, 1850, 50.0, 500.0),
+            ("Stage 4: Target Acquisition & 5.5kg Water Bottle Payload Drop", 10, 1800, 500.0, 500.0),
+            ("Stage 5: Inbound 500m High-Power Return to Base (88% Throttle Cruise)", 30, 1880, 500.0, 1000.0),
+            ("Stage 6: Controlled Heavy-Lift Descent & Touchdown (65% Throttle)", 15, 1650, 1000.0, 1000.0),
+            ("Stage 7: Final Touchdown & Motor Cooling Ramp Down", 10, 1300, 1000.0, 1000.0)
         ]
 
         start_time = time.time()
 
         for stage_name, duration_sec, pwm, start_dist, end_dist in stages:
             print(f"\n▶ [{stage_name}]")
-            print(f"  Duration: {duration_sec}s | Target Throttle: PWM {pwm} | Distance Range: {start_dist:.0f}m -> {end_dist:.0f}m")
+            print(f"  Duration: {duration_sec}s | Throttle: PWM {pwm} ({(pwm-1000)/10:.1f}%) | Distance: {start_dist:.0f}m -> {end_dist:.0f}m")
 
             if "Payload Drop" in stage_name:
-                print("  📦 Actuating Payload Drop Servo (Channel 5 / Servo 1)...")
+                print("  📦 Actuating 5.5kg Payload Drop Servo Mechanism (Channel 5)...")
                 try:
                     self.master.mav.command_long_send(
                         self.master.target_system,
@@ -196,12 +201,14 @@ class FlightMissionSimulator:
                 sys.stdout.write(
                     f"\r  ⏱️ [{total_elapsed:5.1f}s] Stage Progress: {progress_pct:5.1f}% | "
                     f"Distance: \033[1;32m{self.distance_covered_m:6.1f}m / 1000m\033[0m | "
-                    f"Throttle: \033[1;33m{throttle_pct:4.1f}% (PWM {self.current_pwm})\033[0m  "
+                    f"Throttle: \033[1;31m{throttle_pct:4.1f}% (PWM {self.current_pwm})\033[0m  "
                 )
                 sys.stdout.flush()
 
         print("\n\n==========================================================================")
-        print("  🎉 1000m MISSION COMPLETED SUCCESSFULLY!")
+        print("  🎉 5.5 KG HEAVY-LIFT 1000m MISSION SIMULATION COMPLETED!")
+        print("  • Drone Platform Weight           : 5.5 KG")
+        print("  • Initial Start Throttle         : 80% (1800 PWM)")
         print("  • Total Flight Distance Simulated : 1000.0 Meters")
         print("  • Total Rotor Run Time           : {:.1f} Seconds".format(time.time() - start_time))
         print("  • Payload Drop Servo State       : Actuated (Open)")
@@ -212,12 +219,13 @@ class FlightMissionSimulator:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Matek H743 1000m Flight Mission Rotor Simulator")
+    parser = argparse.ArgumentParser(description="Matek H743 5.5kg Heavy Lift 1000m Mission Simulator")
     parser.add_argument("--port", type=str, default="/dev/ttyTHS1", help="Serial port (/dev/ttyTHS1, /dev/ttyUSB0)")
     parser.add_argument("--baud", type=int, default=921600, help="Baud rate (921600)")
+    parser.add_argument("--throttle", type=int, default=80, help="Start throttle percentage (default: 80%)")
     args = parser.parse_args()
 
-    sim = FlightMissionSimulator(port=args.port, baud=args.baud)
+    sim = HeavyLiftFlightSimulator(port=args.port, baud=args.baud, base_throttle_pct=args.throttle)
     sim.prepare_hardware()
     sim.connect()
     sim.start_streaming_thread()
