@@ -9,6 +9,7 @@ Publishes structured detection + scene analysis as ROS2 topics.
 
 import time
 import logging
+import threading
 
 import cv2
 import numpy as np
@@ -49,6 +50,7 @@ class DroneVisionNode(Node):
 
     def __init__(self):
         super().__init__("drone_vision_node")
+        self._processing_lock = threading.Lock()
         self._declare_params()
         self._load_params()
         self._init_publishers()
@@ -80,6 +82,7 @@ class DroneVisionNode(Node):
 
 
         self.declare_parameter("yolo_model", "yolov8n.pt")
+        self.declare_parameter("yolo_imgsz", 320)
         self.declare_parameter("yolo_conf_threshold", 0.45)
         self.declare_parameter("yolo_iou_threshold", 0.45)
         self.declare_parameter("use_tensorrt", False)
@@ -108,6 +111,7 @@ class DroneVisionNode(Node):
             yolo_path = yolo_path.replace(".pt", ".engine")
 
         self.yolo_model_path    = yolo_path
+        self.yolo_imgsz         = p("yolo_imgsz").value
         self.yolo_conf          = p("yolo_conf_threshold").value
         self.yolo_iou           = p("yolo_iou_threshold").value
         self.target_fps         = p("target_fps").value
@@ -147,10 +151,11 @@ class DroneVisionNode(Node):
             model_path=self.yolo_model_path,
             conf_threshold=self.yolo_conf,
             iou_threshold=self.yolo_iou,
+            imgsz=self.yolo_imgsz,
             target_classes=self.target_classes,
             obstacle_classes=self.obstacle_classes,
         )
-        self.get_logger().info(f"YOLO detector ready: {self.yolo_model_path}")
+        self.get_logger().info(f"YOLO detector ready: {self.yolo_model_path} (imgsz={self.yolo_imgsz})")
 
     def _init_analyzer(self):
         self.analyzer = GemmaAnalyzer(
@@ -234,45 +239,53 @@ class DroneVisionNode(Node):
 
     # ── Core Processing ────────────────────────────────────────────────────
     def _process_frame(self, frame):
-        self._frame_count += 1
-        now = self.get_clock().now()
-        header = Header()
-        header.stamp = now.to_msg()
-        header.frame_id = "camera_frame"
+        # Non-blocking frame drop: if previous frame is still being processed, drop this frame
+        # to prevent thread queue congestion and system lockups.
+        if not self._processing_lock.acquire(blocking=False):
+            return
 
-        # ── YOLO inference (every frame) ───────────────────────────────
-        detections, fps, annotated, infer_ms = self.detector.detect(frame)
+        try:
+            self._frame_count += 1
+            now = self.get_clock().now()
+            header = Header()
+            header.stamp = now.to_msg()
+            header.frame_id = "camera_frame"
 
-        # ── Gemma inference (every N frames, async) ────────────────────
-        if self._frame_count % self.gemma_interval == 0:
-            self.analyzer.analyze_async(annotated, detections)
+            # ── YOLO inference (every frame) ───────────────────────────────
+            detections, fps, annotated, infer_ms = self.detector.detect(frame)
 
-        gemma_result, raw_json, gemma_ms = self.analyzer.get_latest_result()
-        if gemma_result is None:
-            gemma_result = GemmaAnalyzer.empty_result()
-            raw_json = "{}"
+            # ── Gemma inference (every N frames, async) ────────────────────
+            if self._frame_count % self.gemma_interval == 0:
+                self.analyzer.analyze_async(annotated, detections)
 
-        # ── Publish detections ─────────────────────────────────────────
-        det_msg = self._build_detection_array(header, detections, fps, infer_ms)
-        self._pub_detections.publish(det_msg)
+            gemma_result, raw_json, gemma_ms = self.analyzer.get_latest_result()
+            if gemma_result is None:
+                gemma_result = GemmaAnalyzer.empty_result()
+                raw_json = "{}"
 
-        # ── Publish scene analysis ─────────────────────────────────────
-        scene_msg = self._build_scene_analysis(header, gemma_result, raw_json, gemma_ms, detections)
-        self._pub_scene.publish(scene_msg)
+            # ── Publish detections ─────────────────────────────────────────
+            det_msg = self._build_detection_array(header, detections, fps, infer_ms)
+            self._pub_detections.publish(det_msg)
 
-        # ── Publish action zones ───────────────────────────────────────
-        self._pub_landing.publish(self._build_action_zone(header, gemma_result, "landing", detections))
-        self._pub_takeoff.publish(self._build_action_zone(header, gemma_result, "takeoff", detections))
-        self._pub_drop.publish(self._build_action_zone(header, gemma_result, "drop_payload", detections))
+            # ── Publish scene analysis ─────────────────────────────────────
+            scene_msg = self._build_scene_analysis(header, gemma_result, raw_json, gemma_ms, detections)
+            self._pub_scene.publish(scene_msg)
 
-        # ── Publish obstacles ──────────────────────────────────────────
-        self._pub_obstacles.publish(self._build_obstacles(header, detections, gemma_result))
+            # ── Publish action zones ───────────────────────────────────────
+            self._pub_landing.publish(self._build_action_zone(header, gemma_result, "landing", detections))
+            self._pub_takeoff.publish(self._build_action_zone(header, gemma_result, "takeoff", detections))
+            self._pub_drop.publish(self._build_action_zone(header, gemma_result, "drop_payload", detections))
 
-        # ── Publish annotated image (debug) ────────────────────────────
-        if self.publish_annotated:
-            annotated = draw_overlay(annotated, gemma_result, self._current_mission_state)
-            img_msg = cv2_to_ros_image(annotated, header)
-            self._pub_image.publish(img_msg)
+            # ── Publish obstacles ──────────────────────────────────────────
+            self._pub_obstacles.publish(self._build_obstacles(header, detections, gemma_result))
+
+            # ── Publish annotated image (debug) ────────────────────────────
+            if self.publish_annotated:
+                annotated = draw_overlay(annotated, gemma_result, self._current_mission_state)
+                img_msg = cv2_to_ros_image(annotated, header)
+                self._pub_image.publish(img_msg)
+        finally:
+            self._processing_lock.release()
 
     # ── Message Builders ───────────────────────────────────────────────────
     def _build_detection_array(self, header, detections, fps, infer_ms) -> DetectionArray:

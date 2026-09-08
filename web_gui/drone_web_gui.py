@@ -331,6 +331,24 @@ class HardwareBridge:
         with self.lock:
             self.target_pwm = 1000
             self.armed = False
+        STUB_FC._armed = False
+        STUB_FC._mode = "DISARMED"
+        if self.mav_conn is not None:
+            try:
+                from pymavlink import mavutil
+                for _ in range(5):
+                    self.mav_conn.mav.command_long_send(
+                        self.mav_conn.target_system, self.mav_conn.target_component,
+                        mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,
+                        0, 21196, 0, 0, 0, 0, 0
+                    )
+                    self.mav_conn.mav.rc_channels_override_send(
+                        self.mav_conn.target_system, self.mav_conn.target_component,
+                        1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000
+                    )
+                    time.sleep(0.01)
+            except Exception as e:
+                logger.error(f"HardwareBridge serial disarm error: {e}")
 
     def _hardware_loop(self):
         # 1. Connect serial MAVLink if available
@@ -397,15 +415,15 @@ class HardwareBridge:
                             STUB_FC._armed = True
                             STUB_FC._mode = f"MANUAL_PWM_{pwm}"
                     else:
-                        if now - last_rc_time > 0.5 and STUB_FC._armed:
+                        if now - last_rc_time > 0.2:
                             last_rc_time = now
                             self.mav_conn.mav.command_long_send(
                                 self.mav_conn.target_system, self.mav_conn.target_component,
-                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 0, 0, 0, 0, 0, 0
+                                mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0, 0, 21196, 0, 0, 0, 0, 0
                             )
                             self.mav_conn.mav.rc_channels_override_send(
                                 self.mav_conn.target_system, self.mav_conn.target_component,
-                                0, 0, 0, 0, 0, 0, 0, 0
+                                1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000
                             )
                             STUB_FC._armed = False
 
@@ -665,7 +683,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 resp = {"status": "ok", "message": "LAND NOW Executed. Controlled vertical descent active."}
             elif cmd == "disarm" or cmd == "terminate":
                 STUB_FC.disarm()
-                STUB_FC._mode = "IDLE"
+                STUB_FC._mode = "DISARMED"
                 get_hw_bridge().trigger_disarm()
                 t = STUB_FC.get_telemetry()
                 pos = t.get("pos_enu", [0.0, 0.0, 0.0])
@@ -673,6 +691,14 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 script_path = os.path.join(ROOT_DIR, "scripts", "send_command.sh")
                 try:
                     subprocess.run(["bash", script_path, "abort"], check=False)
+                    subprocess.Popen(
+                        "ros2 service call /mavros/cmd/arming mavros_msgs/srv/CommandBool '{value: false}'",
+                        shell=True
+                    )
+                    subprocess.Popen(
+                        "ros2 topic pub --once /mavros/rc/override mavros_msgs/msg/OverrideRCIn '{channels: [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}'",
+                        shell=True
+                    )
                 except Exception:
                     pass
                 resp = {"status": "ok", "message": "Motors DISARMED & EMERGENCY KILLED."}

@@ -70,8 +70,9 @@ class YOLODetector:
         model_path: str = "yolov8n.pt",
         conf_threshold: float = 0.45,
         iou_threshold: float = 0.45,
-        imgsz: int = 640,
+        imgsz: int = 320,
         device: str = "cuda",
+        half: Optional[bool] = None,
         category_map: Optional[Dict[str, str]] = None,
         target_classes: Optional[List[str]] = None,
         obstacle_classes: Optional[List[str]] = None,
@@ -81,6 +82,7 @@ class YOLODetector:
         self.iou_threshold = iou_threshold
         self.imgsz = imgsz
         self.device = device
+        self.half = half if half is not None else (self.device == "cuda")
 
         # Build category map
         self.category_map = dict(DEFAULT_CATEGORY_MAP)
@@ -104,13 +106,25 @@ class YOLODetector:
     def _load_model(self) -> None:
         """Load YOLO model (auto-detects .pt vs TensorRT .engine)."""
         try:
+            import torch
+            if self.device == "cuda" and torch.cuda.is_available():
+                torch.backends.cudnn.benchmark = True
+            elif self.device == "cuda" and not torch.cuda.is_available():
+                logger.warn("CUDA device requested but not available. Falling back to CPU.")
+                self.device = "cpu"
+                self.half = False
+
             from ultralytics import YOLO
-            logger.info(f"Loading YOLO model: {self.model_path}")
+            logger.info(f"Loading YOLO model: {self.model_path} (imgsz={self.imgsz}, device={self.device}, half={self.half})")
             self.model = YOLO(self.model_path)
 
             # Warm up
             dummy = np.zeros((self.imgsz, self.imgsz, 3), dtype=np.uint8)
-            self.model(dummy, verbose=False)
+            try:
+                self.model(dummy, imgsz=self.imgsz, device=self.device, half=self.half, verbose=False)
+            except Exception:
+                self.half = False
+                self.model(dummy, imgsz=self.imgsz, device=self.device, verbose=False)
             logger.info(f"YOLO model loaded and warmed up on {self.device}")
 
         except ImportError:
@@ -121,7 +135,7 @@ class YOLODetector:
             raise RuntimeError(f"Failed to load YOLO model '{self.model_path}': {e}")
 
     # ── Inference ──────────────────────────────────────────────────────────
-    def detect(self, frame: np.ndarray) -> Tuple[List[Dict], float, np.ndarray]:
+    def detect(self, frame: np.ndarray, half: Optional[bool] = None) -> Tuple[List[Dict], float, np.ndarray, float]:
         """
         Run YOLO inference on a BGR frame.
 
@@ -129,20 +143,34 @@ class YOLODetector:
             detections: List of detection dicts (see _parse_results)
             fps:        Rolling average FPS
             annotated:  BGR frame with bounding boxes drawn
+            infer_ms:   Inference latency in milliseconds
         """
         if self.model is None:
-            return [], 0.0, frame
+            return [], 0.0, frame, 0.0
 
         t0 = time.time()
+        use_half = half if half is not None else self.half
 
-        results = self.model(
-            frame,
-            conf=self.conf_threshold,
-            iou=self.iou_threshold,
-            imgsz=self.imgsz,
-            device=self.device,
-            verbose=False,
-        )
+        try:
+            results = self.model(
+                frame,
+                conf=self.conf_threshold,
+                iou=self.iou_threshold,
+                imgsz=self.imgsz,
+                device=self.device,
+                half=use_half,
+                verbose=False,
+            )
+        except Exception:
+            # Fallback if half precision unsupported on device
+            results = self.model(
+                frame,
+                conf=self.conf_threshold,
+                iou=self.iou_threshold,
+                imgsz=self.imgsz,
+                device=self.device,
+                verbose=False,
+            )
 
         inference_ms = (time.time() - t0) * 1000.0
 
