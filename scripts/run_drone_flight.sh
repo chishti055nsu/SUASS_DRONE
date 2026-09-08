@@ -52,12 +52,14 @@ echo "  • Matek H743 + Dual GPS: Active on MAVROS"
 echo "=================================================="
 
 FC_PORT="/dev/ttyTHS1"
-if [ -e "/dev/ttyUSB0" ]; then
-    FC_PORT="/dev/ttyUSB0"
+FC_BAUD="921600"
+if [ -e "/dev/ttyACM0" ]; then
+    FC_PORT="/dev/ttyACM0"
+    FC_BAUD="115200"
 fi
 
-echo "[INFO] Starting MAVROS interface on FC Port: $FC_PORT..."
-ros2 launch mavros px4.launch fcu_url:="$FC_PORT:57600" &
+echo "[INFO] Starting MAVROS interface on FC Port: $FC_PORT @ $FC_BAUD baud..."
+ros2 launch mavros px4.launch fcu_url:="$FC_PORT:$FC_BAUD" &
 MAVROS_PID=$!
 sleep 2
 

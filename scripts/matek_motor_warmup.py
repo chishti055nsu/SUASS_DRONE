@@ -27,7 +27,7 @@ except ImportError:
 def parse_args():
     parser = argparse.ArgumentParser(description="Matek H743 Standalone Motor Warmup Tool")
     parser.add_argument("--port", type=str, default=None, help="Serial port (/dev/ttyTHS1, /dev/ttyUSB0, /dev/ttyACM0)")
-    parser.add_argument("--baud", type=int, default=57600, help="Baud rate (57600 or 115200)")
+    parser.add_argument("--baud", type=int, default=921600, help="Baud rate (921600, 57600, or 115200)")
     return parser.parse_args()
 
 

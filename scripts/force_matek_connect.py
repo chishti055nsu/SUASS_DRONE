@@ -49,7 +49,7 @@ def fix_jetson_serial():
 def scan_ports_and_bauds():
     print("\n[2/4] Scanning Serial Ports & Baud Rates for MAVLink Heartbeat...")
     ports = ["/dev/ttyTHS1", "/dev/ttyUSB0", "/dev/ttyACM0", "/dev/ttyUSB1", "/dev/ttyTHS0"]
-    bauds = [57600, 115200, 921600, 38400, 19200]
+    bauds = [921600, 57600, 115200, 38400, 19200]
 
     existing_ports = [p for p in ports if os.path.exists(p)]
     if not existing_ports:

@@ -47,11 +47,11 @@ if echo "$STATE_OUTPUT" | grep -q "connected: true"; then
     echo "$STATE_OUTPUT" | grep -E "connected|armed|guided|mode"
 elif echo "$STATE_OUTPUT" | grep -q "connected: false"; then
     echo -e "  ⚠️ \033[1;33mMAVROS IS RUNNING BUT NOT CONNECTED TO FC (connected: false).\033[0m"
-    echo "  👉 Check baud rate (57600 for Telemetry UART, 115200 for USB)."
+    echo "  👉 Check baud rate (921600 for /dev/ttyTHS1 UART, 115200 for USB /dev/ttyACM0)."
     echo "  👉 Ensure MAVLink telemetry protocol (MAVLink 2) is enabled on FC."
 else
     echo -e "  ℹ️ MAVROS ROS 2 node is not currently running."
-    echo "  👉 Start MAVROS using: ros2 launch mavros px4.launch fcu_url:=$FOUND_PORT:57600"
+    echo "  👉 Start MAVROS using: ros2 launch mavros px4.launch fcu_url:=$FOUND_PORT:921600"
 fi
 
 echo "============================================================"
