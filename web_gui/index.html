@@ -812,6 +812,7 @@
                 <div class="canvas-window">
                     <canvas id="tactical-canvas"></canvas>
                     <canvas id="vision-canvas" style="display: none;"></canvas>
+                    <img id="camera-stream" src="/video_feed" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                     <div class="window-overlay-tag" id="window-tag">RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)</div>
                 </div>
             </div>
@@ -1043,10 +1044,10 @@
             document.getElementById('vbtn-map').classList.toggle('active', mode === 'map');
             document.getElementById('vbtn-cam').classList.toggle('active', mode === 'cam');
             document.getElementById('tactical-canvas').style.display = (mode === 'map') ? 'block' : 'none';
-            document.getElementById('vision-canvas').style.display = (mode === 'cam') ? 'block' : 'none';
+            document.getElementById('camera-stream').style.display = (mode === 'cam') ? 'block' : 'none';
             document.getElementById('window-tag').innerText = (mode === 'map') 
                 ? 'RADAR ENU: N=0.0m | E=0.0m (CLICK MAP TO DISPATCH GOTO)'
-                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC CAMERA)';
+                : 'REAL-TIME VISION PERCEPTION FEED (D455 STEREOSCOPIC CAMERA STREAM)';
             
             if (mode === 'cam') renderVisionCanvas();
             else renderMapCanvas();
