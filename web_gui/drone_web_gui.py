@@ -306,7 +306,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
             self.end_headers()
 
-            for _ in range(60):
+            while True:
                 jpg = get_frame_grabber().get_frame()
                 if jpg is not None:
                     try:
@@ -316,9 +316,10 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                         self.end_headers()
                         self.wfile.write(jpg)
                         self.wfile.write(b"\r\n")
-                    except Exception:
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError, OSError):
                         break
-                time.sleep(0.05)
+                time.sleep(0.033)
             return
 
         elif path == "/d455_feed":
@@ -326,7 +327,7 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=frame")
             self.end_headers()
 
-            for _ in range(60):
+            while True:
                 jpg = get_d455_grabber().get_frame()
                 if jpg is not None:
                     try:
@@ -336,9 +337,10 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                         self.end_headers()
                         self.wfile.write(jpg)
                         self.wfile.write(b"\r\n")
-                    except Exception:
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError, OSError):
                         break
-                time.sleep(0.05)
+                time.sleep(0.033)
             return
 
         elif path == "/api/camera_status":

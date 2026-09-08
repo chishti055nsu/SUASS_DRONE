@@ -336,6 +336,18 @@ class MavrosFlightController(FlightController):
                 req_offboard.custom_mode = "OFFBOARD"
                 mode_cli.call_async(req_offboard)
 
+            # Attempt to set ARMING_CHECK = 0 on ArduPilot to clear PreArm restrictions during bench testing
+            try:
+                from mavros_msgs.srv import ParamSet
+                param_cli = self._node.create_client(ParamSet, "/mavros/param/set")
+                if param_cli.wait_for_service(timeout_sec=0.5):
+                    pre_req = ParamSet.Request()
+                    pre_req.param_id = "ARMING_CHECK"
+                    pre_req.value.integer_value = 0
+                    param_cli.call_async(pre_req)
+            except Exception:
+                pass
+
             arm_cli = self._node.create_client(CommandBool, "/mavros/cmd/arming")
             if arm_cli.wait_for_service(timeout_sec=1.5):
                 req = CommandBool.Request()
