@@ -58,6 +58,8 @@ class AsyncFrameGrabber:
         import cv2
         import numpy as np
 
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+        os.environ["OPENCV_VIDEOIO_PRIORITY_GSTREAMER"] = "100"
         os.environ["OPENCV_LOG_LEVEL"] = "OFF"
         os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;2000000|max_delay;500000|allowed_media_types;video"
         try:
@@ -68,11 +70,11 @@ class AsyncFrameGrabber:
         cap = None
         last_check = 0
         siyi_rtsp_sources = [
+            "rtspsrc location=rtsp://192.168.144.25:8554/main.264 latency=50 ! rtph264depay ! h264parse ! nvv4l2decoder ! nvvideoconvert ! video/x-raw, format=BGRx ! videoconvert ! video/x-raw, format=BGR ! appsink drop=1",
             "rtsp://192.168.144.25:8554/main.264",
             "rtsp://192.168.144.25:8554/stream1",
             "rtsp://192.168.144.25:8554/live/0",
-            "rtsp://192.168.144.11:8554/main.264",
-            "rtsp://192.168.144.10:8554/main.264"
+            "rtsp://192.168.144.11:8554/main.264"
         ]
 
         try:
@@ -92,7 +94,8 @@ class AsyncFrameGrabber:
                     last_check = now
                     for src in siyi_rtsp_sources:
                         try:
-                            c = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+                            backend = cv2.CAP_GSTREAMER if src.startswith("rtspsrc") else cv2.CAP_FFMPEG
+                            c = cv2.VideoCapture(src, backend)
                             c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                             if c.isOpened():
                                 r, f = c.read()
@@ -100,8 +103,8 @@ class AsyncFrameGrabber:
                                     cap = c
                                     frame = f
                                     self.is_hardware_connected = True
-                                    self.active_source = str(src)
-                                    logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {src}")
+                                    self.active_source = "NVIDIA NVDEC GPU (GStreamer)" if src.startswith("rtspsrc") else str(src)
+                                    logger.info(f"Connected to SIYI A8 Mini 4K RTSP stream: {self.active_source}")
                                     break
                                 c.release()
                         except Exception:

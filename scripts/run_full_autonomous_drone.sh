@@ -9,8 +9,10 @@
 
 set -e
 
-# Capture repository root directory BEFORE changing directories
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Enable NVIDIA Jetson CUDA & NVDEC Hardware Acceleration
+export CUDA_VISIBLE_DEVICES=0
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+export OPENCV_VIDEOIO_PRIORITY_GSTREAMER=100
 
 echo "=========================================================================="
 echo "       🛸 IUB DRONE SUAS 2026 — MASTER AUTONOMOUS FLIGHT SUITE 🛸        "
