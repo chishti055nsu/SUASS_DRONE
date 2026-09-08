@@ -710,7 +710,11 @@
                     <div class="panel-header-title">🛡️ RealSense D455 3D VIO & Obstacle Avoidance</div>
                     <span class="sensor-badge">6-DOF VIO LOCK</span>
                 </div>
-                <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
+                <div style="width: 100%; height: 260px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 12px; position: relative;">
+                    <img id="d455-live-video" src="/d455_feed" style="width: 100%; height: 100%; object-fit: cover;">
+                    <div class="window-overlay-tag">REALSENSE D455 DEPTH & VIO OPTICAL FLOW</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.8;">
                     <div class="sensor-row"><span>Optical Flow Tracking:</span><span style="color: var(--accent-green);">STABLE (30 FPS)</span></div>
                     <div class="sensor-row"><span>Obstacle Threat Density:</span><span style="color: var(--accent-cyan);">8% (LOW RISK)</span></div>
                     <div class="sensor-row"><span>Sector Clearance:</span><span style="color: var(--accent-green);">LEFT: CLEAR | CENTER: CLEAR | RIGHT: CLEAR</span></div>
