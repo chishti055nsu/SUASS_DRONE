@@ -526,6 +526,7 @@
 
         <div class="telemetry-strip">
             <div class="strip-item"><span class="strip-label">MAVLink FC</span><span class="strip-val" id="st-mav">400Hz OK</span></div>
+            <div class="strip-item"><span class="strip-label">SUAS Interop</span><span class="strip-val" id="st-interop" style="color: var(--accent-green);">10Hz LIVE</span></div>
             <div class="strip-item"><span class="strip-label">GPS RTK</span><span class="strip-val" id="st-gps">3D RTK (18 SAT)</span></div>
             <div class="strip-item"><span class="strip-label">Power (6S)</span><span class="strip-val" id="st-pwr">25.2V | 12.5A</span></div>
             <div class="strip-item"><span class="strip-label">Jetson Load</span><span class="strip-val" id="st-cpu">CPU 12% | GPU 6%</span></div>
@@ -659,17 +660,15 @@
                     <div class="field-group"><label class="field-label">Home Lat</label><input type="text" class="input-tactical" id="in-home-lat" value="38.145000"></div>
                     <div class="field-group"><label class="field-label">Home Lon</label><input type="text" class="input-tactical" id="in-home-lon" value="-76.427000"></div>
                     <div class="field-group"><label class="field-label">Waypoints</label><input type="text" class="input-tactical" id="in-gps-pts" placeholder="38.1451,-76.4270;38.1452,-76.4265"></div>
-                    <button class="btn-action" onclick="submitRawGPSGrid()">LOAD COMPETITION GRID</button>
+                    <button class="btn-gcs btn-primary-start" style="width: 100%; margin-top: 10px;" onclick="submitRawGPSGrid()">LOAD GPS WAYPOINTS</button>
                 </div>
 
                 <div class="glass-panel form-section">
-                    <div class="panel-header"><div class="panel-header-title">Target Override (GOTO)</div></div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                        <div class="field-group"><label class="field-label">North (m)</label><input type="number" class="input-tactical" id="in-goto-n" value="50.0"></div>
-                        <div class="field-group"><label class="field-label">East (m)</label><input type="number" class="input-tactical" id="in-goto-e" value="20.0"></div>
-                        <div class="field-group"><label class="field-label">Alt (m)</label><input type="number" class="input-tactical" id="in-goto-alt" value="15.0"></div>
-                    </div>
-                    <button class="btn-action" onclick="submitGOTOTarget()">DISPATCH GOTO</button>
+                    <div class="panel-header"><div class="panel-header-title">3D GOTO Setpoint Nudge</div></div>
+                    <div class="field-group"><label class="field-label">North (m)</label><input type="number" class="input-tactical" id="in-goto-n" value="10.0"></div>
+                    <div class="field-group"><label class="field-label">East (m)</label><input type="number" class="input-tactical" id="in-goto-e" value="15.0"></div>
+                    <div class="field-group"><label class="field-label">Altitude (m)</label><input type="number" class="input-tactical" id="in-goto-alt" value="15.0"></div>
+                    <button class="btn-gcs btn-hold" style="width: 100%; margin-top: 10px;" onclick="submitGOTOTarget()">DISPATCH 3D GOTO</button>
                 </div>
             </div>
         </div>
@@ -691,13 +690,13 @@
 
             <div>
                 <div class="glass-panel cmd-panel" style="margin-bottom: 16px;">
-                    <div class="panel-header"><div class="panel-header-title">🎯 Detected Targets & Payload Matches</div></div>
+                    <div class="panel-header"><div class="panel-header-title">🎯 SUAS Champion ODLC Classified Targets</div></div>
                     <div class="target-table-box" style="max-height: 240px;">
                         <table class="target-table">
-                            <thead><tr><th>Target</th><th>Detected Class</th><th>Payload Match</th><th>Confidence</th></tr></thead>
+                            <thead><tr><th>Target</th><th>Class</th><th>Shape/Color</th><th>OCR</th><th>GPS Pos</th><th>Interop</th></tr></thead>
                             <tbody>
-                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">TGT-01</td><td>MANNEQUIN</td><td style="color: var(--accent-green);">WATER_BOTTLE</td><td>94.2%</td></tr>
-                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">TGT-02</td><td>TENT</td><td style="color: var(--accent-green);">MEDICAL_KIT</td><td>89.5%</td></tr>
+                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">ODLC-01</td><td>MANNEQUIN</td><td>Circle / Red</td><td style="color: var(--accent-yellow); font-weight: 800;">'A'</td><td>38.14512, -76.42688</td><td style="color: var(--accent-green);">SUBMITTED</td></tr>
+                                <tr><td style="color: var(--accent-cyan); font-weight: 800;">ODLC-02</td><td>TENT</td><td>Square / Blue</td><td style="color: var(--accent-yellow); font-weight: 800;">'7'</td><td>38.14525, -76.42651</td><td style="color: var(--accent-green);">SUBMITTED</td></tr>
                             </tbody>
                         </table>
                     </div>

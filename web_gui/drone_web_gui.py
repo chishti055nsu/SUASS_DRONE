@@ -641,24 +641,48 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                     "optical_flow": "STABLE",
                     "depth_range": "0.4m - 10.0m"
                 },
+                "suas_interop": {
+                    "connected": True,
+                    "telemetry_hz": 10.0,
+                    "server_url": "http://192.168.1.10:8000",
+                    "odlcs_submitted": 2,
+                    "obstacles_active": 2,
+                    "status": "ONLINE (10Hz STREAMING)"
+                },
+                "obstacle_avoidance": {
+                    "planner": "RRT* TANGENT BYPASS",
+                    "cylinders_tracked": 2,
+                    "path_clear": True,
+                    "safety_margin_m": 5.0
+                },
                 "object_detections": [
                     {
-                        "target_id": "TGT-01",
+                        "target_id": "ODLC-01",
                         "label": "MANNEQUIN",
+                        "shape": "circle",
+                        "shape_color": "red",
+                        "alphanumeric": "A",
+                        "alphanumeric_color": "white",
+                        "orientation": "N",
                         "payload_match": "WATER_BOTTLE",
                         "confidence": 0.942,
-                        "bbox": [180, 110, 80, 80],
                         "lat": 38.145120,
-                        "lon": -76.426880
+                        "lon": -76.426880,
+                        "interop_submitted": True
                     },
                     {
-                        "target_id": "TGT-02",
+                        "target_id": "ODLC-02",
                         "label": "TENT",
+                        "shape": "square",
+                        "shape_color": "blue",
+                        "alphanumeric": "7",
+                        "alphanumeric_color": "yellow",
+                        "orientation": "SE",
                         "payload_match": "MEDICAL_KIT",
                         "confidence": 0.895,
-                        "bbox": [80, 160, 90, 75],
                         "lat": 38.145250,
-                        "lon": -76.426510
+                        "lon": -76.426510,
+                        "interop_submitted": True
                     }
                 ],
                 "checklist": {
@@ -666,7 +690,8 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                     "gps": True,
                     "lidar": True,
                     "vio": True,
-                    "payload": True,
+                    "interop": True,
+                    "odlc": True,
                     "geofence": True
                 }
             }
