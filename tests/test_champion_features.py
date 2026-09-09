@@ -12,10 +12,21 @@ Tests:
 6. Orthomosaic Mapper & GeoTIFF Export.
 """
 
+import sys
 import os
 import unittest
 import numpy as np
 import cv2
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for p in [
+    ROOT,
+    os.path.join(ROOT, "drone_vision"),
+    os.path.join(ROOT, "mission_planner"),
+    os.path.join(ROOT, "precision_landing"),
+]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from drone_vision.odlc_classifier import ODLCClassifier
 from drone_vision.target_geolocator import TargetGeolocator

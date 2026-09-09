@@ -737,11 +737,12 @@
             <div class="glass-panel cmd-panel">
                 <div class="panel-header">
                     <div class="panel-header-title">📡 TFmini-S LiDAR Rangefinder HUD</div>
-                    <span class="sensor-badge">115200 BAUD OK</span>
+                    <span class="sensor-badge" id="d-lidar-status">115200 BAUD OK</span>
                 </div>
                 <div style="background: rgba(0,0,0,0.4); padding: 16px; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.8;">
                     <div class="sensor-row"><span>Altitude Above Ground (AGL):</span><span style="color: var(--accent-cyan); font-weight: 800; font-size: 1.1rem;" id="d-lidar-val">15.00 m</span></div>
-                    <div class="sensor-row"><span>Signal Quality:</span><span style="color: var(--accent-green);">96%</span></div>
+                    <div class="sensor-row"><span>LiDAR Ground Coordinates (ENU):</span><span style="color: var(--accent-green); font-weight: 700;" id="d-lidar-coords">E: 0.00m | N: 0.00m | U: 0.00m</span></div>
+                    <div class="sensor-row"><span>Signal Quality:</span><span style="color: var(--accent-cyan);" id="d-lidar-signal">96%</span></div>
                     <div class="sensor-row"><span>Range Boundaries:</span><span>0.10m – 12.00m</span></div>
                     <div class="progress-bar-bg" style="height: 12px; margin-top: 12px;">
                         <div class="progress-bar-fill" id="d-lidar-bar" style="width: 85%;"></div>
@@ -1142,6 +1143,19 @@
                         const lDist = data.lidar.distance_m || 0.0;
                         const elL = document.getElementById('d-lidar-val');
                         if (elL) elL.innerText = `${lDist.toFixed(2)} m`;
+                        
+                        if (data.lidar.ground_coords_enu) {
+                            const [ge, gn, ga] = data.lidar.ground_coords_enu;
+                            const elCoords = document.getElementById('d-lidar-coords');
+                            if (elCoords) elCoords.innerText = `E: ${ge.toFixed(2)}m | N: ${gn.toFixed(2)}m | Ground Alt: ${ga.toFixed(2)}m`;
+                        }
+
+                        const elSig = document.getElementById('d-lidar-signal');
+                        if (elSig) elSig.innerText = `${data.lidar.signal_quality || 96}% (${data.lidar.strength || 0} RAW)`;
+
+                        const elStat = document.getElementById('d-lidar-status');
+                        if (elStat) elStat.innerText = (data.lidar.status || '115200 BAUD OK').toUpperCase();
+
                         const pct = Math.min(100, Math.max(0, (lDist / 12.0) * 100));
                         const elBar = document.getElementById('d-lidar-bar');
                         if (elBar) elBar.style.width = `${pct}%`;

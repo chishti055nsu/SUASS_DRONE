@@ -596,7 +596,19 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
             current = round(12.5 + (speed * 2.1) if armed else 2.1, 1)
 
             altitude = float(pos[2])
-            lidar_dist = round(max(0.3, altitude + (math.sin(now * 2.0) * 0.04 if armed else 0.0)), 2)
+            hw = get_hw_bridge()
+            if hw.lidar_connected and hw.lidar_dist_m > 0:
+                lidar_dist = round(hw.lidar_dist_m, 2)
+                lidar_strength = hw.lidar_strength
+                lidar_status = "HARDWARE SERIAL OK"
+            else:
+                lidar_dist = round(max(0.1, altitude + (math.sin(now * 2.0) * 0.04 if armed else 0.0)), 2)
+                lidar_strength = 96
+                lidar_status = "HEALTHY (SIMULATED)"
+
+            ground_e = round(float(pos[0]), 2)
+            ground_n = round(float(pos[1]), 2)
+            ground_alt = round(max(0.0, altitude - lidar_dist), 2)
 
             data = {
                 "state": t.get("mode", "IDLE"),
@@ -619,10 +631,12 @@ class WebGCSHandler(SimpleHTTPRequestHandler):
                 "payload_released": bool(t.get("payload_released", False)),
                 "lidar": {
                     "distance_m": lidar_dist,
-                    "signal_quality": 96,
-                    "status": "HEALTHY",
-                    "min_m": 0.3,
-                    "max_m": 12.0
+                    "strength": lidar_strength,
+                    "signal_quality": min(100, max(10, lidar_strength // 10 if lidar_strength > 100 else 96)),
+                    "status": lidar_status,
+                    "min_m": 0.1,
+                    "max_m": 12.0,
+                    "ground_coords_enu": [ground_e, ground_n, ground_alt]
                 },
                 "gps_feedback": {
                     "latitude": 38.145025 + (pos[1] * 0.000009),
