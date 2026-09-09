@@ -31,14 +31,15 @@ if [ -f "$SCRIPT_DIR/maximize_jetson_performance.sh" ]; then
     bash "$SCRIPT_DIR/maximize_jetson_performance.sh" || true
 fi
 
-# 4. Restart permanent systemd service if installed
-echo "[4/5] Reloading and restarting auto-start background service..."
-if systemctl is-active --quiet iub_drone.service 2>/dev/null || systemctl is-enabled --quiet iub_drone.service 2>/dev/null; then
+# 4. Install or restart permanent systemd service
+echo "[4/5] Checking auto-start background service..."
+if [ ! -f /etc/systemd/system/iub_drone.service ]; then
+    echo "  ⚙️ Installing iub_drone.service for permanent boot..."
+    sudo bash "$SCRIPT_DIR/install_auto_start.sh"
+else
     sudo systemctl daemon-reload
     sudo systemctl restart iub_drone.service
     echo "  ✅ iub_drone.service restarted successfully."
-else
-    echo "  ℹ️  iub_drone.service is not installed. (Run 'sudo bash scripts/install_auto_start.sh' to install auto-boot)."
 fi
 
 # 5. Run full test suite verification
